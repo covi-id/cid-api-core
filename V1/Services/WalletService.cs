@@ -10,8 +10,8 @@ using System.Threading.Tasks;
 using CoviIDApiCore.Models.Database;
 using CoviIDApiCore.V1.Interfaces.Repositories;
 using Microsoft.Extensions.Configuration;
-using Hangfire;
 using static CoviIDApiCore.V1.Constants.DefinitionConstants;
+using CoviIDApiCore.Models.AppSettings;
 
 namespace CoviIDApiCore.V1.Services
 {
@@ -24,9 +24,11 @@ namespace CoviIDApiCore.V1.Services
         private readonly IConfiguration _configuration;
         private readonly IOtpService _otpService;
         private readonly IWalletRepository _walletRepository;
-        
+        private readonly StreetcredDefinitions _streetcredDefinitions;
+
         public WalletService(ICustodianBroker custodianBroker, IConnectionService connectionService, IAgencyBroker agencyBroker,
             IConfiguration configuration, IOtpService otpService, IWalletRepository walletRepository,
+            StreetcredDefinitions streetcredDefinitions,
             ICredentialService credentialService)
         {
             _custodianBroker = custodianBroker;
@@ -36,6 +38,7 @@ namespace CoviIDApiCore.V1.Services
             _credentialService = credentialService;
             _otpService = otpService;
             _walletRepository = walletRepository;
+            _streetcredDefinitions = streetcredDefinitions;
         }
 
         public async Task<List<WalletContract>> GetWallets()
@@ -98,15 +101,15 @@ namespace CoviIDApiCore.V1.Services
             {
                 ConnectionId = "", // Leave blank for auto generation
                 Multiparty = false,
-                Name = "CoviID", // This is the Agent name
+                Name = _streetcredDefinitions.TenantName
             };
 
             var agentInvitation = await _connectionService.CreateInvitation(connectionParameters);
             var custodianConnection = await _connectionService.AcceptInvitation(agentInvitation.Invitation, walletId);
-            var offer = await _credentialService.CreateCovidTest(agentInvitation.ConnectionId, covidTest, walletId);
+            var offer = await _credentialService.CreateCovidTest("", covidTest, walletId);
             var userCredentials = await _custodianBroker.GetCredentials(walletId);
 
-            var thisOffer = userCredentials.FirstOrDefault(c => c.State == CredentialsState.Offered && c.DefinitionId == DefinitionIds[Schemas.CovidTest]);
+            var thisOffer = userCredentials.FirstOrDefault(c => c.State == CredentialsState.Offered && c.DefinitionId == _streetcredDefinitions.DefinitionIds[Schema.CovidTest]);
             if (thisOffer != null)
             {
                 await _custodianBroker.AcceptCredential(walletId, thisOffer.CredentialId);

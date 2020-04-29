@@ -1,4 +1,5 @@
 ﻿using CoviIDApiCore.Helpers;
+using CoviIDApiCore.Models.AppSettings;
 using CoviIDApiCore.Models.Database;
 using CoviIDApiCore.V1.DTOs.Connection;
 using CoviIDApiCore.V1.DTOs.Credentials;
@@ -23,14 +24,16 @@ namespace CoviIDApiCore.V1.Services
         private readonly ICustodianBroker _custodianBroker;
         private readonly IConnectionService _connectionService;
         private readonly ICovidTestRepository _covidTestRepository;
+        StreetcredDefinitions _streetcredDefinitions { get; }
 
         public CredentialService(IAgencyBroker agencyBroker, ICustodianBroker custodianBroker, IConnectionService connectionService,
-            ICovidTestRepository covidTestRepository)
+            ICovidTestRepository covidTestRepository, StreetcredDefinitions streetcredDefinitions)
         {
             _agencyBroker = agencyBroker;
             _custodianBroker = custodianBroker;
             _connectionService = connectionService;
             _covidTestRepository = covidTestRepository;
+            _streetcredDefinitions = streetcredDefinitions;
         }
 
         /// <summary>
@@ -44,7 +47,7 @@ namespace CoviIDApiCore.V1.Services
             var credentialOffer = new CredentialOfferParameters
             {
                 ConnectionId = connectionId,
-                DefinitionId = DefinitionIds[Schemas.Person],
+                DefinitionId = _streetcredDefinitions.DefinitionIds[Schema.Person],
                 AutomaticIssuance = false,
                 CredentialValues = new Dictionary<string, string>
                 {
@@ -70,7 +73,7 @@ namespace CoviIDApiCore.V1.Services
                 var credentialOffer = new CredentialOfferParameters
                 {
                     ConnectionId = connectionId,
-                    DefinitionId = DefinitionIds[Schemas.CovidTest],
+                    DefinitionId = _streetcredDefinitions.DefinitionIds[Schema.CovidTest],
                     AutomaticIssuance = false,
                     CredentialValues = new Dictionary<string, string>
                     {
@@ -94,7 +97,7 @@ namespace CoviIDApiCore.V1.Services
             {
                 ConnectionId = "", // Leave blank for auto generation
                 Multiparty = false,
-                Name = AgentName
+                Name = _streetcredDefinitions.TenantName
             };
 
             var agentInvitation = await _connectionService.CreateInvitation(connectionParameters);
@@ -125,8 +128,8 @@ namespace CoviIDApiCore.V1.Services
             var allCredentials = await _custodianBroker.GetCredentials(walletId);
             var offeredCredentials = allCredentials.Where(x => x.State == CredentialsState.Requested).ToList();
 
-            var verifiedPerson = offeredCredentials.FirstOrDefault(p => p.DefinitionId == DefinitionIds[Schemas.Person]);
-            var covidTest = offeredCredentials.Where(c => c.DefinitionId == DefinitionIds[Schemas.CovidTest])
+            var verifiedPerson = offeredCredentials.FirstOrDefault(p => p.DefinitionId == _streetcredDefinitions.DefinitionIds[Schema.Person]);
+            var covidTest = offeredCredentials.Where(c => c.DefinitionId == _streetcredDefinitions.DefinitionIds[Schema.CovidTest])
                 .OrderBy(c => c.Values.TryGetValue(Attributes.DateIssued, out var dateIssued)).ToList().FirstOrDefault();
 
             if (verifiedPerson != null)

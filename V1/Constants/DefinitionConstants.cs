@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Runtime.Serialization;
 
 namespace CoviIDApiCore.V1.Constants
 {
@@ -7,7 +8,6 @@ namespace CoviIDApiCore.V1.Constants
         #region Strings
         public static readonly string CompanyName = "Company Name";
         public static readonly string EmailAdress = "Email Address";
-        public static readonly string AgentName = "CoviID";
         #endregion
 
         public class Attributes
@@ -42,20 +42,12 @@ namespace CoviIDApiCore.V1.Constants
             OrganisationWelcome
         }
 
-        /// <summary>
-        /// Pass in the selected schema and retrieve the corresponding definition Id
-        /// This is added here to save costs to Streetcred API
-        /// </summary>
-        public static Dictionary<Schemas, string> DefinitionIds = new Dictionary<Schemas, string>
+        public enum Schema
         {
-            { Schemas.Person, "RYJoQ8UNadGrrfL7PBK8Wm:3:CL:95145:Verified Person" },
-            { Schemas.CovidTest, "RYJoQ8UNadGrrfL7PBK8Wm:3:CL:94574:Covid Test" }
-        };
-
-        public enum Schemas
-        {
-            Person,
-            CovidTest
+            [EnumMember(Value = "Person")]
+            Person = 0,
+            [EnumMember(Value = "CovidTest")]
+            CovidTest = 1
         }
     }
 

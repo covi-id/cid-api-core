@@ -48,6 +48,7 @@ namespace CoviIDApiCore
 
         public void ConfigureServices(IServiceCollection services)
         {
+            BindConfiguration(services);
             ConfigureCORS(services);
             ConfigureSwagger(services);
             ConfigureHangfire(services);
@@ -267,6 +268,13 @@ namespace CoviIDApiCore
                     x.Environment = _environment;
                     x.Dsn = new Dsn(url);
                 });
+        }
+
+        private void BindConfiguration(IServiceCollection services)
+        {
+            var streetcredDefinitions = new StreetcredDefinitions();
+            _configuration.Bind(nameof(StreetcredDefinitions), streetcredDefinitions);
+            services.AddSingleton(streetcredDefinitions);
         }
         #endregion Private Configuration Methods
     }
