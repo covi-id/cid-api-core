@@ -35,6 +35,7 @@
         public static readonly string Token_OTPFailed = $"OTP is invalid.";
         public static readonly string Token_OTPThreshold = $"Too many OTPs."; //TODO: Copy change
         public static readonly string Token_InvaldPayload = $"OTP Payload is invalid."; //TODO: Copy change
+        public static readonly string Token_Invalid = $"OTP session token is invalid";
         #endregion
 
         #region Credentials

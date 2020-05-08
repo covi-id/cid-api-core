@@ -6,6 +6,7 @@ using System.Security.Authentication;
 using System.Security.Claims;
 using System.Text;
 using CoviIDApiCore.V1.Configuration;
+using CoviIDApiCore.V1.Constants;
 using CoviIDApiCore.V1.DTOs.Authentication;
 using CoviIDApiCore.V1.Interfaces.Services;
 using Microsoft.Extensions.Configuration;
@@ -20,7 +21,6 @@ namespace CoviIDApiCore.V1.Services
         private readonly TokenOptions _tokenOptions;
 
         private readonly string _key;
-        private const string _name = "unique_name", _sid = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/sid";
 
         public TokenService(IConfiguration configuration, IOptions<TokenOptions> tokenOptions)
         {
@@ -59,16 +59,22 @@ namespace CoviIDApiCore.V1.Services
             var readableToken = handler.CanReadToken(authToken);
 
             if(readableToken != true)
-                throw new AuthenticationException("Token invalid");
+                throw new AuthenticationException(Messages.Token_Invalid);
 
             var token = handler.ReadJwtToken(authToken);
 
-            var walletClaim = token.Claims?.FirstOrDefault(t => string.Equals(t.Type,_name))?.Value;
+            var walletClaim = token
+                .Claims?
+                .FirstOrDefault(t => string.Equals(t.Type,DefinitionConstants.IdentityClaimStrings[DefinitionConstants.IdentityClaims.UniqueName]))?
+                .Value;
 
-            var otpClaim = token.Claims?.FirstOrDefault(t => string.Equals(t.Type,_sid))?.Value;
+            var otpClaim = token
+                .Claims?
+                .FirstOrDefault(t => string.Equals(t.Type,DefinitionConstants.IdentityClaimStrings[DefinitionConstants.IdentityClaims.Sid]))?
+                .Value;
 
             if(walletClaim == null)
-                throw new AuthenticationException("Token invalid");
+                throw new AuthenticationException(Messages.Token_Invalid);
 
             return new TokenReturn()
             {
