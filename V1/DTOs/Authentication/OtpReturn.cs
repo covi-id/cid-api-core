@@ -2,7 +2,7 @@
 {
     public class OtpReturn
     {
-        public string SessionId { get; set; }
+        public long OtpId { get; set; }
         public string AuthToken { get; set; }
     }
 }

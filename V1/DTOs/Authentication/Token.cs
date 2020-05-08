@@ -4,4 +4,10 @@
     {
         public string Token { get; set; }
     }
+
+    public class TokenReturn
+    {
+        public string WalletId { get; set; }
+        public long OtpId { get; set; }
+    }
 }

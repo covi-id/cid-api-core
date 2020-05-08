@@ -15,26 +15,24 @@ namespace CoviIDApiCore.V1.Services
     {
         private readonly ICustodianBroker _custodianBroker;
         private readonly IAgencyBroker _agencyBroker;
-        private readonly IConnectionService _connectionService;
-        private readonly ICredentialService _credentialService;
+
         private readonly IConfiguration _configuration;
         private readonly IOtpService _otpService;
         private readonly IWalletRepository _walletRepository;
         private readonly IWalletDetailRepository _walletDetailRepository;
         private readonly ITestResultService _testResultService;
+        private readonly ITokenService _tokenService;
         
-        public WalletService(ICustodianBroker custodianBroker, IConnectionService connectionService, IAgencyBroker agencyBroker,
-            IConfiguration configuration, IOtpService otpService, IWalletRepository walletRepository,
-            ICredentialService credentialService, IWalletDetailRepository walletDetailRepository,
-            ITestResultService testResultService)
+        public WalletService(ICustodianBroker custodianBroker, IAgencyBroker agencyBroker,
+            IConfiguration configuration, IOtpService otpService, IWalletRepository walletRepository, IWalletDetailRepository walletDetailRepository,
+            ITestResultService testResultService, ITokenService tokenService)
         {
             _custodianBroker = custodianBroker;
-            _connectionService = connectionService;
             _agencyBroker = agencyBroker;
             _configuration = configuration;
-            _credentialService = credentialService;
             _walletDetailRepository = walletDetailRepository;
             _testResultService = testResultService;
+            _tokenService = tokenService;
             _otpService = otpService;
             _walletRepository = walletRepository;
         }
@@ -66,8 +64,7 @@ namespace CoviIDApiCore.V1.Services
             {
                 CreatedAt = DateTime.UtcNow,
                 MobileNumber = walletRequest.MobileNumber,
-                MobileNumberReference = walletRequest.MobileNumberReference,
-                SessionId = otpReturn.SessionId
+                MobileNumberReference = walletRequest.MobileNumberReference
             };
 
             await _walletRepository.AddAsync(wallet);
@@ -76,7 +73,7 @@ namespace CoviIDApiCore.V1.Services
 
             return new TokenResponse
             {
-                Token = otpReturn.AuthToken
+                Token = _tokenService.GenerateToken(wallet.Id.ToString(), otpReturn)
             };
         }
 

@@ -4,7 +4,6 @@ namespace CoviIDApiCore.Models.Database
 {
     public class OtpToken : BaseModel<long>
     {
-        public string SessionId { get; set; }
         public int Code { get; set; }
         public string MobileNumber { get; set; }
         public bool isUsed { get; set; }

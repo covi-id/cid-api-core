@@ -38,25 +38,17 @@ namespace CoviIDApiCore.V1.Services
             _tokenService = tokenService;
         }
 
-        public async Task<OtpReturn> GenerateAndSendOtpAsync(string mobileNumber)
+        public async Task<long> GenerateAndSendOtpAsync(string mobileNumber)
         {
             var expiryTime = _configuration.GetValue<int>("OTPSettings:ValidityPeriod");
 
             var code = Utilities.Helpers.GenerateRandom4DigitNumber();
 
-            var sessionId = Utilities.Helpers.GenerateSessionToken();
-
             var message = ConstructMessage(mobileNumber, code, expiryTime);
 
             await _clickatellBroker.SendSms(message);
 
-            await SaveOtpAsync(mobileNumber, sessionId, code, expiryTime);
-
-            return new OtpReturn()
-            {
-                SessionId = sessionId,
-                AuthToken = _tokenService.GenerateToken(sessionId, expiryTime)
-            };
+            return await SaveOtpAsync(mobileNumber,code, expiryTime);
         }
 
         private async Task<bool> ValidateOtpCreationAsync(string mobileNumberReference)
@@ -75,19 +67,17 @@ namespace CoviIDApiCore.V1.Services
 
         public async Task<TokenResponse> ResendOtpAsync(RequestResendOtp payload, string authToken)
         {
-            var sessionId = _tokenService.GetSessionIdFromToken(authToken);
+            var authTokenDetails = _tokenService.GetDetailsFromToken(authToken);
 
             if(!await ValidateOtpCreationAsync(payload.MobileNumber))
                 throw new ValidationException(Messages.Token_OTPThreshold);
 
-            var wallet = await _walletRepository.GetBySessionId(sessionId);
+            var wallet = await _walletRepository.GetAsync(Guid.Parse(authTokenDetails.WalletId));
 
             if (wallet == default)
                 throw new NotFoundException(Messages.Wallet_NotFound);
 
-            var otpReturn = await GenerateAndSendOtpAsync(payload.MobileNumber);
-
-            wallet.SessionId = otpReturn.SessionId;
+            var otp = await GenerateAndSendOtpAsync(payload.MobileNumber);
 
             _walletRepository.Update(wallet);
 
@@ -95,7 +85,7 @@ namespace CoviIDApiCore.V1.Services
 
             return new TokenResponse()
             {
-                Token = otpReturn.AuthToken
+                Token = _tokenService.GenerateToken(wallet.Id.ToString(), otp)
             };
         }
 
@@ -113,7 +103,7 @@ namespace CoviIDApiCore.V1.Services
             };
         }
 
-        private async Task SaveOtpAsync(string mobileNumber, string sessionId, int code, int expiryTime)
+        private async Task<long> SaveOtpAsync(string mobileNumber, int code, int expiryTime)
         {
             var newToken = new OtpToken()
             {
@@ -121,13 +111,14 @@ namespace CoviIDApiCore.V1.Services
                 CreatedAt = DateTime.UtcNow,
                 ExpireAt = DateTime.UtcNow.AddMinutes(expiryTime),
                 isUsed = false,
-                MobileNumber = mobileNumber,
-                SessionId = sessionId
+                MobileNumber = mobileNumber
             };
 
             await _otpTokenRepository.AddAsync(newToken);
 
             await _otpTokenRepository.SaveAsync();
+
+            return newToken.Id;
         }
 
         //TODO: Improve this
@@ -136,9 +127,9 @@ namespace CoviIDApiCore.V1.Services
             if (!payload.isValid())
                 throw new ValidationException(Messages.Token_InvaldPayload);
 
-            var sessionId = _tokenService.GetSessionIdFromToken(authToken);
+            var authTokenDetails = _tokenService.GetDetailsFromToken(authToken);
 
-            var token = await _otpTokenRepository.GetBySessionId(sessionId);
+            var token = await _otpTokenRepository.GetAsync(authTokenDetails.OtpId);
 
             if (token == default || token.ExpireAt <= DateTime.UtcNow || token.Code != payload.Otp)
                 throw new ValidationException(Messages.Token_OTPNotExist);
@@ -149,7 +140,7 @@ namespace CoviIDApiCore.V1.Services
 
             await _otpTokenRepository.SaveAsync();
 
-            var wallet = await _walletRepository.GetBySessionId(sessionId);
+            var wallet = await _walletRepository.GetAsync(Guid.Parse(authTokenDetails.WalletId));
 
             if (wallet == null)
                 throw new NotFoundException(Messages.Wallet_NotFound);

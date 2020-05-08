@@ -6,12 +6,11 @@ using System.Security.Authentication;
 using System.Security.Claims;
 using System.Text;
 using CoviIDApiCore.V1.Configuration;
+using CoviIDApiCore.V1.DTOs.Authentication;
 using CoviIDApiCore.V1.Interfaces.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace CoviIDApiCore.V1.Services
 {
@@ -21,7 +20,7 @@ namespace CoviIDApiCore.V1.Services
         private readonly TokenOptions _tokenOptions;
 
         private readonly string _key;
-        private const string _name = "unique_name";
+        private const string _name = "unique_name", _sid = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/sid";
 
         public TokenService(IConfiguration configuration, IOptions<TokenOptions> tokenOptions)
         {
@@ -31,11 +30,12 @@ namespace CoviIDApiCore.V1.Services
             _key = _configuration.GetValue<string>("ServerKey");
         }
 
-        public string GenerateToken(string sessionId, int validFor)
+        public string GenerateToken(string walletId, long otpId)
         {
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, sessionId)
+                new Claim(ClaimTypes.Name, walletId),
+                new Claim(ClaimTypes.Sid, otpId.ToString())
             };
 
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -43,7 +43,7 @@ namespace CoviIDApiCore.V1.Services
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddMinutes(validFor),
+                Expires = DateTime.UtcNow.AddMinutes(30), //TODO: change
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_key)), SecurityAlgorithms.HmacSha256),
                 IssuedAt = DateTime.UtcNow
             };
@@ -53,7 +53,7 @@ namespace CoviIDApiCore.V1.Services
             return tokenHandler.WriteToken(tokens);
         }
 
-        public string GetSessionIdFromToken(string authToken)
+        public TokenReturn GetDetailsFromToken(string authToken)
         {
             var handler = new JwtSecurityTokenHandler();
             var readableToken = handler.CanReadToken(authToken);
@@ -63,12 +63,18 @@ namespace CoviIDApiCore.V1.Services
 
             var token = handler.ReadJwtToken(authToken);
 
-            var claim = token.Claims?.FirstOrDefault(t => string.Equals(t.Type,_name))?.Value;
+            var walletClaim = token.Claims?.FirstOrDefault(t => string.Equals(t.Type,_name))?.Value;
 
-            if(claim == null)
+            var otpClaim = token.Claims?.FirstOrDefault(t => string.Equals(t.Type,_sid))?.Value;
+
+            if(walletClaim == null)
                 throw new AuthenticationException("Token invalid");
 
-            return claim;
+            return new TokenReturn()
+            {
+                WalletId = walletClaim,
+                OtpId = Convert.ToInt64(otpClaim)
+            };
         }
     }
 }
