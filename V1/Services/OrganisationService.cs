@@ -70,7 +70,7 @@ namespace CoviIDApiCore.V1.Services
                 .OrderByDescending(t => t.CreatedAt)
                 .FirstOrDefault();
 
-            var totalScans = accessLogs.Count(aol => aol.Organisation == organisation && aol.CreatedAt.Date == DateTime.UtcNow.Date);
+            var totalScans = accessLogs.Count(oal => oal.Organisation == organisation && oal.CreatedAt.Date == DateTime.UtcNow.Date);
 
             return new Response(new OrganisationDTO(organisation, orgCounter, totalScans, GetAccessLogBalance(accessLogs)), HttpStatusCode.OK);
         }
@@ -105,7 +105,7 @@ namespace CoviIDApiCore.V1.Services
             await _organisationAccessLogRepository.SaveAsync();
 
             var logs = organisation.AccessLogs
-                .Where(aol => aol.CreatedAt.Date.Equals(DateTime.UtcNow.Date))
+                .Where(oal => oal.CreatedAt.Date.Equals(DateTime.UtcNow.Date))
                 .ToList();
 
             return new Response(
@@ -119,8 +119,8 @@ namespace CoviIDApiCore.V1.Services
 
         private int GetAccessLogBalance(List<OrganisationAccessLog> logs)
         {
-            var checkIns = logs.Count(aol => aol.ScanType == ScanType.CheckIn);
-            var checkOuts = logs.Count(aol => aol.ScanType == ScanType.CheckOut);
+            var checkIns = logs.Count(oal => oal.ScanType == ScanType.CheckIn);
+            var checkOuts = logs.Count(oal => oal.ScanType == ScanType.CheckOut);
 
             return checkIns - checkOuts; //TODO: Maybe improve this?
         }
