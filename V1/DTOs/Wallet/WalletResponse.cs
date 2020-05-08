@@ -4,6 +4,6 @@ namespace CoviIDApiCore.V1.DTOs.Wallet
 {
     public class WalletResponse
     {
-        public string SessionId { get; set; }
+        public string Token { get; set; }
     }
 }

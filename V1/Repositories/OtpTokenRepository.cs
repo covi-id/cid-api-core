@@ -31,7 +31,7 @@ namespace CoviIDApiCore.V1.Repositories
 
         public async Task<OtpToken> GetBySessionId(string sessionId)
         {
-            return await _dbSet.FirstOrDefaultAsync(t => t.SessionId == sessionId);
+            return await _dbSet.FirstOrDefaultAsync(t => t.SessionId == sessionId && !t.isUsed);
         }
 
         public async Task<List<OtpToken>> GetAllUnexpiredByMobileNumberAsync(string mobileNumber)

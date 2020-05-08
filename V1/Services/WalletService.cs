@@ -60,14 +60,14 @@ namespace CoviIDApiCore.V1.Services
 
         public async Task<WalletResponse> CreateWallet(CreateWalletRequest walletRequest)
         {
-            var sessionId = await _otpService.GenerateAndSendOtpAsync(walletRequest.MobileNumber);
+            var otpReturn = await _otpService.GenerateAndSendOtpAsync(walletRequest.MobileNumber);
 
             var wallet = new Wallet
             {
                 CreatedAt = DateTime.UtcNow,
                 MobileNumber = walletRequest.MobileNumber,
                 MobileNumberReference = walletRequest.MobileNumberReference,
-                SessionId = sessionId
+                SessionId = otpReturn.SessionId
             };
 
             await _walletRepository.AddAsync(wallet);
@@ -76,7 +76,7 @@ namespace CoviIDApiCore.V1.Services
 
             return new WalletResponse
             {
-                SessionId = sessionId
+                Token = otpReturn.AuthToken
             };
         }
 

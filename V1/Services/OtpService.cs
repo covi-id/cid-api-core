@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Threading.Tasks;
 using CoviIDApiCore.Exceptions;
@@ -22,9 +23,10 @@ namespace CoviIDApiCore.V1.Services
         private readonly ITestResultService _testResultService;
         private readonly IWalletDetailService _walletDetailService;
         private readonly ICryptoService _cryptoService;
+        private readonly ITokenService _tokenService;
 
         public OtpService(IOtpTokenRepository tokenRepository, IConfiguration configuration, IClickatellBroker clickatellBroker,
-            IWalletRepository walletRepository, ITestResultService testResultService, IWalletDetailService walletDetailService, ICryptoService cryptoService)
+            IWalletRepository walletRepository, ITestResultService testResultService, IWalletDetailService walletDetailService, ICryptoService cryptoService, ITokenService tokenService)
         {
             _otpTokenRepository = tokenRepository;
             _configuration = configuration;
@@ -33,9 +35,10 @@ namespace CoviIDApiCore.V1.Services
             _testResultService = testResultService;
             _walletDetailService = walletDetailService;
             _cryptoService = cryptoService;
+            _tokenService = tokenService;
         }
 
-        public async Task<string> GenerateAndSendOtpAsync(string mobileNumber)
+        public async Task<OtpReturn> GenerateAndSendOtpAsync(string mobileNumber)
         {
             var expiryTime = _configuration.GetValue<int>("OTPSettings:ValidityPeriod");
 
@@ -49,7 +52,11 @@ namespace CoviIDApiCore.V1.Services
 
             await SaveOtpAsync(mobileNumber, sessionId, code, expiryTime);
 
-            return sessionId;
+            return new OtpReturn()
+            {
+                SessionId = sessionId,
+                AuthToken = _tokenService.GenerateToken(sessionId, expiryTime)
+            };
         }
 
         private async Task<bool> ValidateOtpCreationAsync(string mobileNumberReference)
@@ -66,6 +73,7 @@ namespace CoviIDApiCore.V1.Services
             return otps.Count(otp => otp.CreatedAt > DateTime.UtcNow.AddMinutes(-1 * timeThreshold)) <= amountThreshold;
         }
 
+        //TODO: Update this
         public async Task ResendOtp(RequestResendOtp payload)
         {
             if(!await ValidateOtpCreationAsync(payload.MobileNumber))
@@ -76,9 +84,9 @@ namespace CoviIDApiCore.V1.Services
             if (wallet == default)
                 throw new NotFoundException(Messages.Wallet_NotFound);
 
-            var sessionId = await GenerateAndSendOtpAsync(payload.MobileNumber);
+            var otpReturn = await GenerateAndSendOtpAsync(payload.MobileNumber);
 
-            wallet.SessionId = sessionId;
+            wallet.SessionId = otpReturn.SessionId;
 
             _walletRepository.Update(wallet);
 
@@ -117,12 +125,14 @@ namespace CoviIDApiCore.V1.Services
         }
 
         //TODO: Improve this
-        public async Task<OtpConfirmationResponse> ConfirmOtpAsync(RequestOtpConfirmation payload)
+        public async Task<OtpConfirmationResponse> ConfirmOtpAsync(RequestOtpConfirmation payload, string authToken)
         {
+            var sessionId = _tokenService.GetSessionIdFromToken(authToken);
+
             if (!payload.isValid())
                 throw new ValidationException(Messages.Token_InvaldPayload);
 
-            var token = await _otpTokenRepository.GetBySessionId(payload.SessionId);
+            var token = await _otpTokenRepository.GetBySessionId(sessionId);
 
             if (token == default || token.ExpireAt <= DateTime.UtcNow || token.Code != payload.Otp)
                 throw new ValidationException(Messages.Token_OTPNotExist);
@@ -133,7 +143,7 @@ namespace CoviIDApiCore.V1.Services
 
             await _otpTokenRepository.SaveAsync();
 
-            var wallet = await _walletRepository.GetBySessionId(payload.SessionId);
+            var wallet = await _walletRepository.GetBySessionId(sessionId);
 
             if (wallet == null)
                 throw new NotFoundException(Messages.Wallet_NotFound);
