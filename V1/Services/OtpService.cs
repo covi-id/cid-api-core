@@ -73,13 +73,14 @@ namespace CoviIDApiCore.V1.Services
             return otps.Count(otp => otp.CreatedAt > DateTime.UtcNow.AddMinutes(-1 * timeThreshold)) <= amountThreshold;
         }
 
-        //TODO: Update this
-        public async Task ResendOtp(RequestResendOtp payload)
+        public async Task<TokenResponse> ResendOtpAsync(RequestResendOtp payload, string authToken)
         {
+            var sessionId = _tokenService.GetSessionIdFromToken(authToken);
+
             if(!await ValidateOtpCreationAsync(payload.MobileNumber))
                 throw new ValidationException(Messages.Token_OTPThreshold);
 
-            var wallet = await _walletRepository.GetBySessionId(payload.SessionId);
+            var wallet = await _walletRepository.GetBySessionId(sessionId);
 
             if (wallet == default)
                 throw new NotFoundException(Messages.Wallet_NotFound);
@@ -91,6 +92,11 @@ namespace CoviIDApiCore.V1.Services
             _walletRepository.Update(wallet);
 
             await _walletRepository.SaveAsync();
+
+            return new TokenResponse()
+            {
+                Token = otpReturn.AuthToken
+            };
         }
 
         private ClickatellTemplate ConstructMessage(string mobileNumber, int code, int validityPeriod)
@@ -127,10 +133,10 @@ namespace CoviIDApiCore.V1.Services
         //TODO: Improve this
         public async Task<OtpConfirmationResponse> ConfirmOtpAsync(RequestOtpConfirmation payload, string authToken)
         {
-            var sessionId = _tokenService.GetSessionIdFromToken(authToken);
-
             if (!payload.isValid())
                 throw new ValidationException(Messages.Token_InvaldPayload);
+
+            var sessionId = _tokenService.GetSessionIdFromToken(authToken);
 
             var token = await _otpTokenRepository.GetBySessionId(sessionId);
 
