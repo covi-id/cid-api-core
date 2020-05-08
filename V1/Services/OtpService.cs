@@ -22,9 +22,11 @@ namespace CoviIDApiCore.V1.Services
         private readonly ITestResultService _testResultService;
         private readonly IWalletDetailService _walletDetailService;
         private readonly ICryptoService _cryptoService;
+        private readonly IAmazonS3Broker _amazonS3Broker;
 
         public OtpService(IOtpTokenRepository tokenRepository, IConfiguration configuration, IClickatellBroker clickatellBroker,
-            IWalletRepository walletRepository, ITestResultService testResultService, IWalletDetailService walletDetailService, ICryptoService cryptoService)
+            IWalletRepository walletRepository, ITestResultService testResultService, 
+            IWalletDetailService walletDetailService, ICryptoService cryptoService, IAmazonS3Broker amazonS3Broker)
         {
             _otpTokenRepository = tokenRepository;
             _configuration = configuration;
@@ -33,6 +35,7 @@ namespace CoviIDApiCore.V1.Services
             _testResultService = testResultService;
             _walletDetailService = walletDetailService;
             _cryptoService = cryptoService;
+            _amazonS3Broker = amazonS3Broker;
         }
 
         public async Task<string> GenerateAndSendOtpAsync(string mobileNumber)
@@ -144,9 +147,8 @@ namespace CoviIDApiCore.V1.Services
 
             await _walletRepository.SaveAsync();
 
-            //TODO: Upload photo
-
-            payload.WalletDetails.Photo = "New photo URL";
+            var fileReference = await _amazonS3Broker.AddImageToBucket(payload.WalletDetails.Photo, wallet.Id.ToString());
+            payload.WalletDetails.Photo = fileReference;
 
             await _walletDetailService.AddWalletDetailsAsync(wallet, payload.WalletDetails);
 
