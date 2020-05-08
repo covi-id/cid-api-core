@@ -57,6 +57,7 @@ namespace CoviIDApiCore
             ConfigureCORS(services);
             ConfigureSwagger(services);
             ConfigureHangfire(services);
+            BindAppSettingConfiguration(services);
 
             services.AddMvc()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
@@ -75,7 +76,7 @@ namespace CoviIDApiCore
             ConfigureDependecyInjection(services);
             ConfigureHttpClients(services);
             ConfigureRateLimiting(services);
-        }        
+        }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
@@ -183,6 +184,7 @@ namespace CoviIDApiCore
             services.AddTransient<ICustodianBroker, CustodianBroker>();
             services.AddTransient<ISendGridBroker, SendGridBroker>();
             services.AddTransient<IClickatellBroker, ClickatellBroker>();
+            services.AddSingleton<IAmazonS3Broker, AmazonS3Broker>();
             #endregion
         }
 
@@ -290,6 +292,14 @@ namespace CoviIDApiCore
                     x.Dsn = new Dsn(url);
                 });
         }
+
+        private void BindAppSettingConfiguration(IServiceCollection services)
+        {
+            var awsS3BucketCredentials = new AwsS3BucketCredentials();
+            _configuration.Bind(nameof(AwsS3BucketCredentials), awsS3BucketCredentials);
+            services.AddSingleton(awsS3BucketCredentials);
+        }
+
         #endregion Private Configuration Methods
     }
 }

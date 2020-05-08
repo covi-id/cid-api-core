@@ -54,5 +54,11 @@
         public static readonly string Ver_CoviIDNotFound = $"Could not find the CoviID for the wallet";
 
         #endregion
+
+        #region Amazon S3
+        public static readonly string S3_NotFound = $"Could not find the item";
+        public static readonly string S3_FailedToAdd = $"Failed to add to S3 bucket.";
+
+        #endregion
     }
 }
