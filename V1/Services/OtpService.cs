@@ -25,7 +25,7 @@ namespace CoviIDApiCore.V1.Services
         private readonly IAmazonS3Broker _amazonS3Broker;
 
         public OtpService(IOtpTokenRepository tokenRepository, IConfiguration configuration, IClickatellBroker clickatellBroker,
-            IWalletRepository walletRepository, ITestResultService testResultService, 
+            IWalletRepository walletRepository, ITestResultService testResultService,
             IWalletDetailService walletDetailService, ICryptoService cryptoService, IAmazonS3Broker amazonS3Broker)
         {
             _otpTokenRepository = tokenRepository;
@@ -71,7 +71,7 @@ namespace CoviIDApiCore.V1.Services
 
         public async Task ResendOtp(RequestResendOtp payload)
         {
-            if(!await ValidateOtpCreationAsync(payload.MobileNumber))
+            if (!await ValidateOtpCreationAsync(payload.MobileNumber))
                 throw new ValidationException(Messages.Token_OTPThreshold);
 
             var wallet = await _walletRepository.GetBySessionId(payload.SessionId);
@@ -152,7 +152,7 @@ namespace CoviIDApiCore.V1.Services
 
             await _walletDetailService.AddWalletDetailsAsync(wallet, payload.WalletDetails);
 
-            if(payload.TestResult != null)
+            if (payload.TestResult != null)
                 await _testResultService.AddTestResult(wallet, payload.TestResult);
 
             return new OtpConfirmationResponse()
