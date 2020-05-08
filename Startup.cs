@@ -167,11 +167,12 @@ namespace CoviIDApiCore
             services.AddScoped<IOtpService, OtpService>();
             services.AddTransient<ITestResultService, TestResultService>();
             services.AddSingleton<ICryptoService, CryptoService>();
+            services.AddScoped<IWalletDetailService, WalletDetailService>();
             #endregion
 
             #region Repository Layer
             services.AddScoped<IOrganisationRepository, OrganisationRepository>();
-            services.AddScoped<IOrganisationCounterRepository, OrganisationCounterRepository>();
+            services.AddScoped<IOrganisationAccessLogRepository, OrganisationAccessLogRepository>();
             services.AddScoped<IOtpTokenRepository, OtpTokenRepository>();
             services.AddScoped<IWalletRepository, WalletRepository>();
             services.AddScoped<ICovidTestRepository, CovidTestRepository>();

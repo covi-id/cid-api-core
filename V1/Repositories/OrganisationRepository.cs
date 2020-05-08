@@ -1,5 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
+using System.Linq;
+using System.Threading.Tasks;
 using CoviIDApiCore.Data;
 using CoviIDApiCore.Models.Database;
 using CoviIDApiCore.V1.Interfaces.Repositories;
@@ -15,6 +17,14 @@ namespace CoviIDApiCore.V1.Repositories
         {
             _context = context;
             _dbSet = _context.Organisations;
+        }
+
+        public async Task<Organisation> GetWithLogsAsync(Guid id)
+        {
+            return await _dbSet
+                .Where(o => o.Id == id)
+                .Include(o => o.AccessLogs)
+                .FirstOrDefaultAsync();
         }
     }
 }

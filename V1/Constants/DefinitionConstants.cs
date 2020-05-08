@@ -58,10 +58,4 @@ namespace CoviIDApiCore.V1.Constants
             CovidTest
         }
     }
-
-    public enum UpdateType
-    {
-        Addition,
-        Subtraction
-    }
 }

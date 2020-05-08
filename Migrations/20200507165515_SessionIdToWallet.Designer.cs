@@ -4,14 +4,16 @@ using CoviIDApiCore.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace CoviIDApiCore.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20200507165515_SessionIdToWallet")]
+    partial class SessionIdToWallet
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -64,33 +66,26 @@ namespace CoviIDApiCore.Migrations
                     b.ToTable("Organisations");
                 });
 
-            modelBuilder.Entity("CoviIDApiCore.Models.Database.OrganisationAccessLog", b =>
+            modelBuilder.Entity("CoviIDApiCore.Models.Database.OrganisationCounter", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<DateTime>("CreatedAt");
+                    b.Property<int>("Balance");
 
-                    b.Property<decimal>("Latitude")
-                        .HasColumnType("decimal(12,8)");
+                    b.Property<DateTime>("Date");
 
-                    b.Property<decimal>("Longitude")
-                        .HasColumnType("decimal(12,8)");
+                    b.Property<string>("DeviceIdentifier");
+
+                    b.Property<int>("Movement");
 
                     b.Property<Guid?>("OrganisationId");
-
-                    b.Property<string>("ScanType")
-                        .IsRequired();
-
-                    b.Property<Guid?>("WalletId");
 
                     b.HasKey("Id");
 
                     b.HasIndex("OrganisationId");
 
-                    b.HasIndex("WalletId");
-
-                    b.ToTable("OrganisationAccessLogs");
+                    b.ToTable("OrganisationCounters");
                 });
 
             modelBuilder.Entity("CoviIDApiCore.Models.Database.OtpToken", b =>
@@ -185,8 +180,7 @@ namespace CoviIDApiCore.Migrations
                     b.Property<string>("ResultStatus")
                         .IsRequired();
 
-                    b.Property<string>("TestType")
-                        .IsRequired();
+                    b.Property<int>("TestType");
 
                     b.Property<DateTime>("TestedAt");
 
@@ -199,15 +193,11 @@ namespace CoviIDApiCore.Migrations
                     b.ToTable("WalletTestResults");
                 });
 
-            modelBuilder.Entity("CoviIDApiCore.Models.Database.OrganisationAccessLog", b =>
+            modelBuilder.Entity("CoviIDApiCore.Models.Database.OrganisationCounter", b =>
                 {
                     b.HasOne("CoviIDApiCore.Models.Database.Organisation", "Organisation")
                         .WithMany("Counter")
                         .HasForeignKey("OrganisationId");
-
-                    b.HasOne("CoviIDApiCore.Models.Database.Wallet", "Wallet")
-                        .WithMany()
-                        .HasForeignKey("WalletId");
                 });
 
             modelBuilder.Entity("CoviIDApiCore.Models.Database.WalletDetail", b =>

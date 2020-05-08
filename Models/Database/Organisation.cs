@@ -8,7 +8,7 @@ namespace CoviIDApiCore.Models.Database
         public string Name { get; set; }
         public string Payload { get; set; }
         public DateTime CreatedAt { get; set; }
-        public virtual IList<OrganisationCounter> Counter { get; set; }
+        public virtual IList<OrganisationAccessLog> AccessLogs { get; set; }
 
         public Organisation()
         {

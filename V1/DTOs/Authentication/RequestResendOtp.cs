@@ -2,7 +2,7 @@
 {
     public class RequestResendOtp
     {
-        public string WalletId { get; set; }
-        public long MobileNumber { get; set; }
+        public string SessionId { get; set; }
+        public string MobileNumber { get; set; }
     }
 }

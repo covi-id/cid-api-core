@@ -1,10 +1,12 @@
 ﻿using CoviIDApiCore.Models.Database;
-using CoviIDApiCore.V1.DTOs.TestResult;
+using CoviIDApiCore.V1.DTOs.WalletTestResult;
 using CoviIDApiCore.V1.Interfaces.Repositories;
 using CoviIDApiCore.V1.Interfaces.Services;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using CoviIDApiCore.Exceptions;
+using CoviIDApiCore.V1.Constants;
 
 namespace CoviIDApiCore.V1.Services
 {
@@ -41,19 +43,44 @@ namespace CoviIDApiCore.V1.Services
 
         public async Task AddTestResult(TestResultRequest testResultRequest)
         {
-            // TODO : Get wallet via the secret key
             var testResults = new WalletTestResult
             {
-                //Wallet =
+                //TODO: Get wallet via the secret key
                 Laboratory = testResultRequest.Laboratory,
                 ReferenceNumber = testResultRequest.ReferenceNumber,
                 TestedAt = testResultRequest.TestedAt,
                 ResultStatus = testResultRequest.ResultStatus,
                 LaboratoryStatus = LaboratoryStatus.Unsent,
+                TestType = TestType.Covid19,
                 HasConsent = testResultRequest.HasConsent,
                 PermissionGrantedAt = DateTime.UtcNow
             };
+
             await _walletTestResultRepository.AddAsync(testResults);
+
+            await _walletTestResultRepository.SaveAsync();
+        }
+
+        public async Task AddTestResult(Wallet wallet, TestResultRequest testResultRequest)
+        {
+            if(!testResultRequest.isValid())
+                throw new ValidationException(Messages.TestResult_Invalid);
+
+            var testResults = new WalletTestResult
+            {
+                Wallet = wallet,
+                Laboratory = testResultRequest.Laboratory,
+                ReferenceNumber = testResultRequest.ReferenceNumber,
+                TestedAt = testResultRequest.TestedAt,
+                ResultStatus = testResultRequest.ResultStatus,
+                LaboratoryStatus = LaboratoryStatus.Unsent,
+                TestType = TestType.Covid19,
+                HasConsent = testResultRequest.HasConsent,
+                PermissionGrantedAt = DateTime.UtcNow
+            };
+
+            await _walletTestResultRepository.AddAsync(testResults);
+
             await _walletTestResultRepository.SaveAsync();
         }
     }

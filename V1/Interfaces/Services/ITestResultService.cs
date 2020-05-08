@@ -1,6 +1,7 @@
-﻿using CoviIDApiCore.V1.DTOs.TestResult;
+﻿using CoviIDApiCore.V1.DTOs.WalletTestResult;
 using System;
 using System.Threading.Tasks;
+using CoviIDApiCore.Models.Database;
 
 namespace CoviIDApiCore.V1.Interfaces.Services
 {
@@ -8,5 +9,6 @@ namespace CoviIDApiCore.V1.Interfaces.Services
     {
         Task<TestResultResponse> GetTestResult(Guid walletId);
         Task AddTestResult(TestResultRequest testResultRequest);
+        Task AddTestResult(Wallet wallet, TestResultRequest testResultRequest);
     }
 }

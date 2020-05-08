@@ -1,7 +1,9 @@
 using System;
-using System.Reflection;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.IO;
+using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
 using CoviIDApiCore.V1.Interfaces.Services;
 using CoviIDApiCore.V1.Attributes;
 using Microsoft.Extensions.Configuration;
@@ -13,17 +15,20 @@ namespace CoviIDApiCore.V1.Services
     public class CryptoService : ICryptoService
     {
         private readonly string serverKey;
+        private readonly RNGCryptoServiceProvider rng;
 
         public CryptoService(IConfiguration configuration)
         {
             serverKey = configuration.GetValue<string>("ServerKey");
+            rng = new RNGCryptoServiceProvider();
         }
 
 
-        public Task<string> GenerateEncryptedSecretKey()
+        public string GenerateEncryptedSecretKey()
         {
-            // TODO
-            return Task.FromResult<string>("totally_encrypted_secret_key");
+            byte[] key = new byte[32]; // 256 bits
+            rng.GetBytes(key);
+            return Encrypt(Convert.ToBase64String(key), serverKey);
         }
 
         public void EncryptAsServer<T>(T obj)
@@ -38,12 +43,14 @@ namespace CoviIDApiCore.V1.Services
 
         public void EncryptAsUser<T>(T obj, string encryptedSecretKey)
         {
-            TransformObj(TransformDirection.ToCipher, obj, encryptedSecretKey, false);
+            var secretKey = Decrypt(encryptedSecretKey, serverKey);
+            TransformObj(TransformDirection.ToCipher, obj, secretKey, false);
         }
 
         public void DecryptAsUser<T>(T obj, string encryptedSecretKey)
         {
-            TransformObj(TransformDirection.FromCipher, obj, encryptedSecretKey, false);
+            var secretKey = Decrypt(encryptedSecretKey, serverKey);
+            TransformObj(TransformDirection.FromCipher, obj, secretKey, false);
         }
 
         private void TransformObj<T>(TransformDirection direction, T obj, string key, bool serverManaged = false)
@@ -84,16 +91,47 @@ namespace CoviIDApiCore.V1.Services
             return encryptedProps;
         }
 
-        private string Encrypt (string plainText, string key)
-        {
-            // TODO
-            return plainText;
+        private string Encrypt (string plainText, string key) {
+            using (var aes = Aes.Create())
+            {
+                var iv = aes.IV;
+                using (var encryptor = aes.CreateEncryptor(Convert.FromBase64String(key), iv))
+                using (var ms = new MemoryStream())
+                {
+                    using (var cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
+                    using (var binaryWriter = new BinaryWriter(cs))
+                    {
+                        // prepend IV to data
+                        ms.Write(iv);
+                        binaryWriter.Write(Encoding.UTF8.GetBytes(plainText));
+                        cs.FlushFinalBlock();
+                    }
+
+                    return Convert.ToBase64String(ms.ToArray());
+                }
+            }
         }
 
         private string Decrypt (string cipherText, string key)
         {
-            // TODO
-            return cipherText;
+            var cipherBytes = Convert.FromBase64String(cipherText);
+            //get first 16 bytes of IV and use it to decrypt
+            var iv = new byte[16];
+            Array.Copy(cipherBytes, 0, iv, 0, iv.Length);
+
+            using (var aes = Aes.Create())
+            {
+                using (var ms = new MemoryStream())
+                {
+                    using (var cs = new CryptoStream(ms, aes.CreateDecryptor(Convert.FromBase64String(key), iv), CryptoStreamMode.Write))
+                    using (var binaryWriter = new BinaryWriter(cs))
+                    {
+                        binaryWriter.Write(cipherBytes, iv.Length, cipherBytes.Length - iv.Length);
+                    }
+
+                    return Encoding.UTF8.GetString(ms.ToArray());
+                }
+            }
         }
     }
 }

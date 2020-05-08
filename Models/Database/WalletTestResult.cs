@@ -1,4 +1,4 @@
-﻿using CoviIDApiCore.V1.DTOs.TestResult;
+﻿using CoviIDApiCore.V1.DTOs.WalletTestResult;
 using System;
 
 namespace CoviIDApiCore.Models.Database
@@ -6,6 +6,7 @@ namespace CoviIDApiCore.Models.Database
     public class WalletTestResult : BaseModel<Guid>
     {
         public virtual Wallet Wallet { get; set; }
+        public TestType TestType { get; set; }
         public LaboratoryStatus LaboratoryStatus { get; set; }
         public ResultStatus ResultStatus { get; set; }
         public Laboratory Laboratory { get; set; }

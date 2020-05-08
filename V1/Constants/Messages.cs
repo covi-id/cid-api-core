@@ -33,6 +33,8 @@
         public static readonly string Token_OTPNotExist = $"OTP could not be found.";
         public static readonly string Token_OTPExpired = $"OTP has expired.";
         public static readonly string Token_OTPFailed = $"OTP is invalid.";
+        public static readonly string Token_OTPThreshold = $"Too many OTPs."; //TODO: Copy change
+        public static readonly string Token_InvaldPayload = $"OTP Payload is invalid."; //TODO: Copy change
         #endregion
 
         #region Credentials
@@ -52,7 +54,14 @@
 
         #region Verifier
         public static readonly string Ver_CoviIDNotFound = $"Could not find the CoviID for the wallet";
+        #endregion
 
+        #region Wallet
+        public static readonly string Wallet_NotFound = $"Could not find wallet.";
+        #endregion
+
+        #region TestResults
+        public static readonly string TestResult_Invalid = $"Test result is invalid."; //TODO: Copy change
         #endregion
 
         #region Amazon S3

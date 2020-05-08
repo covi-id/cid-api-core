@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Threading.Tasks;
+using CoviIDApiCore.Models.Database;
 using CoviIDApiCore.V1.Constants;
 using CoviIDApiCore.V1.DTOs.Organisation;
 using CoviIDApiCore.V1.DTOs.System;
@@ -12,7 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CoviIDApiCore.V1.Controllers
 {
     [EnableCors("AllowSpecificOrigin")]
-    [Route("api/organisation")]
+    [Route("api/")]
     [ApiController]
     public class OrganisationController : Controller
     {
@@ -24,14 +25,34 @@ namespace CoviIDApiCore.V1.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateOrganisation([FromBody] CreateOrganisationRequest payload)
+        public IActionResult CreateOrganisation([FromBody] CreateOrganisationRequest payload)
         {
             BackgroundJob.Enqueue(() => _organisationService.CreateAsync(payload));
 
             return new OkResult();
         }
 
-        [HttpGet("{id}")]
+        [HttpPut("organisation/subtract/{id}")]
+        public async Task<IActionResult> Subtract(string id)
+        {
+            var payload = new UpdateCountRequest()
+            {
+                Latitude = 0, Longitude = 0,
+            };
+
+            return StatusCode(StatusCodes.Status200OK,
+                await _organisationService.UpdateCountAsync(id, payload, ScanType.CheckOut));
+        }
+
+        [HttpGet("organisation/{id}")]
+        public async Task<IActionResult> GetOrganisationOld(string id)
+        {
+            var resp = await _organisationService.GetAsync(id);
+
+            return StatusCode(resp.Meta.Code, resp);
+        }
+
+        [HttpGet("organisations/{id}")]
         public async Task<IActionResult> GetOrganisation(string id)
         {
             var resp = await _organisationService.GetAsync(id);
@@ -39,13 +60,25 @@ namespace CoviIDApiCore.V1.Controllers
             return StatusCode(resp.Meta.Code, resp);
         }
 
-        [HttpPut("subtract/{id}")]
-        public async Task<IActionResult> UpdateCount(string id, string deviceIdentifier)
+        [HttpPost("organisations/{id}/check_in")]
+        public async Task<IActionResult> CheckIn(string id, [FromBody] UpdateCountRequest payload)
         {
-            await _organisationService.UpdateCountAsync(id, deviceIdentifier, UpdateType.Subtraction);
-
             return StatusCode(StatusCodes.Status200OK,
-                new Response(true, HttpStatusCode.OK, Messages.Misc_Success));
+                await _organisationService.UpdateCountAsync(id, payload, ScanType.CheckIn));
+        }
+
+        [HttpPost("organisations/{id}/check_out")]
+        public async Task<IActionResult> CheckOut(string id, [FromBody] UpdateCountRequest payload)
+        {
+            return StatusCode(StatusCodes.Status200OK,
+                await _organisationService.UpdateCountAsync(id, payload, ScanType.CheckOut));
+        }
+
+        [HttpPost("{id}/denied")]
+        public async Task<IActionResult> AccessDenied(string id, [FromBody] UpdateCountRequest payload)
+        {
+            return StatusCode(StatusCodes.Status200OK,
+                await _organisationService.UpdateCountAsync(id, payload, ScanType.Denied));
         }
     }
 }

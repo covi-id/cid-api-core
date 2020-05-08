@@ -1,4 +1,4 @@
-﻿namespace CoviIDApiCore.V1.DTOs.TestResult
+﻿namespace CoviIDApiCore.V1.DTOs.WalletTestResult
 {
     public enum Laboratory
     {

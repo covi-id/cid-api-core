@@ -26,9 +26,6 @@ namespace CoviIDApiCore.V1.Services
 
             var covidStatus = coviIdCredentials.CovidTestCredentials.CovidStatus;
 
-            if (!string.IsNullOrEmpty(organisationId))
-                await _organisationService.UpdateCountAsync(organisationId, deviceIdentifier, UpdateType.Addition);
-
             return new VerifyResult
             {
                 Picture = coviIdCredentials.PersonCredentials.Photo,

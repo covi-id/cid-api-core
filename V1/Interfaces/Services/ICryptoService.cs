@@ -1,10 +1,8 @@
-using System.Threading.Tasks;
-
 namespace CoviIDApiCore.V1.Interfaces.Services
 {
     public interface ICryptoService
     {
-        Task<string> GenerateEncryptedSecretKey();
+        string GenerateEncryptedSecretKey();
 
         void EncryptAsServer<T>(T obj);
         void DecryptAsServer<T>(T obj);

@@ -2,6 +2,7 @@
 using CoviIDApiCore.V1.Constants;
 using CoviIDApiCore.V1.DTOs.Wallet;
 using System;
+using CoviIDApiCore.V1.DTOs.Authentication;
 using System.ComponentModel.DataAnnotations;
 
 namespace CoviIDApiCore.Models.Database
@@ -21,5 +22,19 @@ namespace CoviIDApiCore.Models.Database
         public string PhotoUrl { get; set; }
         public IdType IdType { get; set; }
         public string IdValue { get; set; }
+
+        public WalletDetail()
+        {
+        }
+
+        public WalletDetail(WalletDetailsRequest detailsRequest)
+        {
+            FirstName = detailsRequest.FirstName;
+            LastName = detailsRequest.LastName;
+            Email = detailsRequest.Email;
+            PhotoUrl = detailsRequest.Photo;
+            IdType = detailsRequest.IdType;
+            IdValue = detailsRequest.IdValue;
+        }
     }
 }
