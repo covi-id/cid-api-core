@@ -37,6 +37,7 @@ namespace CoviIDApiCore.V1.Services
             _walletDetailService = walletDetailService;
             _cryptoService = cryptoService;
             _tokenService = tokenService;
+            _amazonS3Broker = amazonS3Broker;
         }
 
         public async Task<long> GenerateAndSendOtpAsync(string mobileNumber)
