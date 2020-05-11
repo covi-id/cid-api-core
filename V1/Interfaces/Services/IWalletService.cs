@@ -7,7 +7,7 @@ namespace CoviIDApiCore.V1.Interfaces.Services
 {
     public interface IWalletService
     {
-        Task<WalletStatusResponse> GetWalletStatus(Guid walletId, string key);
+        Task<WalletStatusResponse> GetWalletStatus(string walletId, string key);
         Task<TokenResponse> CreateWallet(CreateWalletRequest walletRequest);
     }
 }
