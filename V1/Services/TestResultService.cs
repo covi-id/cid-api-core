@@ -54,6 +54,9 @@ namespace CoviIDApiCore.V1.Services
         {
             var wallet = await _walletRepository.GetAsync(testResultRequest.walletId);
 
+            if (wallet == null)
+                throw new ValidationException(Messages.Wallet_NotFound);
+
             var testResults = new WalletTestResult
             {
                 Wallet = wallet,

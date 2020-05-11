@@ -23,7 +23,6 @@ namespace CoviIDApiCore.V1.Services
             rng = new RNGCryptoServiceProvider();
         }
 
-
         public string GenerateEncryptedSecretKey()
         {
             byte[] key = new byte[32]; // 256 bits
