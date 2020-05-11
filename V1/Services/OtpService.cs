@@ -122,7 +122,7 @@ namespace CoviIDApiCore.V1.Services
         //TODO: Improve this
         public async Task<OtpConfirmationResponse> ConfirmOtpAsync(RequestOtpConfirmation payload, string authToken)
         {
-            if (!payload.isValid())
+            if (payload.TestResult != null && !payload.isValid())
                 throw new ValidationException(Messages.Token_InvaldPayload);
 
             var authTokenDetails = _tokenService.GetDetailsFromToken(authToken);
