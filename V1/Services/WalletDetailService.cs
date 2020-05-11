@@ -9,13 +9,15 @@ namespace CoviIDApiCore.V1.Services
     public class WalletDetailService : IWalletDetailService
     {
         private readonly IWalletDetailRepository _walletDetailRepository;
+        private readonly ICryptoService _cryptoService;
 
-        public WalletDetailService(IWalletDetailRepository walletDetailRepository)
+        public WalletDetailService(IWalletDetailRepository walletDetailRepository, ICryptoService cryptoService)
         {
             _walletDetailRepository = walletDetailRepository;
+            _cryptoService = cryptoService;
         }
 
-        public async Task AddWalletDetailsAsync(Wallet wallet, WalletDetailsRequest walletDetails)
+        public async Task AddWalletDetailsAsync(Wallet wallet, WalletDetailsRequest walletDetails, string key)
         {
             //TODO: Validation
 
@@ -23,6 +25,8 @@ namespace CoviIDApiCore.V1.Services
             {
                 Wallet = wallet
             };
+
+            _cryptoService.EncryptAsUser(details, key);
 
             await _walletDetailRepository.AddAsync(details);
 

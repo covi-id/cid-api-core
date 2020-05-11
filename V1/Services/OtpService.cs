@@ -155,7 +155,9 @@ namespace CoviIDApiCore.V1.Services
 
             payload.WalletDetails.Photo = "New photo URL";
 
-            await _walletDetailService.AddWalletDetailsAsync(wallet, payload.WalletDetails);
+            var key = _cryptoService.GenerateEncryptedSecretKey();
+
+            await _walletDetailService.AddWalletDetailsAsync(wallet, payload.WalletDetails, key);
 
             if(payload.TestResult != null)
                 await _testResultService.AddTestResult(wallet, payload.TestResult);
@@ -163,7 +165,7 @@ namespace CoviIDApiCore.V1.Services
             return new OtpConfirmationResponse()
             {
                 WalletId = wallet.Id.ToString(),
-                Key = _cryptoService.GenerateEncryptedSecretKey()
+                Key = key
             };
         }
     }
