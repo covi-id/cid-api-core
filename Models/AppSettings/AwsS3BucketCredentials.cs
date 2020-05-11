@@ -4,5 +4,7 @@
     {
         public string Accesskey { get; set; }
         public string SecretKey { get; set; }
+        public string BucketName { get; set; }
+        public int ExpiresInMinutes { get; set; }
     }
 }
