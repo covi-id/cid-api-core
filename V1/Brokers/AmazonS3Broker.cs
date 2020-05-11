@@ -14,10 +14,11 @@ namespace CoviIDApiCore.V1.Brokers
     public class AmazonS3Broker : IAmazonS3Broker
     {
         private AmazonS3Client _client;
-        private const string bucketName = "covid-files-images";
-        public AmazonS3Broker(AwsS3BucketCredentials credentials)
+        private readonly AwsS3BucketCredentials _awsS3Bucket;
+
+        public AmazonS3Broker(AwsS3BucketCredentials awsS3Bucket)
         {
-            _client = new AmazonS3Client(new BasicAWSCredentials(credentials.Accesskey, credentials.SecretKey),
+            _client = new AmazonS3Client(new BasicAWSCredentials(awsS3Bucket.Accesskey, awsS3Bucket.SecretKey),
                 RegionEndpoint.EUWest1);
         }
 
@@ -29,7 +30,7 @@ namespace CoviIDApiCore.V1.Brokers
             var upload = new PutObjectRequest
             {
                 CannedACL = S3CannedACL.Private,
-                BucketName = bucketName,
+                BucketName = _awsS3Bucket.BucketName,
                 Key = image
             };
             try
@@ -53,8 +54,8 @@ namespace CoviIDApiCore.V1.Brokers
             var preSignedUrl = new GetPreSignedUrlRequest
             {
                 ContentType = "image/png",
-                BucketName = bucketName,
-                Expires = DateTime.Now.AddMinutes(30),
+                BucketName = _awsS3Bucket.BucketName,
+                Expires = DateTime.Now.AddMinutes(_awsS3Bucket.ExpiresInMinutes),
                 Key = $"{fileName}.png"
             };
             var urlToPhoto = _client.GetPreSignedURL(preSignedUrl);

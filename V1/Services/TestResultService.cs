@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CoviIDApiCore.Exceptions;
 using CoviIDApiCore.V1.Constants;
+using Microsoft.EntityFrameworkCore.Internal;
 
 namespace CoviIDApiCore.V1.Services
 {
@@ -26,6 +27,9 @@ namespace CoviIDApiCore.V1.Services
 
             if (tests == null)
                 throw new ValidationException(Messages.TestResult_NotFound);
+
+            if (!tests.Any())
+                return null;
 
             var response = new TestResultResponse();
 

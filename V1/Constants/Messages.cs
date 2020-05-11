@@ -61,6 +61,10 @@
         public static readonly string Wallet_NotFound = $"Could not find wallet.";
         #endregion
 
+        #region WalletDetails
+        public static readonly string WalltDetails_NotFound = $"Could not find wallet details.";
+        #endregion
+
         #region TestResults
         public static readonly string TestResult_NotFound = $"Could not find any test resulst.";
         public static readonly string TestResult_Invalid = $"Test result is invalid."; //TODO: Copy change

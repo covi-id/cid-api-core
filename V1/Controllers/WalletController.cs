@@ -31,9 +31,9 @@ namespace CoviIDApiCore.V1.Controllers
 
         [HttpPost]
         [Route("{walletId}/status")]
-        public async Task<IActionResult> GetWalletStatus(Guid walletId, [FromBody] string key)
+        public async Task<IActionResult> GetWalletStatus(string walletId, [FromBody] WalletStatusRequest payload)
         {
-            var response = await _walletService.GetWalletStatus(walletId, key);
+            var response = await _walletService.GetWalletStatus(walletId, payload.Key);
 
             return Ok(new Response(response, HttpStatusCode.OK));
         }
