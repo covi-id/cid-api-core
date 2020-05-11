@@ -23,10 +23,11 @@ namespace CoviIDApiCore.V1.Services
         private readonly ITestResultService _testResultService;
         private readonly IWalletDetailService _walletDetailService;
         private readonly ICryptoService _cryptoService;
+        private readonly IAmazonS3Broker _amazonS3Broker;
         private readonly ITokenService _tokenService;
 
         public OtpService(IOtpTokenRepository tokenRepository, IConfiguration configuration, IClickatellBroker clickatellBroker,
-            IWalletRepository walletRepository, ITestResultService testResultService, IWalletDetailService walletDetailService, ICryptoService cryptoService, ITokenService tokenService)
+                    IWalletRepository walletRepository, ITestResultService testResultService, IWalletDetailService walletDetailService, ICryptoService cryptoService, ITokenService tokenService, IAmazonS3Broker amazonS3Broker)
         {
             _otpTokenRepository = tokenRepository;
             _configuration = configuration;
@@ -69,7 +70,7 @@ namespace CoviIDApiCore.V1.Services
         {
             var authTokenDetails = _tokenService.GetDetailsFromToken(authToken);
 
-            if(!await ValidateOtpCreationAsync(payload.MobileNumber))
+            if (!await ValidateOtpCreationAsync(payload.MobileNumber))
                 throw new ValidationException(Messages.Token_OTPThreshold);
 
             var wallet = await _walletRepository.GetAsync(Guid.Parse(authTokenDetails.WalletId));
@@ -147,15 +148,14 @@ namespace CoviIDApiCore.V1.Services
 
             await _walletRepository.SaveAsync();
 
-            //TODO: Upload photo
-
-            payload.WalletDetails.Photo = "New photo URL";
+            var fileReference = await _amazonS3Broker.AddImageToBucket(payload.WalletDetails.Photo, wallet.Id.ToString());
+            payload.WalletDetails.Photo = fileReference;
 
             var key = _cryptoService.GenerateEncryptedSecretKey();
 
             await _walletDetailService.AddWalletDetailsAsync(wallet, payload.WalletDetails, key);
 
-            if(payload.TestResult != null)
+            if (payload.TestResult != null)
                 await _testResultService.AddTestResult(wallet, payload.TestResult);
 
             return new OtpConfirmationResponse()
