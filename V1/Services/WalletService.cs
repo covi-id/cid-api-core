@@ -15,17 +15,17 @@ namespace CoviIDApiCore.V1.Services
     {
         private readonly ICustodianBroker _custodianBroker;
         private readonly IAgencyBroker _agencyBroker;
-
         private readonly IConfiguration _configuration;
         private readonly IOtpService _otpService;
         private readonly IWalletRepository _walletRepository;
         private readonly IWalletDetailRepository _walletDetailRepository;
         private readonly ITestResultService _testResultService;
         private readonly ITokenService _tokenService;
-        
+        private readonly ICryptoService _cryptoService;
+
         public WalletService(ICustodianBroker custodianBroker, IAgencyBroker agencyBroker,
             IConfiguration configuration, IOtpService otpService, IWalletRepository walletRepository, IWalletDetailRepository walletDetailRepository,
-            ITestResultService testResultService, ITokenService tokenService)
+            ITestResultService testResultService, ITokenService tokenService, ICryptoService cryptoService)
         {
             _custodianBroker = custodianBroker;
             _agencyBroker = agencyBroker;
@@ -33,6 +33,7 @@ namespace CoviIDApiCore.V1.Services
             _walletDetailRepository = walletDetailRepository;
             _testResultService = testResultService;
             _tokenService = tokenService;
+            _cryptoService = cryptoService;
             _otpService = otpService;
             _walletRepository = walletRepository;
         }
@@ -66,6 +67,8 @@ namespace CoviIDApiCore.V1.Services
                 MobileNumber = walletRequest.MobileNumber,
                 MobileNumberReference = walletRequest.MobileNumberReference
             };
+
+            _cryptoService.EncryptAsServer(wallet);
 
             await _walletRepository.AddAsync(wallet);
 

@@ -79,10 +79,6 @@ namespace CoviIDApiCore.V1.Services
 
             var otp = await GenerateAndSendOtpAsync(payload.MobileNumber);
 
-            _walletRepository.Update(wallet);
-
-            await _walletRepository.SaveAsync();
-
             return new TokenResponse()
             {
                 Token = _tokenService.GenerateToken(wallet.Id.ToString(), otp)
