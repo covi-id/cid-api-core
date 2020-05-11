@@ -3,7 +3,7 @@
     public enum Laboratory
     {
         NHLS = 0,
-        LancetLaboratories = 1,
+        Lancet = 1,
         Pathcare = 2,
     }
 }

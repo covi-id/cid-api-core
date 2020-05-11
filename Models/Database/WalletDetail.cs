@@ -14,7 +14,6 @@ namespace CoviIDApiCore.Models.Database
         public string LastName { get; set; }
         [Encrypted]	
         public string Email { get; set; }
-        [Encrypted]
         public string PhotoReference { get; set; }
         public IdType IdType { get; set; }
         [Encrypted]
