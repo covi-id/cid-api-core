@@ -20,6 +20,7 @@ namespace CoviIDApiCore.V1.Brokers
         {
             _client = new AmazonS3Client(new BasicAWSCredentials(awsS3Bucket.Accesskey, awsS3Bucket.SecretKey),
                 RegionEndpoint.EUWest1);
+            _awsS3Bucket = awsS3Bucket;
         }
 
         public async Task<string> AddImageToBucket(string file, string fileName)
