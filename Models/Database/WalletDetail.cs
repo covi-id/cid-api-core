@@ -19,8 +19,10 @@ namespace CoviIDApiCore.Models.Database
         [Encrypted]	
         //[RegularExpression(@"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$$", ErrorMessage = "Invalid email address")]
         public string Email { get; set; }
+        [Encrypted]
         public string PhotoUrl { get; set; }
         public IdType IdType { get; set; }
+        [Encrypted]
         public string IdValue { get; set; }
 
         public WalletDetail()
