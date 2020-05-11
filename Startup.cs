@@ -158,7 +158,6 @@ namespace CoviIDApiCore
         {
             #region Service layer
             services.AddTransient<IWalletService, WalletService>();
-            services.AddTransient<IConnectionService, ConnectionService>();
             services.AddTransient<IVerifyService, VerifyService>();
             services.AddTransient<ICredentialService, CredentialService>();
             services.AddScoped<IOrganisationService, OrganisationService>();
