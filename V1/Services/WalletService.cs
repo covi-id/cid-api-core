@@ -5,6 +5,9 @@ using System.Threading.Tasks;
 using CoviIDApiCore.Models.Database;
 using CoviIDApiCore.V1.DTOs.Authentication;
 using CoviIDApiCore.V1.Interfaces.Repositories;
+using CoviIDApiCore.Exceptions;
+using CoviIDApiCore.V1.Constants;
+using CoviIDApiCore.V1.Interfaces.Brokers;
 
 namespace CoviIDApiCore.V1.Services
 {
@@ -16,31 +19,38 @@ namespace CoviIDApiCore.V1.Services
         private readonly ITestResultService _testResultService;
         private readonly ITokenService _tokenService;
         private readonly ICryptoService _cryptoService;
+        private readonly IAmazonS3Broker _amazonS3Broker;
 
         public WalletService(IOtpService otpService, IWalletRepository walletRepository, IWalletDetailRepository walletDetailRepository,
-            ITestResultService testResultService, ITokenService tokenService, ICryptoService cryptoService)
+            ITestResultService testResultService, ITokenService tokenService, ICryptoService cryptoService,
+            IAmazonS3Broker amazonS3Broker)
         {
             _walletDetailRepository = walletDetailRepository;
             _testResultService = testResultService;
             _tokenService = tokenService;
             _cryptoService = cryptoService;
+            _amazonS3Broker = amazonS3Broker;
             _otpService = otpService;
             _walletRepository = walletRepository;
         }
 
         public async Task<WalletStatusResponse> GetWalletStatus(Guid walletId, string key)
         {
-            // TODO : Handle decryption
-            // TODO : Make photo url secure
-
             var wallet = await _walletDetailRepository.GetAsync(walletId);
+            if (wallet == null)
+                throw new ValidationException(Messages.Wallet_NotFound);
+
+            _cryptoService.DecryptAsUser(wallet, key);
+
+            var photoUrl = await _amazonS3Broker.GetImage(wallet.PhotoUrl);
+
             var testResults = await _testResultService.GetTestResult(walletId);
 
             var response = new WalletStatusResponse
             {
                 FirstName = wallet.FirstName,
                 LastName = wallet.LastName,
-                PhotoUrl = wallet.PhotoUrl,
+                PhotoUrl = photoUrl,
                 ResultStatus = testResults.ResultStatus.ToString(),
                 Status = (int)testResults.ResultStatus
             };
