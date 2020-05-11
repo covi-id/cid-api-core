@@ -24,16 +24,14 @@ namespace CoviIDApiCore.V1.Controllers
         public async Task<IActionResult> ConfirmOtp([FromBody] RequestOtpConfirmation payload)
         {
             return StatusCode(StatusCodes.Status200OK,
-                new Response(await _otpService.ConfirmOtpAsync(payload),true, HttpStatusCode.OK, Messages.Misc_Success));
+                new Response(await _otpService.ConfirmOtpAsync(payload, Request.Headers["Authorization"]),true, HttpStatusCode.OK, Messages.Misc_Success));
         }
 
         [HttpPost("otp/resend")]
         public async Task<IActionResult> ResendOtp([FromBody] RequestResendOtp payload)
         {
-            await _otpService.ResendOtp(payload);
-
             return StatusCode(StatusCodes.Status200OK,
-                new Response(true, HttpStatusCode.OK, Messages.Misc_Success));
+                new Response(await _otpService.ResendOtpAsync(payload, Request.Headers["Authorization"]),true, HttpStatusCode.OK, Messages.Misc_Success));
         }
     }
 }

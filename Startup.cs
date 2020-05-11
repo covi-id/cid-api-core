@@ -19,6 +19,7 @@ using CoviIDApiCore.V1.Brokers;
 using System.Net.Http.Headers;
 using AspNetCoreRateLimit;
 using CoviIDApiCore.Data;
+using CoviIDApiCore.V1.Configuration;
 using CoviIDApiCore.V1.Interfaces.Brokers;
 using CoviIDApiCore.V1.Interfaces.Repositories;
 using CoviIDApiCore.V1.Interfaces.Services;
@@ -168,6 +169,7 @@ namespace CoviIDApiCore
             services.AddTransient<ITestResultService, TestResultService>();
             services.AddSingleton<ICryptoService, CryptoService>();
             services.AddScoped<IWalletDetailService, WalletDetailService>();
+            services.AddSingleton<ITokenService, TokenService>();
             #endregion
 
             #region Repository Layer

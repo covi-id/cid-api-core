@@ -57,5 +57,17 @@ namespace CoviIDApiCore.V1.Constants
             Person,
             CovidTest
         }
+
+        public static Dictionary<IdentityClaims, string> IdentityClaimStrings = new Dictionary<IdentityClaims, string>()
+        {
+            { IdentityClaims.UniqueName, "unique_name" },
+            { IdentityClaims.Sid, "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/sid"}
+        };
+
+        public enum IdentityClaims
+        {
+            UniqueName,
+            Sid
+        }
     }
 }

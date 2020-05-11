@@ -8,10 +8,6 @@ namespace CoviIDApiCore.V1.DTOs.Authentication
     {
         [Required]
         public int Otp { get; set; }
-        [Required]
-        [StringLength(40)]
-        public string SessionId { get; set; }
-
         public TestResultRequest TestResult { get; set; }
         public WalletDetailsRequest WalletDetails { get; set; }
 

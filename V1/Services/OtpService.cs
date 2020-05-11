@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Threading.Tasks;
 using CoviIDApiCore.Exceptions;
@@ -23,10 +24,10 @@ namespace CoviIDApiCore.V1.Services
         private readonly IWalletDetailService _walletDetailService;
         private readonly ICryptoService _cryptoService;
         private readonly IAmazonS3Broker _amazonS3Broker;
+        private readonly ITokenService _tokenService;
 
         public OtpService(IOtpTokenRepository tokenRepository, IConfiguration configuration, IClickatellBroker clickatellBroker,
-            IWalletRepository walletRepository, ITestResultService testResultService,
-            IWalletDetailService walletDetailService, ICryptoService cryptoService, IAmazonS3Broker amazonS3Broker)
+                    IWalletRepository walletRepository, ITestResultService testResultService, IWalletDetailService walletDetailService, ICryptoService cryptoService, ITokenService tokenService, IAmazonS3Broker amazonS3Broker)
         {
             _otpTokenRepository = tokenRepository;
             _configuration = configuration;
@@ -35,24 +36,20 @@ namespace CoviIDApiCore.V1.Services
             _testResultService = testResultService;
             _walletDetailService = walletDetailService;
             _cryptoService = cryptoService;
-            _amazonS3Broker = amazonS3Broker;
+            _tokenService = tokenService;
         }
 
-        public async Task<string> GenerateAndSendOtpAsync(string mobileNumber)
+        public async Task<long> GenerateAndSendOtpAsync(string mobileNumber)
         {
             var expiryTime = _configuration.GetValue<int>("OTPSettings:ValidityPeriod");
 
             var code = Utilities.Helpers.GenerateRandom4DigitNumber();
 
-            var sessionId = Utilities.Helpers.GenerateSessionToken();
-
             var message = ConstructMessage(mobileNumber, code, expiryTime);
 
             await _clickatellBroker.SendSms(message);
 
-            await SaveOtpAsync(mobileNumber, sessionId, code, expiryTime);
-
-            return sessionId;
+            return await SaveOtpAsync(mobileNumber,code, expiryTime);
         }
 
         private async Task<bool> ValidateOtpCreationAsync(string mobileNumberReference)
@@ -69,23 +66,24 @@ namespace CoviIDApiCore.V1.Services
             return otps.Count(otp => otp.CreatedAt > DateTime.UtcNow.AddMinutes(-1 * timeThreshold)) <= amountThreshold;
         }
 
-        public async Task ResendOtp(RequestResendOtp payload)
+        public async Task<TokenResponse> ResendOtpAsync(RequestResendOtp payload, string authToken)
         {
+            var authTokenDetails = _tokenService.GetDetailsFromToken(authToken);
+
             if (!await ValidateOtpCreationAsync(payload.MobileNumber))
                 throw new ValidationException(Messages.Token_OTPThreshold);
 
-            var wallet = await _walletRepository.GetBySessionId(payload.SessionId);
+            var wallet = await _walletRepository.GetAsync(Guid.Parse(authTokenDetails.WalletId));
 
             if (wallet == default)
                 throw new NotFoundException(Messages.Wallet_NotFound);
 
-            var sessionId = await GenerateAndSendOtpAsync(payload.MobileNumber);
+            var otp = await GenerateAndSendOtpAsync(payload.MobileNumber);
 
-            wallet.SessionId = sessionId;
-
-            _walletRepository.Update(wallet);
-
-            await _walletRepository.SaveAsync();
+            return new TokenResponse()
+            {
+                Token = _tokenService.GenerateToken(wallet.Id.ToString(), otp)
+            };
         }
 
         private ClickatellTemplate ConstructMessage(string mobileNumber, int code, int validityPeriod)
@@ -102,7 +100,7 @@ namespace CoviIDApiCore.V1.Services
             };
         }
 
-        private async Task SaveOtpAsync(string mobileNumber, string sessionId, int code, int expiryTime)
+        private async Task<long> SaveOtpAsync(string mobileNumber, int code, int expiryTime)
         {
             var newToken = new OtpToken()
             {
@@ -110,22 +108,25 @@ namespace CoviIDApiCore.V1.Services
                 CreatedAt = DateTime.UtcNow,
                 ExpireAt = DateTime.UtcNow.AddMinutes(expiryTime),
                 isUsed = false,
-                MobileNumber = mobileNumber,
-                SessionId = sessionId
+                MobileNumber = mobileNumber
             };
 
             await _otpTokenRepository.AddAsync(newToken);
 
             await _otpTokenRepository.SaveAsync();
+
+            return newToken.Id;
         }
 
         //TODO: Improve this
-        public async Task<OtpConfirmationResponse> ConfirmOtpAsync(RequestOtpConfirmation payload)
+        public async Task<OtpConfirmationResponse> ConfirmOtpAsync(RequestOtpConfirmation payload, string authToken)
         {
             if (!payload.isValid())
                 throw new ValidationException(Messages.Token_InvaldPayload);
 
-            var token = await _otpTokenRepository.GetBySessionId(payload.SessionId);
+            var authTokenDetails = _tokenService.GetDetailsFromToken(authToken);
+
+            var token = await _otpTokenRepository.GetAsync(authTokenDetails.OtpId);
 
             if (token == default || token.ExpireAt <= DateTime.UtcNow || token.Code != payload.Otp)
                 throw new ValidationException(Messages.Token_OTPNotExist);
@@ -136,7 +137,7 @@ namespace CoviIDApiCore.V1.Services
 
             await _otpTokenRepository.SaveAsync();
 
-            var wallet = await _walletRepository.GetBySessionId(payload.SessionId);
+            var wallet = await _walletRepository.GetAsync(Guid.Parse(authTokenDetails.WalletId));
 
             if (wallet == null)
                 throw new NotFoundException(Messages.Wallet_NotFound);
@@ -150,7 +151,9 @@ namespace CoviIDApiCore.V1.Services
             var fileReference = await _amazonS3Broker.AddImageToBucket(payload.WalletDetails.Photo, wallet.Id.ToString());
             payload.WalletDetails.Photo = fileReference;
 
-            await _walletDetailService.AddWalletDetailsAsync(wallet, payload.WalletDetails);
+            var key = _cryptoService.GenerateEncryptedSecretKey();
+
+            await _walletDetailService.AddWalletDetailsAsync(wallet, payload.WalletDetails, key);
 
             if (payload.TestResult != null)
                 await _testResultService.AddTestResult(wallet, payload.TestResult);
@@ -158,7 +161,7 @@ namespace CoviIDApiCore.V1.Services
             return new OtpConfirmationResponse()
             {
                 WalletId = wallet.Id.ToString(),
-                Key = _cryptoService.GenerateEncryptedSecretKey()
+                Key = key
             };
         }
     }
