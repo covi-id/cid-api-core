@@ -1,9 +1,6 @@
-﻿using System.Net;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using CoviIDApiCore.Models.Database;
-using CoviIDApiCore.V1.Constants;
 using CoviIDApiCore.V1.DTOs.Organisation;
-using CoviIDApiCore.V1.DTOs.System;
 using CoviIDApiCore.V1.Interfaces.Services;
 using Hangfire;
 using Microsoft.AspNetCore.Cors;
