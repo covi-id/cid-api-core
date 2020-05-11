@@ -54,6 +54,10 @@ namespace CoviIDApiCore.Middleware
             {
                 await HandleClickatellException(context, e);
             }
+            catch (AmazonS3Exception e)
+            {
+                await HandleAmazonS3Exception(context, e);
+            }
             catch (QRException e)
             {
                 await HandleQRException(context, e);
@@ -67,7 +71,7 @@ namespace CoviIDApiCore.Middleware
                 await HandleUnexpectedException(context, e);
             }
         }
-
+    
         #region Exception Handler Methods
 
         private static Task HandleValidationException(HttpContext context, Exception e)
@@ -140,6 +144,22 @@ namespace CoviIDApiCore.Middleware
             var rsp = new Response(false, statusCode, message);
             return ReturnResult(context, rsp);
         }
+        private Task HandleAmazonS3Exception(HttpContext context, AmazonS3Exception e)
+        {
+            SentrySdk.CaptureException(e);
+
+            var statusCode = HttpStatusCode.InternalServerError;
+            context.Response.ContentType = "application/json";
+            context.Response.StatusCode = (int)statusCode;
+            var message = Messages.Misc_ThirdParty;
+
+            #if DEBUG
+            message = e.Message;
+            #endif
+            var rsp = new Response(false, statusCode, message);
+            return ReturnResult(context, rsp);
+        }
+
 
         private static Task HandleUnexpectedException(HttpContext context, Exception e)
         {
