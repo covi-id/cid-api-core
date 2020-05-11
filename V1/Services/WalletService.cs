@@ -42,7 +42,7 @@ namespace CoviIDApiCore.V1.Services
 
             _cryptoService.DecryptAsUser(wallet, key);
 
-            var photoUrl = await _amazonS3Broker.GetImage(wallet.PhotoUrl);
+            var photoUrl = await _amazonS3Broker.GetImage(wallet.PhotoReference);
 
             var testResults = await _testResultService.GetTestResult(walletId);
 
