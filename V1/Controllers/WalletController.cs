@@ -1,6 +1,5 @@
 ﻿using System.Net;
 using System.Threading.Tasks;
-using CoviIDApiCore.V1.DTOs.Credentials;
 using CoviIDApiCore.V1.DTOs.System;
 using CoviIDApiCore.V1.DTOs.Wallet;
 using CoviIDApiCore.V1.Interfaces.Services;
@@ -11,7 +10,7 @@ using System;
 namespace CoviIDApiCore.V1.Controllers
 {
     [EnableCors("AllowSpecificOrigin")]
-    [Route("api/wallet")]
+    [Route("api/wallets")]
     [ApiController]
     public class WalletController : ControllerBase
     {
@@ -38,15 +37,5 @@ namespace CoviIDApiCore.V1.Controllers
 
             return Ok(new Response(response, HttpStatusCode.OK));
         }
-
-        [HttpPost]
-        [Route("coviid")]
-        public async Task<IActionResult> CreateCoviIdWallet([FromBody] CoviIdWalletParameters coviIdWalletParameters)
-        {
-            var response = await _walletService.CreateCoviIdWallet(coviIdWalletParameters);
-
-            return Ok(new Response(response, HttpStatusCode.OK));
-        }
-
     }
 }

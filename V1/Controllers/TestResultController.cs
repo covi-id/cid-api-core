@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
+﻿using System.Net;
 using System.Threading.Tasks;
 using CoviIDApiCore.V1.DTOs.System;
 using CoviIDApiCore.V1.DTOs.WalletTestResult;
@@ -10,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CoviIDApiCore.V1.Controllers
 {
-    [Route("api/test_result")]
+    [Route("api/test_results")]
     [ApiController]
     public class TestResultController : ControllerBase
     {

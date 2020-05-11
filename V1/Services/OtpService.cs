@@ -149,7 +149,7 @@ namespace CoviIDApiCore.V1.Services
 
             await _walletRepository.SaveAsync();
 
-            var fileReference = await _amazonS3Broker.AddImageToBucket(payload.WalletDetails.Photo, wallet.Id.ToString());
+            var fileReference = await _amazonS3Broker.AddImageToBucket(payload.WalletDetails.Photo, Guid.NewGuid().ToString());
             payload.WalletDetails.Photo = fileReference;
 
             var key = _cryptoService.GenerateEncryptedSecretKey();

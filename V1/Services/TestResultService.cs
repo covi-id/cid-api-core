@@ -13,20 +13,25 @@ namespace CoviIDApiCore.V1.Services
     public class TestResultService : ITestResultService
     {
         private readonly IWalletTestResultRepository _walletTestResultRepository;
-        public TestResultService(IWalletTestResultRepository walletTestResultRepository)
+        private readonly IWalletRepository _walletRepository;
+        public TestResultService(IWalletTestResultRepository walletTestResultRepository, IWalletRepository walletRepository)
         {
             _walletTestResultRepository = walletTestResultRepository;
+            _walletRepository = walletRepository;
         }
 
         public async Task<TestResultResponse> GetTestResult(Guid walletId)
         {
             var tests = await _walletTestResultRepository.GetTestResults(walletId);
+
+            if (tests == null)
+                throw new ValidationException(Messages.TestResult_NotFound);
+
             var response = new TestResultResponse();
 
             if (tests.Count > 1)
             {
                 // TODO : Do calculation based on all test results
-
             }
             var test = tests.OrderBy(t => t.TestedAt).FirstOrDefault();
             response.HasConsent = test.HasConsent;
@@ -43,9 +48,11 @@ namespace CoviIDApiCore.V1.Services
 
         public async Task AddTestResult(TestResultRequest testResultRequest)
         {
+            var wallet = await _walletRepository.GetAsync(testResultRequest.walletId);
+
             var testResults = new WalletTestResult
             {
-                //TODO: Get wallet via the secret key
+                Wallet = wallet,
                 Laboratory = testResultRequest.Laboratory,
                 ReferenceNumber = testResultRequest.ReferenceNumber,
                 TestedAt = testResultRequest.TestedAt,
@@ -63,7 +70,7 @@ namespace CoviIDApiCore.V1.Services
 
         public async Task AddTestResult(Wallet wallet, TestResultRequest testResultRequest)
         {
-            if(!testResultRequest.isValid())
+            if (!testResultRequest.isValid())
                 throw new ValidationException(Messages.TestResult_Invalid);
 
             var testResults = new WalletTestResult
