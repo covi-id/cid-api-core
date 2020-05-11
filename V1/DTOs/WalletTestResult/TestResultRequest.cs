@@ -4,7 +4,7 @@ namespace CoviIDApiCore.V1.DTOs.WalletTestResult
 {
     public class TestResultRequest
     {
-        public string Key { get; set; }
+        public Guid walletId { get; set; }
         public LaboratoryStatus LaboratoryStatus { get; set; } = LaboratoryStatus.Unsent;
         public ResultStatus ResultStatus { get; set; }
         public Laboratory Laboratory { get; set; }

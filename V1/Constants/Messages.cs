@@ -62,6 +62,7 @@
         #endregion
 
         #region TestResults
+        public static readonly string TestResult_NotFound = $"Could not find any test resulst.";
         public static readonly string TestResult_Invalid = $"Test result is invalid."; //TODO: Copy change
         #endregion
 
