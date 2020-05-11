@@ -12,8 +12,6 @@ namespace CoviIDApiCore.Models.Database
         public string FirstName { get; set; }
         [Encrypted]
         public string LastName { get; set; }
-        [Encrypted]	
-        public string Email { get; set; }
         public string PhotoReference { get; set; }
         public IdType IdType { get; set; }
         [Encrypted]
@@ -27,7 +25,6 @@ namespace CoviIDApiCore.Models.Database
         {
             FirstName = detailsRequest.FirstName;
             LastName = detailsRequest.LastName;
-            Email = detailsRequest.Email;
             PhotoReference = detailsRequest.Photo;
             IdType = detailsRequest.IdType;
             IdValue = detailsRequest.IdValue;
