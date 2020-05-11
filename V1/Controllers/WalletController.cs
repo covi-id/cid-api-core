@@ -11,7 +11,7 @@ using System;
 namespace CoviIDApiCore.V1.Controllers
 {
     [EnableCors("AllowSpecificOrigin")]
-    [Route("api/wallet")]
+    [Route("api/wallets")]
     [ApiController]
     public class WalletController : ControllerBase
     {
