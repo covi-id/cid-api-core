@@ -30,7 +30,7 @@
         #endregion
 
         #region Tokens
-        public static readonly string Token_OTPNotExist = $"OTP could not be found.";
+        public static readonly string Token_OTPNotExist = $"OTP could not be found or has expired.";
         public static readonly string Token_OTPExpired = $"OTP has expired.";
         public static readonly string Token_OTPFailed = $"OTP is invalid.";
         public static readonly string Token_OTPThreshold = $"Too many OTPs."; //TODO: Copy change

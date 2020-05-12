@@ -18,8 +18,7 @@ namespace CoviIDApiCore.V1.Brokers
 
         public AmazonS3Broker(AwsS3BucketCredentials awsS3Bucket)
         {
-            _client = new AmazonS3Client(new BasicAWSCredentials(awsS3Bucket.Accesskey, awsS3Bucket.SecretKey),
-                RegionEndpoint.EUWest1);
+            _client = new AmazonS3Client(new BasicAWSCredentials(awsS3Bucket.Accesskey, awsS3Bucket.SecretKey), RegionEndpoint.EUWest1);
             _awsS3Bucket = awsS3Bucket;
         }
 
@@ -54,7 +53,6 @@ namespace CoviIDApiCore.V1.Brokers
         {
             var preSignedUrl = new GetPreSignedUrlRequest
             {
-                ContentType = "image/png",
                 BucketName = _awsS3Bucket.BucketName,
                 Expires = DateTime.Now.AddMinutes(_awsS3Bucket.ExpiresInMinutes),
                 Key = $"{fileName}.png"
