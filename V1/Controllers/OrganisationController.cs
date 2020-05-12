@@ -41,7 +41,7 @@ namespace CoviIDApiCore.V1.Controllers
                 await _organisationService.UpdateCountAsync(id, payload, ScanType.CheckOut));
         }
 
-        [HttpGet("organisations/{id}")]
+        [HttpGet("organisation/{id}")]
         public async Task<IActionResult> GetOrganisationOld(string id)
         {
             var resp = await _organisationService.GetAsync(id);
