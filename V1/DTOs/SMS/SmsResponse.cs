@@ -2,6 +2,7 @@
 {
     public class SmsResponse
     {
-        
+        public int ValidityPeriod { get; set; }
+        public int Code { get; set; }
     }
 }
