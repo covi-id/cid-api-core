@@ -128,7 +128,7 @@ namespace CoviIDApiCore.V1.Services
 
             var token = await _otpTokenRepository.GetAsync(authTokenDetails.OtpId);
 
-            if (token == default || token.ExpireAt <= DateTime.UtcNow || token.Code != payload.Otp)
+            if (token == default || token.isUsed || token.ExpireAt <= DateTime.UtcNow || token.Code != payload.Otp)
                 throw new ValidationException(Messages.Token_OTPNotExist);
 
             token.isUsed = true;

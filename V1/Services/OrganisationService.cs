@@ -83,7 +83,7 @@ namespace CoviIDApiCore.V1.Services
             {
                 wallet = await _walletRepository.GetAsync(Guid.Parse(payload.WalletId));
 
-                if(wallet == null)
+                if (wallet == null)
                     throw new NotFoundException(Messages.Wallet_NotFound);
             }
 

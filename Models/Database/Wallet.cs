@@ -1,6 +1,5 @@
 ﻿using CoviIDApiCore.V1.Attributes;
 using System;
-using System.Collections.Generic;
 
 namespace CoviIDApiCore.Models.Database
 {
