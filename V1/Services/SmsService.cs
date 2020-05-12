@@ -56,6 +56,20 @@ namespace CoviIDApiCore.V1.Services
             };
         }
 
+        private ClickatellTemplate ConstructMessage(SmsType smsType, string mobileNumber, string organisation = null, string url = null, int? code = null, int? validityPeriod = null)
+        {
+            var recipient = new[]
+            {
+                mobileNumber
+            };
+
+            return new ClickatellTemplate()
+            {
+                To = recipient,
+                Content = string.Format(DefinitionConstants.SmsStrings[SmsType.Welcome], organisation, url)
+            };
+        }
+
         private ClickatellTemplate ConstructWelcomeMessage(string mobileNumber, string organisation, string url)
         {
             var recipient = new[]
