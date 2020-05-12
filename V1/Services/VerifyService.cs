@@ -3,6 +3,7 @@ using CoviIDApiCore.V1.Interfaces.Services;
 using System.Threading.Tasks;
 using CoviIDApiCore.Exceptions;
 using CoviIDApiCore.V1.Constants;
+using CoviIDApiCore.V1.DTOs.Credentials;
 
 namespace CoviIDApiCore.V1.Services
 {
@@ -21,10 +22,12 @@ namespace CoviIDApiCore.V1.Services
         {
             var coviIdCredentials = await _credentialService.GetCoviIDCredentials(walletId);
 
-            if (coviIdCredentials == default)
-                throw new NotFoundException();
+            if (coviIdCredentials.CovidTestCredentials == default)
+                throw new NotFoundException(Messages.Ver_CoviIDNotFound);
 
-            if (!string.IsNullOrEmpty(organisationId))
+            var covidStatus = coviIdCredentials.CovidTestCredentials.CovidStatus;
+
+            if (!string.IsNullOrEmpty(organisationId) && covidStatus != CovidStatus.Positive)
                 await _organisationService.UpdateCountAsync(organisationId, deviceIdentifier, UpdateType.Addition);
 
             return new VerifyResult
@@ -33,7 +36,7 @@ namespace CoviIDApiCore.V1.Services
                 Name = coviIdCredentials.PersonCredentials.FirstName,
                 Surname = coviIdCredentials.PersonCredentials.LastName,
                 Status = (int)coviIdCredentials.CovidTestCredentials.CovidStatus,
-                CovidStatus = coviIdCredentials.CovidTestCredentials.CovidStatus.ToString()
+                CovidStatus = covidStatus.ToString()
             };
         }
     }

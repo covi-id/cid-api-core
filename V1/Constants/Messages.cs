@@ -49,5 +49,10 @@
         public static readonly string Val_DateNotInPast = $"Invalid Date, date must be in the past";
         public static readonly string Val_FileTooLarge = $"The File size is to large.";
         #endregion
+
+        #region Verifier
+        public static readonly string Ver_CoviIDNotFound = $"Could not find the CoviID for the wallet";
+
+        #endregion
     }
 }

@@ -31,24 +31,29 @@ namespace CoviIDApiCore.V1.Brokers
         public async Task<string> UploadFiles(string file, string fileName)
         {
             var base64Array = Convert.FromBase64String(file);
-            var filePath = Path.Combine($"{Environment.CurrentDirectory}/{fileName}.png").ValidateFileSize();
+            var filePath = Path.Combine($"{Environment.CurrentDirectory}/upload-images/{fileName}.png");
             File.WriteAllBytes(filePath, base64Array);
 
-            var multipartContent = new MultipartFormDataContent
+            if (filePath.IsAppropriateSize())
             {
+                var multipartContent = new MultipartFormDataContent
                 {
-                    new ByteArrayContent(File.ReadAllBytes(filePath)),
-                    "uploadedFiles", Path.GetFileName(filePath)
-                },
-                {new StringContent(fileName), "filename"},
-                {new StringContent("image/png"), "contentType"}
-            };
+                    {
+                        new ByteArrayContent(File.ReadAllBytes(filePath)),
+                        "uploadedFiles", Path.GetFileName(filePath)
+                    },
+                    {new StringContent(fileName), "filename"},
+                    {new StringContent("image/png"), "contentType"}
+                };
 
+                var response = await _httpClient.PostAsync($"{partialRoot}/common/upload", multipartContent);
+                response = await ValidateResponse(response);
+                File.Delete(filePath);
+                return JsonConvert.DeserializeObject<string>(await response.Content.ReadAsStringAsync());
+            }
             File.Delete(filePath);
 
-            var response = await _httpClient.PostAsync($"{partialRoot}/common/upload", multipartContent);
-            response = await ValidateResponse(response);
-            return JsonConvert.DeserializeObject<string>(await response.Content.ReadAsStringAsync());
+            throw new ValidationException(Messages.Val_FileTooLarge);
         }
 
         #endregion
@@ -57,7 +62,7 @@ namespace CoviIDApiCore.V1.Brokers
         public async Task<ConnectionContract> CreateInvitation(ConnectionParameters connectionParameters)
         {
             var content = new StringContent(JsonConvert.SerializeObject(connectionParameters), Encoding.UTF8, applicationJson);
-            
+
             var response = await _httpClient.PostAsync($"{partialRoot}connections", content);
             response = await ValidateResponse(response);
 
@@ -109,7 +114,7 @@ namespace CoviIDApiCore.V1.Brokers
         {
             if (response.IsSuccessStatusCode)
                 return response;
-            
+
             var message = await response.Content.ReadAsStringAsync();
             throw new StreetCredBrokerException($"{message} Broker status code: {response.StatusCode}");
         }
