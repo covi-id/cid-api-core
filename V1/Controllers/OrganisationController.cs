@@ -21,7 +21,7 @@ namespace CoviIDApiCore.V1.Controllers
             _organisationService = organisationService;
         }
 
-        [HttpPost]
+        [HttpPost("organisations")]
         public IActionResult CreateOrganisation([FromBody] CreateOrganisationRequest payload)
         {
             BackgroundJob.Enqueue(() => _organisationService.CreateAsync(payload));
