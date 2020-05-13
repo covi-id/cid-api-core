@@ -188,6 +188,8 @@ namespace CoviIDApiCore
             services.AddTransient<ISendGridBroker, SendGridBroker>();
             services.AddTransient<IClickatellBroker, ClickatellBroker>();
             services.AddSingleton<IAmazonS3Broker, AmazonS3Broker>();
+            services.AddTransient<IBitlyBroker, BitlyBroker>();
+
             #endregion
         }
 
@@ -204,6 +206,9 @@ namespace CoviIDApiCore
 
             var clickatellCredentials = new ClickatellCredentials();
             _configuration.Bind(nameof(ClickatellCredentials), clickatellCredentials);
+
+            var bitlyCredentials = new BitlyCredentials();
+            _configuration.Bind(nameof(BitlyCredentials), bitlyCredentials);
 
             services.AddHttpClient<IAgencyBroker, AgencyBroker>(client =>
             {
@@ -236,6 +241,13 @@ namespace CoviIDApiCore
                     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(_applicationJson));
                 }
             );
+
+            services.AddHttpClient<IBitlyBroker, BitlyBroker>(client =>
+            {
+                client.BaseAddress = new Uri(bitlyCredentials.BaseUrl);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", bitlyCredentials.Key);
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(_applicationJson));
+            });
         }
 
         private void ConfigureSwagger(IServiceCollection services)
