@@ -55,8 +55,4 @@
     </Content>
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="V1\DTOs\Bitly" />
-  </ItemGroup>
-
 </Project>
