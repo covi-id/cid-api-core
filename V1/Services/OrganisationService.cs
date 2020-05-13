@@ -127,10 +127,10 @@ namespace CoviIDApiCore.V1.Services
                 var userLogs = logs.Where(l => l.Wallet.Id == walletId && l.CreatedAt.Date == DateTime.Now.Date).ToList();
 
                 if(!userLogs.Any() && scanType == ScanType.CheckOut)
-                    throw new ValidationException(Messages.Org_UserScanOutNoScanIn);
+                    throw new ValidationException(Messages.Org_UserNotScannedIn);
 
                 if(!userLogs.Any(l => l.ScanType == ScanType.CheckIn) && scanType == ScanType.CheckOut)
-                    throw new ValidationException(Messages.Org_UserScanOutNoScanIn);
+                    throw new ValidationException(Messages.Org_UserNotScannedIn);
 
                 if(userLogs.Any(l => l.ScanType == ScanType.CheckOut) && scanType == ScanType.CheckOut)
                     throw new ValidationException(Messages.Org_UserScannedOut);
