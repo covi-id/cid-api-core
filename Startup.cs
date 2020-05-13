@@ -169,6 +169,7 @@ namespace CoviIDApiCore
             services.AddSingleton<ICryptoService, CryptoService>();
             services.AddScoped<IWalletDetailService, WalletDetailService>();
             services.AddSingleton<ITokenService, TokenService>();
+            services.AddTransient<ISmsService, SmsService>();
             #endregion
 
             #region Repository Layer
