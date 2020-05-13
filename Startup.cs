@@ -189,7 +189,6 @@ namespace CoviIDApiCore
             services.AddTransient<IClickatellBroker, ClickatellBroker>();
             services.AddSingleton<IAmazonS3Broker, AmazonS3Broker>();
             services.AddTransient<IBitlyBroker, BitlyBroker>();
-
             #endregion
         }
 
