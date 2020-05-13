@@ -124,10 +124,18 @@ namespace CoviIDApiCore.V1.Services
         {
             if (walletId != default)
             {
-                if(!logs.Any(l => l.ScanType == ScanType.CheckIn && l.CreatedAt.Date == DateTime.Now.Date))
+                var userLogs = logs.Where(l => l.Wallet.Id == walletId && l.CreatedAt.Date == DateTime.Now.Date).ToList();
+
+                if(!userLogs.Any() && scanType == ScanType.CheckOut)
                     throw new ValidationException(Messages.Org_UserScanOutNoScanIn);
 
-                if(logs.Any(l => l.ScanType == ScanType.CheckOut && l.CreatedAt.Date == DateTime.Now.Date))
+                if(userLogs.Any(l => l.ScanType == ScanType.Denied) && scanType == ScanType.CheckIn)
+                    throw new ValidationException();
+
+                if(!userLogs.Any(l => l.ScanType == ScanType.CheckIn) && scanType == ScanType.CheckOut)
+                    throw new ValidationException(Messages.Org_UserScanOutNoScanIn);
+
+                if(userLogs.Any(l => l.ScanType == ScanType.CheckOut) && scanType == ScanType.CheckOut)
                     throw new ValidationException(Messages.Org_UserScannedOut);
             }
 

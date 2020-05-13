@@ -25,6 +25,7 @@
         public static readonly string Org_EmailEmpty = $"Organisation email is empty.";
         public static readonly string Org_UserScanOutNoScanIn = $"User can not be scanned out if no scan in has been recorded.";
         public static readonly string Org_UserScannedOut = $"User has already been scanned out.";
+        public static readonly string Org_UserDeniedScanIn = $"User can not be scanned in. User was denied access today.";
         #endregion
 
         #region QRCode
