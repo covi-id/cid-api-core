@@ -129,9 +129,6 @@ namespace CoviIDApiCore.V1.Services
                 if(!userLogs.Any() && scanType == ScanType.CheckOut)
                     throw new ValidationException(Messages.Org_UserScanOutNoScanIn);
 
-                if(userLogs.Any(l => l.ScanType == ScanType.Denied) && scanType == ScanType.CheckIn)
-                    throw new ValidationException();
-
                 if(!userLogs.Any(l => l.ScanType == ScanType.CheckIn) && scanType == ScanType.CheckOut)
                     throw new ValidationException(Messages.Org_UserScanOutNoScanIn);
 
