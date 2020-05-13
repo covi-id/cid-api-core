@@ -70,12 +70,25 @@ namespace CoviIDApiCore.V1.Controllers
             return StatusCode(StatusCodes.Status200OK,
                 await _organisationService.UpdateCountAsync(id, payload, ScanType.CheckOut));
         }
-
+        // TODO : Add organisation into route
         [HttpPost("{id}/denied")]
         public async Task<IActionResult> AccessDenied(string id, [FromBody] UpdateCountRequest payload)
         {
             return StatusCode(StatusCodes.Status200OK,
                 await _organisationService.UpdateCountAsync(id, payload, ScanType.Denied));
+        }
+
+        /// <summary>
+        /// Creates a mobile entry for a user and checks them in.
+        /// </summary>
+        /// <param name="organisationId"></param>
+        /// <param name="payload"></param>
+        /// <returns></returns>
+        [HttpPost("organisations/{organisationId}/mobile_entry")]
+        public async Task<IActionResult> MobileEntry(string organisationId, [FromBody] MobileEntryRequest payload)
+        {
+            var response = await _organisationService.MobileEntry(organisationId, payload);
+            return StatusCode(StatusCodes.Status200OK, response);
         }
     }
 }

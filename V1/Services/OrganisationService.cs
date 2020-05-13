@@ -21,14 +21,17 @@ namespace CoviIDApiCore.V1.Services
         private readonly IEmailService _emailService;
         private readonly IQRCodeService _qrCodeService;
         private readonly IWalletRepository _walletRepository;
+        private readonly IWalletService _walletService;
 
-        public OrganisationService(IOrganisationRepository organisationRepository, IOrganisationAccessLogRepository organisationAccessLogRepository, IEmailService emailService, IQRCodeService qrCodeService, IWalletRepository walletRepository)
+        public OrganisationService(IOrganisationRepository organisationRepository, IOrganisationAccessLogRepository organisationAccessLogRepository,
+            IEmailService emailService, IQRCodeService qrCodeService, IWalletRepository walletRepository, IWalletService walletService)
         {
             _organisationRepository = organisationRepository;
             _organisationAccessLogRepository = organisationAccessLogRepository;
             _emailService = emailService;
             _qrCodeService = qrCodeService;
             _walletRepository = walletRepository;
+            _walletService = walletService;
         }
 
         public async Task CreateAsync(CreateOrganisationRequest payload)
@@ -117,6 +120,22 @@ namespace CoviIDApiCore.V1.Services
                 HttpStatusCode.OK);
         }
 
+        public async Task<Response> MobileEntry(string organisationId, MobileEntryRequest payload)
+        {
+            var wallet = await _walletService.CreateWalletAndSms(payload.WalletRequest);
+
+            var updateCounterRequest = new UpdateCountRequest
+            {
+                Latitude = payload.Latitude,
+                Longitude = payload.Longitude,
+                WalletId = wallet.Id.ToString()
+            };
+
+            var counterResponse = await UpdateCountAsync(organisationId, updateCounterRequest, ScanType.CheckIn);
+            return counterResponse;
+        }
+
+        #region Private Methods
         private int GetAccessLogBalance(List<OrganisationAccessLog> logs)
         {
             var checkIns = logs.Count(oal => oal.ScanType == ScanType.CheckIn);
@@ -144,5 +163,6 @@ namespace CoviIDApiCore.V1.Services
                 _qrCodeService.GenerateQRCode(organisation.Id.ToString()),
                 DefinitionConstants.EmailTemplates.OrganisationWelcome);
         }
+        #endregion
     }
 }
