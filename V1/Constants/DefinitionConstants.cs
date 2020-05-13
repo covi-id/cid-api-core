@@ -10,7 +10,7 @@ namespace CoviIDApiCore.V1.Constants
         public static readonly string AgentName = "CoviID";
         #endregion
 
-        public class Attributes
+        public class SchemaAttributes
         {
             // Covid Test Schema
             public static readonly string ReferenceNumber = "testReferenceNumber";
@@ -57,11 +57,17 @@ namespace CoviIDApiCore.V1.Constants
             Person,
             CovidTest
         }
-    }
 
-    public enum UpdateType
-    {
-        Addition,
-        Subtraction
+        public static Dictionary<IdentityClaims, string> IdentityClaimStrings = new Dictionary<IdentityClaims, string>()
+        {
+            { IdentityClaims.UniqueName, "unique_name" },
+            { IdentityClaims.Sid, "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/sid"}
+        };
+
+        public enum IdentityClaims
+        {
+            UniqueName,
+            Sid
+        }
     }
 }

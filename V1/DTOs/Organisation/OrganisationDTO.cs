@@ -14,10 +14,10 @@ namespace CoviIDApiCore.V1.DTOs.Organisation
 
         }
 
-        public OrganisationDTO(Models.Database.Organisation organisation, OrganisationCounter orgCounter, int total)
+        public OrganisationDTO(Models.Database.Organisation organisation, OrganisationAccessLog organisationAccessLog, int total, int balance)
         {
             Id = organisation.Id.ToString();
-            Balance = orgCounter?.Balance ?? 0;
+            Balance = balance;
             Name = organisation.Name;
             Total = total;
         }

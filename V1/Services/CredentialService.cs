@@ -1,13 +1,8 @@
-﻿using CoviIDApiCore.Helpers;
-using CoviIDApiCore.Models.Database;
-using CoviIDApiCore.V1.Constants;
-using CoviIDApiCore.V1.DTOs.Connection;
+﻿using CoviIDApiCore.V1.Constants;
 using CoviIDApiCore.V1.DTOs.Credentials;
 using CoviIDApiCore.V1.Interfaces.Brokers;
-using CoviIDApiCore.V1.Interfaces.Repositories;
 using CoviIDApiCore.V1.Interfaces.Services;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
@@ -21,108 +16,11 @@ namespace CoviIDApiCore.V1.Services
     /// </summary>
     public class CredentialService : ICredentialService
     {
-        private readonly IAgencyBroker _agencyBroker;
         private readonly ICustodianBroker _custodianBroker;
-        private readonly IConnectionService _connectionService;
-        private readonly ICovidTestRepository _covidTestRepository;
 
-        public CredentialService(IAgencyBroker agencyBroker, ICustodianBroker custodianBroker, IConnectionService connectionService,
-            ICovidTestRepository covidTestRepository)
+        public CredentialService(ICustodianBroker custodianBroker)
         {
-            _agencyBroker = agencyBroker;
             _custodianBroker = custodianBroker;
-            _connectionService = connectionService;
-            _covidTestRepository = covidTestRepository;
-        }
-
-        /// <summary>
-        /// Creates a verified person credentials with the relevant DefinitionID and attribute values.
-        /// </summary>
-        /// <param name="connectionId"></param>
-        /// <param name="personCredential"></param>
-        /// <returns></returns>
-        public async Task<CredentialsContract> CreatePerson(string connectionId, PersonCredentialParameters personCredential)
-        {
-            var credentialOffer = new CredentialOfferParameters
-            {
-                ConnectionId = connectionId,
-                DefinitionId = DefinitionIds[Schemas.Person],
-                AutomaticIssuance = false,
-                CredentialValues = new Dictionary<string, string>
-                {
-                    { Attributes.FirstName , personCredential.FirstName.ValidateLength() },
-                    { Attributes.LastName, personCredential.LastName.ValidateLength() },
-                    { Attributes.Photo, personCredential.Photo },
-                    { Attributes.MobileNumber , personCredential.MobileNumber.ValidateMobileNumber().ToString() },
-                    { Attributes.IdentificationType , personCredential.IdentificationType.ToString() },
-                    { Attributes.IdentificationValue, personCredential.IdentificationValue.ValidateIdentification(personCredential.IdentificationType) }
-                }
-            };
-
-            var credentials = await _agencyBroker.SendCredentials(credentialOffer);
-            return credentials;
-        }
-
-        public async Task<CredentialsContract> CreateCovidTest(string connectionId, CovidTestCredentialParameters covidTestCredential, string walletId)
-        {
-            CredentialsContract credentials = null;
-            if (covidTestCredential != null)
-            {
-                covidTestCredential.DateIssued = DateTime.UtcNow;
-                var credentialOffer = new CredentialOfferParameters
-                {
-                    ConnectionId = connectionId,
-                    DefinitionId = DefinitionIds[Schemas.CovidTest],
-                    AutomaticIssuance = false,
-                    CredentialValues = new Dictionary<string, string>
-                    {
-                        { Attributes.ReferenceNumber , covidTestCredential.ReferenceNumber.ValidateLength() },
-                        { Attributes.Laboratory , covidTestCredential.Laboratory.ToString() },
-                        { Attributes.DateTested , covidTestCredential.DateTested.IsInPast().ToString() },
-                        { Attributes.DateIssued, covidTestCredential.DateIssued.ToString() },
-                        { Attributes.CovidStatus, covidTestCredential.CovidStatus.ToString() },
-                    }
-                };
-
-                credentials = await _agencyBroker.SendCredentials(credentialOffer);
-                StoreCoviIDCredentials(covidTestCredential, walletId);
-            }
-            return credentials;
-        }
-
-        public async Task CreatePersonAndCovidTestCredentials(CovidTestCredentialParameters covidTest, PersonCredentialParameters person, string walletId)
-        {
-            var connectionParameters = new ConnectionParameters
-            {
-                ConnectionId = "", // Leave blank for auto generation
-                Multiparty = false,
-                Name = AgentName
-            };
-
-            var agentInvitation = await _connectionService.CreateInvitation(connectionParameters);
-            var custodianConnection = await _connectionService.AcceptInvitation(agentInvitation.Invitation, walletId);
-
-            // Create the set of credentials
-            var personalDetialsCredentials = await CreatePerson(agentInvitation.ConnectionId, person);
-            var covidTestCredentials = await CreateCovidTest(agentInvitation.ConnectionId, covidTest, walletId);
-
-            var userCredentials = await _custodianBroker.GetCredentials(walletId);
-            if (userCredentials == null)
-                throw new ValidationException(Messages.Cred_NotFound);
-
-            var offeredCredentials = userCredentials?.Where(x => x.State == CredentialsState.Offered);
-            if (offeredCredentials == null)
-                throw new ValidationException(Messages.Cred_OfferedNotFound);
-
-            if (offeredCredentials != null)
-            {
-                // Accept all the credentials
-                foreach (var offer in offeredCredentials)
-                {
-                    await _custodianBroker.AcceptCredential(walletId, offer.CredentialId);
-                }
-            }
-            return;
         }
 
         public async Task<CoviIDCredentialContract> GetCoviIDCredentials(string walletId)
@@ -140,27 +38,27 @@ namespace CoviIDApiCore.V1.Services
 
             var verifiedPerson = offeredCredentials?.FirstOrDefault(p => p.DefinitionId == DefinitionIds[Schemas.Person]);
             var covidTest = offeredCredentials?.Where(c => c.DefinitionId == DefinitionIds[Schemas.CovidTest])
-                .OrderBy(c => c.Values.TryGetValue(Attributes.DateIssued, out var dateIssued)).ToList().FirstOrDefault();
+                .OrderBy(c => c.Values.TryGetValue(SchemaAttributes.DateIssued, out var dateIssued)).ToList().FirstOrDefault();
 
             if (verifiedPerson != null)
             {
                 //TODO: Optimize
-                verifiedPerson.Values.TryGetValue(Attributes.FirstName, out string firstName);
-                verifiedPerson.Values.TryGetValue(Attributes.LastName, out string lastName);
-                verifiedPerson.Values.TryGetValue(Attributes.Photo, out string photo);
-                verifiedPerson.Values.TryGetValue(Attributes.MobileNumber, out string mobileNumber);
-                verifiedPerson.Values.TryGetValue(Attributes.IdentificationType, out string identificationTypeStr);
-                verifiedPerson.Values.TryGetValue(Attributes.IdentificationValue, out string identificationValue);
+                verifiedPerson.Values.TryGetValue(SchemaAttributes.FirstName, out string firstName);
+                verifiedPerson.Values.TryGetValue(SchemaAttributes.LastName, out string lastName);
+                verifiedPerson.Values.TryGetValue(SchemaAttributes.Photo, out string photo);
+                verifiedPerson.Values.TryGetValue(SchemaAttributes.MobileNumber, out string mobileNumber);
+                verifiedPerson.Values.TryGetValue(SchemaAttributes.IdentificationType, out string identificationTypeStr);
+                verifiedPerson.Values.TryGetValue(SchemaAttributes.IdentificationValue, out string identificationValue);
 
                 var identificationType = (IdentificationTypes)Enum.Parse(typeof(IdentificationTypes), identificationTypeStr);
 
                 if (covidTest != null)
                 {
-                    covidTest.Values.TryGetValue(Attributes.ReferenceNumber, out string referenceNumber);
-                    covidTest.Values.TryGetValue(Attributes.Laboratory, out string laboratoryStr);
-                    covidTest.Values.TryGetValue(Attributes.DateTested, out string dateTested);
-                    covidTest.Values.TryGetValue(Attributes.DateIssued, out string dateIssued);
-                    covidTest.Values.TryGetValue(Attributes.CovidStatus, out string covidStatusStr);
+                    covidTest.Values.TryGetValue(SchemaAttributes.ReferenceNumber, out string referenceNumber);
+                    covidTest.Values.TryGetValue(SchemaAttributes.Laboratory, out string laboratoryStr);
+                    covidTest.Values.TryGetValue(SchemaAttributes.DateTested, out string dateTested);
+                    covidTest.Values.TryGetValue(SchemaAttributes.DateIssued, out string dateIssued);
+                    covidTest.Values.TryGetValue(SchemaAttributes.CovidStatus, out string covidStatusStr);
 
 
                     var laboratory = (Laboratory)Enum.Parse(typeof(Laboratory), laboratoryStr);
@@ -188,28 +86,6 @@ namespace CoviIDApiCore.V1.Services
                 };
             }
             throw new ValidationException(Messages.Cred_VerifidPersonNotFound);
-        }
-        private async void StoreCoviIDCredentials(CovidTestCredentialParameters covidTestParameters, string walletId)
-        {
-            if (covidTestParameters.HasConsent)
-            {
-                var covidTest = new CovidTest
-                {
-                    CovidStatus = covidTestParameters.CovidStatus,
-                    DateIssued = covidTestParameters.DateIssued,
-                    DateTested = covidTestParameters.DateTested,
-                    HasConsent = covidTestParameters.HasConsent,
-                    Laboratory = covidTestParameters.Laboratory,
-                    PermissionGrantedAt = DateTime.Now,
-                    ReferenceNumber = covidTestParameters.ReferenceNumber,
-                    WalletId = walletId,
-                    CredentialIndicator = CredentialIndicator.Added
-                };
-                await _covidTestRepository.AddAsync(covidTest);
-                await _covidTestRepository.SaveAsync();
-
-            }
-            return;
         }
     }
 }

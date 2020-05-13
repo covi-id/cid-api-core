@@ -64,26 +64,33 @@ namespace CoviIDApiCore.Migrations
                     b.ToTable("Organisations");
                 });
 
-            modelBuilder.Entity("CoviIDApiCore.Models.Database.OrganisationCounter", b =>
+            modelBuilder.Entity("CoviIDApiCore.Models.Database.OrganisationAccessLog", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<int>("Balance");
+                    b.Property<DateTime>("CreatedAt");
 
-                    b.Property<DateTime>("Date");
+                    b.Property<decimal>("Latitude")
+                        .HasColumnType("decimal(12,8)");
 
-                    b.Property<string>("DeviceIdentifier");
-
-                    b.Property<int>("Movement");
+                    b.Property<decimal>("Longitude")
+                        .HasColumnType("decimal(12,8)");
 
                     b.Property<Guid?>("OrganisationId");
+
+                    b.Property<string>("ScanType")
+                        .IsRequired();
+
+                    b.Property<Guid?>("WalletId");
 
                     b.HasKey("Id");
 
                     b.HasIndex("OrganisationId");
 
-                    b.ToTable("OrganisationCounters");
+                    b.HasIndex("WalletId");
+
+                    b.ToTable("OrganisationAccessLogs");
                 });
 
             modelBuilder.Entity("CoviIDApiCore.Models.Database.OtpToken", b =>
@@ -100,13 +107,9 @@ namespace CoviIDApiCore.Migrations
 
                     b.Property<string>("MobileNumber");
 
-                    b.Property<Guid?>("WalletId");
-
                     b.Property<bool>("isUsed");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("WalletId");
 
                     b.ToTable("OtpTokens");
                 });
@@ -118,24 +121,100 @@ namespace CoviIDApiCore.Migrations
 
                     b.Property<DateTime>("CreatedAt");
 
-                    b.Property<string>("WalletIdentifier");
+                    b.Property<string>("MobileNumber");
+
+                    b.Property<string>("MobileNumberReference");
+
+                    b.Property<DateTime>("MobileNumberVerifiedAt");
 
                     b.HasKey("Id");
 
                     b.ToTable("Wallets");
                 });
 
-            modelBuilder.Entity("CoviIDApiCore.Models.Database.OrganisationCounter", b =>
+            modelBuilder.Entity("CoviIDApiCore.Models.Database.WalletDetail", b =>
                 {
-                    b.HasOne("CoviIDApiCore.Models.Database.Organisation", "Organisation")
-                        .WithMany("Counter")
-                        .HasForeignKey("OrganisationId");
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<string>("FirstName");
+
+                    b.Property<string>("IdType")
+                        .IsRequired();
+
+                    b.Property<string>("IdValue");
+
+                    b.Property<string>("LastName");
+
+                    b.Property<string>("PhotoReference");
+
+                    b.Property<Guid?>("WalletId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WalletId");
+
+                    b.ToTable("WalletDetails");
                 });
 
-            modelBuilder.Entity("CoviIDApiCore.Models.Database.OtpToken", b =>
+            modelBuilder.Entity("CoviIDApiCore.Models.Database.WalletTestResult", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<bool>("HasConsent");
+
+                    b.Property<DateTime>("IssuedAt");
+
+                    b.Property<string>("Laboratory")
+                        .IsRequired();
+
+                    b.Property<string>("LaboratoryStatus")
+                        .IsRequired();
+
+                    b.Property<DateTime>("PermissionGrantedAt");
+
+                    b.Property<string>("ReferenceNumber");
+
+                    b.Property<string>("ResultStatus")
+                        .IsRequired();
+
+                    b.Property<string>("TestType")
+                        .IsRequired();
+
+                    b.Property<DateTime>("TestedAt");
+
+                    b.Property<Guid?>("WalletId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WalletId");
+
+                    b.ToTable("WalletTestResults");
+                });
+
+            modelBuilder.Entity("CoviIDApiCore.Models.Database.OrganisationAccessLog", b =>
+                {
+                    b.HasOne("CoviIDApiCore.Models.Database.Organisation", "Organisation")
+                        .WithMany("AccessLogs")
+                        .HasForeignKey("OrganisationId");
+
+                    b.HasOne("CoviIDApiCore.Models.Database.Wallet", "Wallet")
+                        .WithMany()
+                        .HasForeignKey("WalletId");
+                });
+
+            modelBuilder.Entity("CoviIDApiCore.Models.Database.WalletDetail", b =>
                 {
                     b.HasOne("CoviIDApiCore.Models.Database.Wallet", "Wallet")
-                        .WithMany("Tokens")
+                        .WithMany()
+                        .HasForeignKey("WalletId");
+                });
+
+            modelBuilder.Entity("CoviIDApiCore.Models.Database.WalletTestResult", b =>
+                {
+                    b.HasOne("CoviIDApiCore.Models.Database.Wallet", "Wallet")
+                        .WithMany()
                         .HasForeignKey("WalletId");
                 });
 #pragma warning restore 612, 618

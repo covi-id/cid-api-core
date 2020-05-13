@@ -18,13 +18,5 @@ namespace CoviIDApiCore.V1.Repositories
             _context = context;
             _dbSet = _context.Wallets;
         }
-
-        public async Task<Wallet> GetByWalletIdentifier(string identifier)
-        {
-            return await _dbSet
-                .Where(t => string.Equals(t.WalletIdentifier, identifier))
-                .OrderByDescending(t => t.CreatedAt)
-                .FirstOrDefaultAsync();
-        }
     }
 }

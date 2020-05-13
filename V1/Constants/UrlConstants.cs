@@ -10,7 +10,7 @@ namespace CoviIDApiCore.V1.Constants
             { Routes.Custodian, "custodian/v1/api/" },
             { Routes.Sendgrid, "v3/mail/send"},
             { Routes.ClickatellSend, "/messages"},
-            { Routes.Organisation, "/api/organisation" },
+            { Routes.Organisation, "/api/organisations" },
             { Routes.Health, "/" }
         };
 

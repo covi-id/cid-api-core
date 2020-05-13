@@ -7,6 +7,7 @@ using CoviIDApiCore.Exceptions;
 using CoviIDApiCore.V1.Constants;
 using CoviIDApiCore.V1.DTOs.System;
 using CoviIDApiCore.V1.Interfaces.Services;
+using Newtonsoft.Json.Serialization;
 using Sentry;
 
 namespace CoviIDApiCore.Middleware
@@ -53,6 +54,10 @@ namespace CoviIDApiCore.Middleware
             {
                 await HandleClickatellException(context, e);
             }
+            catch (AmazonS3Exception e)
+            {
+                await HandleAmazonS3Exception(context, e);
+            }
             catch (QRException e)
             {
                 await HandleQRException(context, e);
@@ -66,7 +71,7 @@ namespace CoviIDApiCore.Middleware
                 await HandleUnexpectedException(context, e);
             }
         }
-
+    
         #region Exception Handler Methods
 
         private static Task HandleValidationException(HttpContext context, Exception e)
@@ -74,10 +79,11 @@ namespace CoviIDApiCore.Middleware
             var code = HttpStatusCode.BadRequest;
 
             context.Response.ContentType = "application/json";
-            context.Response.StatusCode = (int)code;
+            context.Response.StatusCode = (int) code;
 
             var rsp = new Response(false, code, e.Message);
-            return context.Response.WriteAsync(JsonConvert.SerializeObject(rsp));
+
+            return ReturnResult(context, rsp);
         }
 
         private static Task HandleNotFoundException(HttpContext context)
@@ -88,9 +94,8 @@ namespace CoviIDApiCore.Middleware
             context.Response.StatusCode = (int)code;
 
             var rsp = new Response(false, HttpStatusCode.NotFound);
-            return context.Response.WriteAsync(JsonConvert.SerializeObject(rsp));
+            return ReturnResult(context, rsp);
         }
-
 
         private Task HandleStreetCredBrokerException(HttpContext context, StreetCredBrokerException e)
         {
@@ -105,7 +110,7 @@ namespace CoviIDApiCore.Middleware
             message = e.Message;
             #endif
             var rsp = new Response(false, statusCode, message);
-            return context.Response.WriteAsync(JsonConvert.SerializeObject(rsp));
+            return ReturnResult(context, rsp);
         }
 
         private Task HandleSendGridException(HttpContext context, SendGridException e)
@@ -121,7 +126,7 @@ namespace CoviIDApiCore.Middleware
             message = e.Message;
             #endif
             var rsp = new Response(false, statusCode, message);
-            return context.Response.WriteAsync(JsonConvert.SerializeObject(rsp));
+            return ReturnResult(context, rsp);
         }
 
         private Task HandleClickatellException(HttpContext context, ClickatellException e)
@@ -137,8 +142,24 @@ namespace CoviIDApiCore.Middleware
             message = e.Message;
             #endif
             var rsp = new Response(false, statusCode, message);
-            return context.Response.WriteAsync(JsonConvert.SerializeObject(rsp));
+            return ReturnResult(context, rsp);
         }
+        private Task HandleAmazonS3Exception(HttpContext context, AmazonS3Exception e)
+        {
+            SentrySdk.CaptureException(e);
+
+            var statusCode = HttpStatusCode.InternalServerError;
+            context.Response.ContentType = "application/json";
+            context.Response.StatusCode = (int)statusCode;
+            var message = Messages.Misc_ThirdParty;
+
+            #if DEBUG
+            message = e.Message;
+            #endif
+            var rsp = new Response(false, statusCode, message);
+            return ReturnResult(context, rsp);
+        }
+
 
         private static Task HandleUnexpectedException(HttpContext context, Exception e)
         {
@@ -155,7 +176,7 @@ namespace CoviIDApiCore.Middleware
             #endif
 
             var rsp = new Response(false, code, message);
-            return context.Response.WriteAsync(JsonConvert.SerializeObject(rsp));
+            return ReturnResult(context, rsp);
         }
 
         private static Task HandleQRException(HttpContext context, Exception e)
@@ -170,7 +191,7 @@ namespace CoviIDApiCore.Middleware
             var message = Messages.Misc_ThirdParty;
 
             var rsp = new Response(false, code, message);
-            return context.Response.WriteAsync(JsonConvert.SerializeObject(rsp));
+            return ReturnResult(context, rsp);
         }
 
         private static Task HandleUnauthorisedException(HttpContext context, Exception e)
@@ -183,7 +204,16 @@ namespace CoviIDApiCore.Middleware
             var message = Messages.Misc_Unauthorized;
 
             var rsp = new Response(false, code, message);
-            return context.Response.WriteAsync(JsonConvert.SerializeObject(rsp));
+            return ReturnResult(context, rsp);
+        }
+
+        private static Task ReturnResult(HttpContext context, object response)
+        {
+            return context.Response.WriteAsync(JsonConvert.SerializeObject(response, new JsonSerializerSettings
+            {
+                ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                Formatting = Formatting.Indented
+            }));
         }
         #endregion Exception Handler Methods
     }

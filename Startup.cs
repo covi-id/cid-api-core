@@ -17,7 +17,9 @@ using System.Reflection;
 using CoviIDApiCore.Models.AppSettings;
 using CoviIDApiCore.V1.Brokers;
 using System.Net.Http.Headers;
+using AspNetCoreRateLimit;
 using CoviIDApiCore.Data;
+using CoviIDApiCore.V1.Configuration;
 using CoviIDApiCore.V1.Interfaces.Brokers;
 using CoviIDApiCore.V1.Interfaces.Repositories;
 using CoviIDApiCore.V1.Interfaces.Services;
@@ -56,6 +58,7 @@ namespace CoviIDApiCore
             ConfigureCORS(services);
             ConfigureSwagger(services);
             ConfigureHangfire(services);
+            BindAppSettingConfiguration(services);
 
             services.AddMvc()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
@@ -73,7 +76,8 @@ namespace CoviIDApiCore
             ConfigureDatabaseContext(services);
             ConfigureDependecyInjection(services);
             ConfigureHttpClients(services);
-        }        
+            ConfigureRateLimiting(services);
+        }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
@@ -154,7 +158,6 @@ namespace CoviIDApiCore
         {
             #region Service layer
             services.AddTransient<IWalletService, WalletService>();
-            services.AddTransient<IConnectionService, ConnectionService>();
             services.AddTransient<IVerifyService, VerifyService>();
             services.AddTransient<ICredentialService, CredentialService>();
             services.AddScoped<IOrganisationService, OrganisationService>();
@@ -162,14 +165,20 @@ namespace CoviIDApiCore
             services.AddSingleton<IAuthenticationService, AuthenticationService>();
             services.AddTransient<IQRCodeService, QRCodeService>();
             services.AddScoped<IOtpService, OtpService>();
+            services.AddTransient<ITestResultService, TestResultService>();
+            services.AddSingleton<ICryptoService, CryptoService>();
+            services.AddScoped<IWalletDetailService, WalletDetailService>();
+            services.AddSingleton<ITokenService, TokenService>();
             #endregion
 
             #region Repository Layer
             services.AddScoped<IOrganisationRepository, OrganisationRepository>();
-            services.AddScoped<IOrganisationCounterRepository, OrganisationCounterRepository>();
+            services.AddScoped<IOrganisationAccessLogRepository, OrganisationAccessLogRepository>();
             services.AddScoped<IOtpTokenRepository, OtpTokenRepository>();
             services.AddScoped<IWalletRepository, WalletRepository>();
             services.AddScoped<ICovidTestRepository, CovidTestRepository>();
+            services.AddScoped<IWalletDetailRepository, WalletDetailRepository>();
+            services.AddScoped<IWalletTestResultRepository, WalletTestResultRepository>();
             #endregion
 
             #region Broker Layer
@@ -177,6 +186,7 @@ namespace CoviIDApiCore
             services.AddTransient<ICustodianBroker, CustodianBroker>();
             services.AddTransient<ISendGridBroker, SendGridBroker>();
             services.AddTransient<IClickatellBroker, ClickatellBroker>();
+            services.AddSingleton<IAmazonS3Broker, AmazonS3Broker>();
             #endregion
         }
 
@@ -263,6 +273,17 @@ namespace CoviIDApiCore
             });
         }
 
+        private void ConfigureRateLimiting(IServiceCollection services)
+        {
+            services.Configure<IpRateLimitOptions>(_configuration.GetSection("PlatformSettings:IpRateLimiting"));
+            services.Configure<IpRateLimitPolicies>(_configuration.GetSection("PlatformSettings:IpRateLimitPolicies"));
+
+            services.AddSingleton<IIpPolicyStore, DistributedCacheIpPolicyStore>();
+            services.AddSingleton<IRateLimitCounterStore, DistributedCacheRateLimitCounterStore>();
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+        }
+        
         private void ConfigureSentry()
         {
             var url = _configuration?.GetSection("Sentry")?.GetSection("Url").Value ?? throw new Exception("Failed to setup sentry.");
@@ -273,6 +294,14 @@ namespace CoviIDApiCore
                     x.Dsn = new Dsn(url);
                 });
         }
+
+        private void BindAppSettingConfiguration(IServiceCollection services)
+        {
+            var awsS3BucketCredentials = new AwsS3BucketCredentials();
+            _configuration.Bind(nameof(AwsS3BucketCredentials), awsS3BucketCredentials);
+            services.AddSingleton(awsS3BucketCredentials);
+        }
+
         #endregion Private Configuration Methods
     }
 }

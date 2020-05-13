@@ -6,8 +6,8 @@ namespace CoviIDApiCore.V1.Interfaces.Services
 {
     public interface IOtpService
     {
-        Task GenerateAndSendOtpAsync(string mobileNumber, Wallet wallet);
-        Task ResendOtp(RequestResendOtp payload);
-        Task ConfirmOtpAsync(RequestOtpConfirmation payload);
+        Task<long> GenerateAndSendOtpAsync(string mobileNumber);
+        Task<TokenResponse> ResendOtpAsync(RequestResendOtp payload, string authToken);
+        Task<OtpConfirmationResponse> ConfirmOtpAsync(RequestOtpConfirmation payload, string authToken);
     }
 }

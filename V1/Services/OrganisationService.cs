@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ using CoviIDApiCore.V1.DTOs.Organisation;
 using CoviIDApiCore.V1.DTOs.System;
 using CoviIDApiCore.V1.Interfaces.Repositories;
 using CoviIDApiCore.V1.Interfaces.Services;
+using Microsoft.EntityFrameworkCore.Internal;
 using Newtonsoft.Json;
 
 namespace CoviIDApiCore.V1.Services
@@ -16,16 +18,18 @@ namespace CoviIDApiCore.V1.Services
     public class OrganisationService : IOrganisationService
     {
         private readonly IOrganisationRepository _organisationRepository;
-        private readonly IOrganisationCounterRepository _organisationCounterRepository;
+        private readonly IOrganisationAccessLogRepository _organisationAccessLogRepository;
         private readonly IEmailService _emailService;
         private readonly IQRCodeService _qrCodeService;
+        private readonly IWalletRepository _walletRepository;
 
-        public OrganisationService(IOrganisationRepository organisationRepository, IOrganisationCounterRepository organisationCounterRepository, IEmailService emailService, IQRCodeService qrCodeService)
+        public OrganisationService(IOrganisationRepository organisationRepository, IOrganisationAccessLogRepository organisationAccessLogRepository, IEmailService emailService, IQRCodeService qrCodeService, IWalletRepository walletRepository)
         {
             _organisationRepository = organisationRepository;
-            _organisationCounterRepository = organisationCounterRepository;
+            _organisationAccessLogRepository = organisationAccessLogRepository;
             _emailService = emailService;
             _qrCodeService = qrCodeService;
+            _walletRepository = walletRepository;
         }
 
         public async Task CreateAsync(CreateOrganisationRequest payload)
@@ -59,46 +63,102 @@ namespace CoviIDApiCore.V1.Services
             if (organisation == default)
                 return new Response(false, HttpStatusCode.NotFound, Messages.Org_NotExists);
 
-            var orgCounter = await _organisationCounterRepository.GetLastByOrganisation(organisation);
+            var accessLogs = await _organisationAccessLogRepository.GetByCurrentDayByOrganisation(organisation);
 
-            var totalScans = _organisationCounterRepository.Count();
+            var orgCounter = accessLogs
+                .Where(oal => oal.Organisation == organisation)
+                .Where(oal => oal.CreatedAt.Date == DateTime.UtcNow.Date)
+                .OrderByDescending(t => t.CreatedAt)
+                .FirstOrDefault();
 
-            return new Response(new OrganisationDTO(organisation, orgCounter, totalScans), HttpStatusCode.OK);
+            var totalScans = accessLogs.Count(oal => oal.Organisation == organisation && oal.CreatedAt.Date == DateTime.UtcNow.Date);
+
+            return new Response(new OrganisationDTO(organisation, orgCounter, totalScans, GetAccessLogBalance(accessLogs)), HttpStatusCode.OK);
         }
 
-        public async Task UpdateCountAsync(string id, string deviceId, UpdateType updateType)
+        public async Task<Response> UpdateCountAsync(string id, UpdateCountRequest payload, ScanType scanType)
         {
-            var balance = 0;
+            Wallet wallet = null;
 
-            var organisation = await _organisationRepository.GetAsync(Guid.Parse(id));
+            if (!string.IsNullOrEmpty(payload.WalletId))
+            {
+                wallet = await _walletRepository.GetAsync(Guid.Parse(payload.WalletId));
+
+                if (wallet == null)
+                    throw new NotFoundException(Messages.Wallet_NotFound);
+            }
+
+            var organisation = await _organisationRepository.GetWithLogsAsync(Guid.Parse(id));
 
             if (organisation == default)
                 throw new NotFoundException(Messages.Org_NotExists);
 
-            var lastCount = await _organisationCounterRepository.GetLastByOrganisation(organisation);
+            await ValidateScan(organisation.AccessLogs.ToList(), scanType, wallet);
 
-            balance = lastCount?.Balance ?? 0;
+            await UpdateLogs(wallet, organisation, scanType);
 
-            if (balance < 1 && updateType == UpdateType.Subtraction)
-                throw new ValidationException(Messages.Org_NegBalance);
+            var logs = organisation.AccessLogs
+                .Where(oal => oal.CreatedAt.Date.Equals(DateTime.UtcNow.Date))
+                .ToList();
 
-            var newCount = new OrganisationCounter()
+            return new Response(
+                new UpdateCountResponse()
+                {
+                    Balance = logs.Count == 0 ? 0 : GetAccessLogBalance(logs)
+                },
+                true,
+                HttpStatusCode.OK);
+        }
+
+        private async Task UpdateLogs(Wallet wallet, Organisation organisation, ScanType scanType)
+        {
+            var newCount = new OrganisationAccessLog()
             {
+                Wallet = wallet,
                 Organisation = organisation,
-                Date = DateTime.UtcNow,
-                Movement = updateType == UpdateType.Addition
-                    ? 1
-                    : -1,
-                Balance = updateType == UpdateType.Addition
-                    ? balance + 1
-                    : balance - 1
-                ,
-                DeviceIdentifier = deviceId
+                CreatedAt = DateTime.UtcNow,
+                ScanType = scanType
             };
 
-            await _organisationCounterRepository.AddAsync(newCount);
+            await _organisationAccessLogRepository.AddAsync(newCount);
 
-            await _organisationCounterRepository.SaveAsync();
+            await _organisationAccessLogRepository.SaveAsync();
+        }
+
+        private async Task ValidateScan(List<OrganisationAccessLog> logs, ScanType scanType, Wallet wallet)
+        {
+            if (wallet != default)
+            {
+                var userLogs = logs
+                    .Where(l => l.Wallet == wallet && l.CreatedAt.Date == DateTime.Now.Date)
+                    .OrderByDescending(l => l.CreatedAt)
+                    .ToList();
+
+                if(!userLogs.Any() && scanType == ScanType.CheckOut)
+                    throw new ValidationException(Messages.Org_UserNotScannedIn);
+
+                if (userLogs.FirstOrDefault()?.ScanType == ScanType.CheckIn && scanType == ScanType.CheckIn)
+                    await UpdateLogs(wallet, userLogs.FirstOrDefault()?.Organisation, ScanType.CheckOut);
+
+                if(!userLogs.Any(l => l.ScanType == ScanType.CheckIn) && scanType == ScanType.CheckOut)
+                    throw new ValidationException(Messages.Org_UserNotScannedIn);
+
+                if(userLogs.FirstOrDefault()?.ScanType == ScanType.CheckOut && scanType == ScanType.CheckOut)
+                    throw new ValidationException(Messages.Org_UserScannedOut);
+            }
+
+            var balance = GetAccessLogBalance(logs);
+
+            if(balance < 1 && scanType == ScanType.CheckOut)
+                throw new ValidationException(Messages.Org_NegBalance);
+        }
+
+        private int GetAccessLogBalance(List<OrganisationAccessLog> logs)
+        {
+            var checkIns = logs.Count(oal => oal.ScanType == ScanType.CheckIn);
+            var checkOuts = logs.Count(oal => oal.ScanType == ScanType.CheckOut);
+
+            return checkIns - checkOuts; //TODO: Maybe improve this?
         }
 
         private async Task NotifyOrganisation(string companyName, CreateOrganisationRequest payload, Organisation organisation)
@@ -114,7 +174,6 @@ namespace CoviIDApiCore.V1.Services
             if (string.IsNullOrEmpty(emailAddress))
                 throw new ValidationException(Messages.Org_EmailEmpty);
 
-            //TODO: Queueing
             await _emailService.SendEmail(
                 emailAddress,
                 companyName,

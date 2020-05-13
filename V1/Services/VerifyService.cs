@@ -3,7 +3,6 @@ using CoviIDApiCore.V1.Interfaces.Services;
 using System.Threading.Tasks;
 using CoviIDApiCore.Exceptions;
 using CoviIDApiCore.V1.Constants;
-using CoviIDApiCore.V1.DTOs.Credentials;
 
 namespace CoviIDApiCore.V1.Services
 {
@@ -26,9 +25,6 @@ namespace CoviIDApiCore.V1.Services
                 throw new NotFoundException(Messages.Ver_CoviIDNotFound);
 
             var covidStatus = coviIdCredentials.CovidTestCredentials.CovidStatus;
-
-            if (!string.IsNullOrEmpty(organisationId) && covidStatus != CovidStatus.Positive)
-                await _organisationService.UpdateCountAsync(organisationId, deviceIdentifier, UpdateType.Addition);
 
             return new VerifyResult
             {

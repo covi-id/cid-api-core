@@ -21,8 +21,11 @@
         #region Organisations
         public static readonly string Org_NotExists = $"Organisation does not exist.";
         public static readonly string Org_PayloadInvalid = $"Payload is invalid.";
-        public static readonly string Org_NegBalance = $"Balance can not be less than 0.";
+        public static readonly string Org_NegBalance = $"User can not be scanned out. Balance can not be less than 0."; //TODO: Copy change
         public static readonly string Org_EmailEmpty = $"Organisation email is empty.";
+        public static readonly string Org_UserNotScannedIn = $"User can not be scanned out if no scan in has been recorded.";
+        public static readonly string Org_UserScannedOut = $"User has already been scanned out.";
+        public static readonly string Org_UserDeniedScanIn = $"User can not be scanned in. User was denied access today.";
         #endregion
 
         #region QRCode
@@ -30,9 +33,12 @@
         #endregion
 
         #region Tokens
-        public static readonly string Token_OTPNotExist = $"OTP could not be found.";
+        public static readonly string Token_OTPNotExist = $"OTP could not be found or has expired.";
         public static readonly string Token_OTPExpired = $"OTP has expired.";
         public static readonly string Token_OTPFailed = $"OTP is invalid.";
+        public static readonly string Token_OTPThreshold = $"Too many OTPs."; //TODO: Copy change
+        public static readonly string Token_InvaldPayload = $"OTP Payload is invalid."; //TODO: Copy change
+        public static readonly string Token_Invalid = $"OTP session token is invalid";
         #endregion
 
         #region Credentials
@@ -52,6 +58,24 @@
 
         #region Verifier
         public static readonly string Ver_CoviIDNotFound = $"Could not find the CoviID for the wallet";
+        #endregion
+
+        #region Wallet
+        public static readonly string Wallet_NotFound = $"Could not find wallet.";
+        #endregion
+
+        #region WalletDetails
+        public static readonly string WalltDetails_NotFound = $"Could not find wallet details.";
+        #endregion
+
+        #region TestResults
+        public static readonly string TestResult_NotFound = $"Could not find any test resulst.";
+        public static readonly string TestResult_Invalid = $"Test result is invalid."; //TODO: Copy change
+        #endregion
+
+        #region Amazon S3
+        public static readonly string S3_NotFound = $"Could not find the item";
+        public static readonly string S3_FailedToAdd = $"Failed to add to S3 bucket.";
 
         #endregion
     }

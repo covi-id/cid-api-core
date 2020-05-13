@@ -1,6 +1,7 @@
 ﻿using CoviIDApiCore.V1.DTOs.Credentials;
 using System;
 
+
 namespace CoviIDApiCore.Models.Database
 {
     public class CovidTest : BaseModel<Guid>

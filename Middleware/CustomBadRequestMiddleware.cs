@@ -3,22 +3,31 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.Net;
 using System.Text;
 using CoviIDApiCore.V1.DTOs.System;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace CoviIDApiCore.Middleware
 {
     public class CustomBadRequestMiddleware : ValidationProblemDetails
     {
+        public Response Response { get; set; }
         public Meta Meta { get; set; }
         public object Data { get; set; }
 
         public CustomBadRequestMiddleware(ActionContext context)
         {
-            Meta = new Meta
+            Response = new Response(Meta = new Meta
             {
                 Code = (int)HttpStatusCode.BadRequest,
                 Message = ConstructErrorMessage(context),
                 Success = false
-            };
+            }, false, HttpStatusCode.BadRequest);
+
+            JsonConvert.SerializeObject(Response, new JsonSerializerSettings
+            {
+                ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                Formatting = Formatting.Indented
+            });
         }
 
         private string ConstructErrorMessage(ActionContext context)
