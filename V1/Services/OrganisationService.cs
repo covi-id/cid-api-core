@@ -10,6 +10,7 @@ using CoviIDApiCore.V1.DTOs.Organisation;
 using CoviIDApiCore.V1.DTOs.System;
 using CoviIDApiCore.V1.Interfaces.Repositories;
 using CoviIDApiCore.V1.Interfaces.Services;
+using Microsoft.EntityFrameworkCore.Internal;
 using Newtonsoft.Json;
 
 namespace CoviIDApiCore.V1.Services
@@ -92,6 +93,8 @@ namespace CoviIDApiCore.V1.Services
             if (organisation == default)
                 throw new NotFoundException(Messages.Org_NotExists);
 
+            ValidateScan(organisation.AccessLogs.ToList(), scanType, wallet?.Id ?? default);
+
             var newCount = new OrganisationAccessLog()
             {
                 Wallet = wallet,
@@ -115,6 +118,28 @@ namespace CoviIDApiCore.V1.Services
                 },
                 true,
                 HttpStatusCode.OK);
+        }
+
+        private void ValidateScan(List<OrganisationAccessLog> logs, ScanType scanType, Guid walletId = default)
+        {
+            if (walletId != default)
+            {
+                var userLogs = logs.Where(l => l.Wallet.Id == walletId && l.CreatedAt.Date == DateTime.Now.Date).ToList();
+
+                if(!userLogs.Any() && scanType == ScanType.CheckOut)
+                    throw new ValidationException(Messages.Org_UserNotScannedIn);
+
+                if(!userLogs.Any(l => l.ScanType == ScanType.CheckIn) && scanType == ScanType.CheckOut)
+                    throw new ValidationException(Messages.Org_UserNotScannedIn);
+
+                if(userLogs.Any(l => l.ScanType == ScanType.CheckOut) && scanType == ScanType.CheckOut)
+                    throw new ValidationException(Messages.Org_UserScannedOut);
+            }
+
+            var balance = GetAccessLogBalance(logs);
+
+            if(balance < 1 && scanType == ScanType.CheckOut)
+                throw new ValidationException(Messages.Org_NegBalance);
         }
 
         private int GetAccessLogBalance(List<OrganisationAccessLog> logs)
