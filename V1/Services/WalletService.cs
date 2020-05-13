@@ -83,7 +83,7 @@ namespace CoviIDApiCore.V1.Services
             return wallet;
         }
 
-        private async Task<Wallet> AddWalletToDatabase(CreateWalletRequest walletRequest)
+        public async Task<Wallet> AddWalletToDatabase(CreateWalletRequest walletRequest)
         {
             var wallet = new Wallet
             {
