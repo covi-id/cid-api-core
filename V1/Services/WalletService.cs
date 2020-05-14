@@ -10,6 +10,7 @@ using CoviIDApiCore.Exceptions;
 using CoviIDApiCore.V1.Constants;
 using CoviIDApiCore.V1.DTOs.WalletTestResult;
 using CoviIDApiCore.V1.Interfaces.Brokers;
+using Microsoft.AspNetCore.Http;
 
 namespace CoviIDApiCore.V1.Services
 {
@@ -22,16 +23,18 @@ namespace CoviIDApiCore.V1.Services
         private readonly ITokenService _tokenService;
         private readonly ICryptoService _cryptoService;
         private readonly IAmazonS3Broker _amazonS3Broker;
+        private readonly ISessionService _sessionService;
 
         public WalletService(IOtpService otpService, IWalletRepository walletRepository, IWalletDetailRepository walletDetailRepository,
             ITestResultService testResultService, ITokenService tokenService, ICryptoService cryptoService,
-            IAmazonS3Broker amazonS3Broker)
+            IAmazonS3Broker amazonS3Broker, ISessionService sessionService)
         {
             _walletDetailRepository = walletDetailRepository;
             _testResultService = testResultService;
             _tokenService = tokenService;
             _cryptoService = cryptoService;
             _amazonS3Broker = amazonS3Broker;
+            _sessionService = sessionService;
             _otpService = otpService;
             _walletRepository = walletRepository;
         }
@@ -49,7 +52,7 @@ namespace CoviIDApiCore.V1.Services
 
             _cryptoService.DecryptAsUser(walletDetails, key);
 
-            var photoUrl = await _amazonS3Broker.GetImage(walletDetails.PhotoReference);
+            var photoUrl = _amazonS3Broker.GetImage(walletDetails.PhotoReference);
 
             var testResults = await _testResultService.GetTestResult(Guid.Parse(walletId));
 
@@ -59,27 +62,39 @@ namespace CoviIDApiCore.V1.Services
                 LastName = walletDetails.LastName,
                 PhotoUrl = photoUrl,
                 ResultStatus = testResults == null ? ResultStatus.Untested.ToString() : testResults.ResultStatus.ToString(),
-                Status = testResults == null ?  Convert.ToInt32(ResultStatus.Untested) : (int)testResults?.ResultStatus
+                Status = testResults == null ? Convert.ToInt32(ResultStatus.Untested) : (int)testResults?.ResultStatus
             };
             return response;
         }
 
-        public async Task<TokenResponse> CreateWalletAndOtp(CreateWalletRequest walletRequest)
+        public async Task<TokenResponse> CreateWalletAndOtp(CreateWalletRequest walletRequest, string sessionId = null)
         {
-            var otpReturn = await _otpService.GenerateAndSendOtpAsync(walletRequest.MobileNumber);
+            Wallet wallet;
+            // Not mobile entry
+            if (sessionId == null)
+            {
+                wallet = await CreateWallet(walletRequest);
+            }
+            // Mobile entry
+            else
+            {
+                wallet = await GetWallet(sessionId);
+                wallet.MobileNumberReference = walletRequest.MobileNumberReference;
+                wallet.MobileNumber = wallet.MobileNumber;
+                await UpdateWallet(wallet);
+            }
 
-            var wallet = await CreateWallet(walletRequest);
+            var otpId = await _otpService.GenerateAndSendOtpAsync(walletRequest.MobileNumber);
+
 
             return new TokenResponse
             {
-                Token = _tokenService.GenerateToken(wallet.Id.ToString(), otpReturn)
+                Token = _tokenService.GenerateToken(wallet.Id.ToString(), otpId)
             };
         }
 
         public async Task<Wallet> CreateWallet(CreateWalletRequest walletRequest)
         {
-            //TODO : Check for wallet created via mobile entry
-
             var wallet = new Wallet
             {
                 CreatedAt = DateTime.UtcNow,
@@ -94,21 +109,21 @@ namespace CoviIDApiCore.V1.Services
             await _walletRepository.SaveAsync();
             return wallet;
         }
-
-        private async Task<TokenResponse> UpdateMobileWallet(Wallet wallet, long otpReturn, CreateWalletRequest walletRequest)
+        private async Task<Wallet> GetWallet(string sessionId)
         {
-            wallet.MobileNumberReference = walletRequest.MobileNumberReference;
+            var session = await _sessionService.GetAndUseSession(sessionId);
+            var wallet = await _walletRepository.GetAsync(session.Wallet.Id);
 
+            return wallet;
+        }
+
+        private async Task UpdateWallet(Wallet wallet)
+        {
             _cryptoService.EncryptAsServer(wallet);
 
             _walletRepository.Update(wallet);
 
             await _walletRepository.SaveAsync();
-
-            return new TokenResponse
-            {
-                Token = _tokenService.GenerateToken(wallet.Id.ToString(), otpReturn)
-            };
         }
     }
 }

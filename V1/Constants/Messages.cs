@@ -76,5 +76,9 @@
         public static readonly string S3_NotFound = $"Could not find the item";
         public static readonly string S3_FailedToAdd = $"Failed to add to S3 bucket.";
         #endregion
+
+        #region Session
+        public const string Ses_Invalid = "Session is invalid";
+        #endregion
     }
 }

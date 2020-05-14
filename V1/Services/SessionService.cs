@@ -1,8 +1,10 @@
 ﻿using CoviIDApiCore.Models.AppSettings;
 using CoviIDApiCore.Models.Database;
+using CoviIDApiCore.V1.Constants;
 using CoviIDApiCore.V1.Interfaces.Repositories;
 using CoviIDApiCore.V1.Interfaces.Services;
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 
 namespace CoviIDApiCore.V1.Services
@@ -28,6 +30,20 @@ namespace CoviIDApiCore.V1.Services
             await _sessionRepository.AddAsync(session);
             await _sessionRepository.SaveAsync();
 
+            return session;
+        }
+
+        public async Task<Session> GetAndUseSession(string sessionId)
+        {
+            var session = await _sessionRepository.GetAsync(Guid.Parse(sessionId));
+
+            if (session == default || session == null || session.isUsed || DateTime.UtcNow > session.ExpireAt)
+                throw new ValidationException(Messages.Ses_Invalid);
+
+            session.isUsed = true;
+            _sessionRepository.Update(session);
+
+            await _sessionRepository.SaveAsync();
             return session;
         }
     }

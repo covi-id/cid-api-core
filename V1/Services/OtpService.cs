@@ -43,7 +43,7 @@ namespace CoviIDApiCore.V1.Services
 
         public async Task<long> GenerateAndSendOtpAsync(string mobileNumber)
         {
-            var sms = await _smsService.SendMessage(mobileNumber, DefinitionConstants.SmsType.Otp);
+            var sms = await _smsService.SendMessage(mobileNumber);
 
             return await SaveOtpAsync(mobileNumber, sms.Code, sms.ValidityPeriod);
         }
