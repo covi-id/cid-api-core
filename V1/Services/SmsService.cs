@@ -1,12 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using CoviIDApiCore.Exceptions;
 using CoviIDApiCore.V1.Constants;
+using CoviIDApiCore.V1.DTOs.Bitly;
 using CoviIDApiCore.V1.DTOs.Clickatell;
 using CoviIDApiCore.V1.DTOs.SMS;
 using CoviIDApiCore.V1.Interfaces.Brokers;
 using Microsoft.Extensions.Configuration;
 
 using CoviIDApiCore.V1.Interfaces.Services;
+using Newtonsoft.Json;
 using SmsType = CoviIDApiCore.V1.Constants.DefinitionConstants.SmsType;
 
 namespace CoviIDApiCore.V1.Services
@@ -15,11 +19,13 @@ namespace CoviIDApiCore.V1.Services
     {
         private readonly IConfiguration _configuration;
         private readonly IClickatellBroker _clickatellBroker;
+        private readonly IBitlyBroker _bitlyBroker;
 
-        public SmsService(IConfiguration configuration, IClickatellBroker clickatellBroker)
+        public SmsService(IConfiguration configuration, IClickatellBroker clickatellBroker, IBitlyBroker bitlyBroker)
         {
             _configuration = configuration;
             _clickatellBroker = clickatellBroker;
+            _bitlyBroker = bitlyBroker;
         }
 
         // TODO : Split up into 2 methods
@@ -37,14 +43,12 @@ namespace CoviIDApiCore.V1.Services
                     code = Utilities.Helpers.GenerateRandom4DigitNumber();
 
                     message = ConstructOtpMessage(mobileNumber, code, validityPeriod);
-
                     break;
                 case SmsType.Welcome:
-                    // TODO : Shorten url with bitly
                     var url = _configuration.GetValue<string>("WebsiteDomian");
                     url = $"{url}/?sessionId={sessionId}";
 
-                    message = ConstructWelcomeMessage(mobileNumber, organisation, url, expireAt);
+                    message = ConstructWelcomeMessage(mobileNumber, organisation, await GetShortenedUrl(url), expireAt);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(smsType), smsType, null);
@@ -59,7 +63,22 @@ namespace CoviIDApiCore.V1.Services
             };
         }
 
-        private ClickatellTemplate ConstructWelcomeMessage(string mobileNumber, string organisation, string url, DateTime expireAt)
+        private async Task<string> GetShortenedUrl<T>(T url)
+        {
+            if(EqualityComparer<T>.Default.Equals(url, default))
+                throw new ValidationException(Messages.Val_Url);
+
+            var payload = new BitlyTemplate()
+            {
+                Url = url.ToString()
+            };
+
+            var bitlyResponse = await _bitlyBroker.ShortenRequest(payload);
+
+            return bitlyResponse.Link;
+        }
+
+        private static ClickatellTemplate ConstructWelcomeMessage(string mobileNumber, string organisation, string url, DateTime expireAt)
         {
             var recipient = new[]
             {
@@ -73,7 +92,7 @@ namespace CoviIDApiCore.V1.Services
             };
         }
 
-        private ClickatellTemplate ConstructOtpMessage(string mobileNumber, int code, int validityPeriod)
+        private static ClickatellTemplate ConstructOtpMessage(string mobileNumber, int code, int validityPeriod)
         {
             var recipient = new[]
             {

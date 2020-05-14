@@ -50,7 +50,9 @@
         public static readonly string Val_MobileNumber = $"Invalid mobile number.";
         public static readonly string Val_Identification = $"Invalid Identification number.";
         public static readonly string Val_DateNotInPast = $"Invalid Date, date must be in the past";
-        public static readonly string Val_FileTooLarge = $"The File size is to large.";
+        public static readonly string Val_FileTooLarge = $"The file size is too large.";
+        public static readonly string Val_Url = $"Url not present.";
+        public static readonly string Val_Organisation = $"Organisation name not present.";
         #endregion
 
         #region Verifier
@@ -73,7 +75,6 @@
         #region Amazon S3
         public static readonly string S3_NotFound = $"Could not find the item";
         public static readonly string S3_FailedToAdd = $"Failed to add to S3 bucket.";
-
         #endregion
     }
 }
