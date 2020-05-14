@@ -78,12 +78,6 @@ namespace CoviIDApiCore.V1.Controllers
                 await _organisationService.UpdateCountAsync(id, payload, ScanType.Denied));
         }
 
-        /// <summary>
-        /// Creates a mobile entry for a user and checks them in.
-        /// </summary>
-        /// <param name="organisationId"></param>
-        /// <param name="payload"></param>
-        /// <returns></returns>
         [HttpPost("organisations/{organisationId}/mobile_check_in")]
         public async Task<IActionResult> MobileCheckIn(string organisationId, [FromBody] MobileUpdateCountRequest payload)
         {
