@@ -24,10 +24,11 @@ namespace CoviIDApiCore.V1.Services
         private readonly IWalletRepository _walletRepository;
         private readonly IWalletService _walletService;
         private readonly ISessionService _sessionService;
+        private readonly ISmsService _smsService;
 
         public OrganisationService(IOrganisationRepository organisationRepository, IOrganisationAccessLogRepository organisationAccessLogRepository,
             IEmailService emailService, IQRCodeService qrCodeService, IWalletRepository walletRepository, IWalletService walletService,
-            ISessionService sessionService)
+            ISessionService sessionService, ISmsService smsService)
         {
             _organisationRepository = organisationRepository;
             _organisationAccessLogRepository = organisationAccessLogRepository;
@@ -36,6 +37,7 @@ namespace CoviIDApiCore.V1.Services
             _walletRepository = walletRepository;
             _walletService = walletService;
             _sessionService = sessionService;
+            _smsService = smsService;
         }
 
         public async Task CreateAsync(CreateOrganisationRequest payload)
@@ -134,8 +136,9 @@ namespace CoviIDApiCore.V1.Services
 
             var session = await _sessionService.CreateSession(payload.MobileNumber);
 
-            // TODO : Send SMS
+            var organisation = await _organisationRepository.GetAsync(Guid.Parse(organisationId));
 
+            await _smsService.SendMessage(payload.MobileNumber, DefinitionConstants.SmsType.Welcome, organisation.Name, session.ExpireAt.Date);
 
             var updateCounterRequest = new UpdateCountRequest
             {
@@ -143,7 +146,6 @@ namespace CoviIDApiCore.V1.Services
                 Longitude = payload.Longitude,
                 WalletId = wallet.Id.ToString()
             };
-
             var counterResponse = await UpdateCountAsync(organisationId, updateCounterRequest, ScanType.CheckIn);
             return counterResponse;
         }

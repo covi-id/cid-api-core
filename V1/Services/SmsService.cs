@@ -22,7 +22,7 @@ namespace CoviIDApiCore.V1.Services
             _clickatellBroker = clickatellBroker;
         }
 
-        public async Task<SmsResponse> SendMessage(string mobileNumber, SmsType smsType, string organisation = null)
+        public async Task<SmsResponse> SendMessage(string mobileNumber, SmsType smsType, string organisation = null, DateTime expireAt = default)
         {
             ClickatellTemplate message;
             var validityPeriod = 0;
@@ -41,7 +41,7 @@ namespace CoviIDApiCore.V1.Services
                 case SmsType.Welcome:
                     var url = _configuration.GetValue<string>("CoviIDBaseUrl");
 
-                    message = ConstructWelcomeMessage(mobileNumber, organisation, url);
+                    message = ConstructWelcomeMessage(mobileNumber, organisation, url, expireAt);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(smsType), smsType, null);
@@ -56,7 +56,7 @@ namespace CoviIDApiCore.V1.Services
             };
         }
 
-        private ClickatellTemplate ConstructWelcomeMessage(string mobileNumber, string organisation, string url)
+        private ClickatellTemplate ConstructWelcomeMessage(string mobileNumber, string organisation, string url, DateTime expireAt)
         {
             var recipient = new[]
             {
@@ -66,7 +66,7 @@ namespace CoviIDApiCore.V1.Services
             return new ClickatellTemplate()
             {
                 To = recipient,
-                Content = string.Format(DefinitionConstants.SmsStrings[SmsType.Welcome], organisation, url)
+                Content = string.Format(DefinitionConstants.SmsStrings[SmsType.Welcome], organisation, url, expireAt)
             };
         }
 
