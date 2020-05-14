@@ -12,8 +12,8 @@ namespace CoviIDApiCore.V1.Repositories
         private DbSet<Session> _dbset;
         public SessionRepository(ApplicationDbContext context) : base(context)
         {
-            context = _context;
-            _dbset = _context.Sessions;
+            _context = context;
+            _dbset = context.Sessions;
         }
     }
 }
