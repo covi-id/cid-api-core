@@ -10,7 +10,6 @@ using CoviIDApiCore.Exceptions;
 using CoviIDApiCore.V1.Constants;
 using CoviIDApiCore.V1.DTOs.WalletTestResult;
 using CoviIDApiCore.V1.Interfaces.Brokers;
-using Microsoft.AspNetCore.Http;
 
 namespace CoviIDApiCore.V1.Services
 {
@@ -67,25 +66,23 @@ namespace CoviIDApiCore.V1.Services
             return response;
         }
 
-        public async Task<TokenResponse> CreateWalletAndOtp(CreateWalletRequest walletRequest, string sessionId = null)
+        public async Task<TokenResponse> CreateWalletAndOtp(CreateWalletRequest walletRequest, string sessionId)
         {
             Wallet wallet;
-            // Not mobile entry
+
             if (sessionId == null)
-            {
                 wallet = await CreateWallet(walletRequest);
-            }
-            // Mobile entry
             else
             {
                 wallet = await GetWallet(sessionId);
+
                 wallet.MobileNumberReference = walletRequest.MobileNumberReference;
                 wallet.MobileNumber = wallet.MobileNumber;
+
                 await UpdateWallet(wallet);
             }
 
             var otpId = await _otpService.GenerateAndSendOtpAsync(walletRequest.MobileNumber);
-
 
             return new TokenResponse
             {

@@ -6,6 +6,7 @@ using CoviIDApiCore.V1.Interfaces.Services;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 
 namespace CoviIDApiCore.V1.Services
 {
@@ -13,17 +14,20 @@ namespace CoviIDApiCore.V1.Services
     {
         private readonly ISessionRepository _sessionRepository;
         private readonly SessionSettings _sessionSettings;
-        public SessionService(ISessionRepository sessionRepository, SessionSettings sessionSettings)
+        private readonly IConfiguration _configuration;
+
+        public SessionService(ISessionRepository sessionRepository, SessionSettings sessionSettings, IConfiguration configuration)
         {
             _sessionRepository = sessionRepository;
             _sessionSettings = sessionSettings;
+            _configuration = configuration;
         }
 
         public async Task<Session> CreateSession(string mobileNumber, Wallet wallet)
         {
             var session = new Session
             {
-                ExpireAt = DateTime.UtcNow.AddMinutes(_sessionSettings.ExpiresInMinutes),
+                ExpireAt = DateTime.UtcNow.AddMinutes(_configuration.GetValue<int>("SessionSettings:ExpiryInMinutes")),
                 CreatedAt = DateTime.UtcNow,
                 Wallet = wallet
             };

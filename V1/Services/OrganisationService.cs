@@ -149,7 +149,9 @@ namespace CoviIDApiCore.V1.Services
                 Longitude = payload.Longitude,
                 WalletId = wallet.Id.ToString()
             };
+
             var counterResponse = await UpdateCountAsync(organisationId, updateCounterRequest, ScanType.CheckIn);
+
             return counterResponse;
         }
 
