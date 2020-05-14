@@ -27,7 +27,7 @@ namespace CoviIDApiCore.Middleware
         {
             try
             {
-                if (!_authentication.IsAuthorized(context.Request.Headers["x-api-key"]) 
+                if (!_authentication.IsAuthorized(context.Request.Headers["x-api-key"])
                     && context.Request.Path != UrlConstants.PartialRoutes[UrlConstants.Routes.Organisation]
                     && context.Request.Path != UrlConstants.PartialRoutes[UrlConstants.Routes.Health])
                     throw new UnauthorizedAccessException();
@@ -65,6 +65,10 @@ namespace CoviIDApiCore.Middleware
             catch (UnauthorizedAccessException e)
             {
                 await HandleUnauthorisedException(context, e);
+            }
+            catch (BitlyException e)
+            {
+                await HandleBitlyException(context, e);
             }
             catch (Exception e)
             {
@@ -160,6 +164,21 @@ namespace CoviIDApiCore.Middleware
             return ReturnResult(context, rsp);
         }
 
+        private Task HandleBitlyException(HttpContext context, BitlyException e)
+        {
+            SentrySdk.CaptureException(e);
+
+            var statusCode = HttpStatusCode.InternalServerError;
+            context.Response.ContentType = "application/json";
+            context.Response.StatusCode = (int)statusCode;
+            var message = Messages.Misc_ThirdParty;
+
+            #if DEBUG
+            message = e.Message;
+            #endif
+            var rsp = new Response(false, statusCode, message);
+            return ReturnResult(context, rsp);
+        }
 
         private static Task HandleUnexpectedException(HttpContext context, Exception e)
         {
