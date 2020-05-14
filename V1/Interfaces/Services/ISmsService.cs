@@ -6,7 +6,7 @@ namespace CoviIDApiCore.V1.Interfaces.Services
 {
     public interface ISmsService
     {
-        Task<SmsResponse> SendMessage(string mobileNumber);
+        Task<SmsResponse> SendOtpSms(string mobileNumber);
         Task SendWelcomeSms(string mobileNumber, string organisationName, DateTime expireAt, Guid sessionId);
     }
 }

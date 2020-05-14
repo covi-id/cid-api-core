@@ -8,9 +8,7 @@ using CoviIDApiCore.V1.DTOs.Clickatell;
 using CoviIDApiCore.V1.DTOs.SMS;
 using CoviIDApiCore.V1.Interfaces.Brokers;
 using Microsoft.Extensions.Configuration;
-
 using CoviIDApiCore.V1.Interfaces.Services;
-using Newtonsoft.Json;
 using SmsType = CoviIDApiCore.V1.Constants.DefinitionConstants.SmsType;
 
 namespace CoviIDApiCore.V1.Services
@@ -28,7 +26,7 @@ namespace CoviIDApiCore.V1.Services
             _bitlyBroker = bitlyBroker;
         }
 
-        public async Task<SmsResponse> SendMessage(string mobileNumber)
+        public async Task<SmsResponse> SendOtpSms(string mobileNumber)
         {
             var validityPeriod = _configuration.GetValue<int>("OTPSettings:ValidityPeriod");
 
@@ -46,7 +44,7 @@ namespace CoviIDApiCore.V1.Services
         public async Task SendWelcomeSms(string mobileNumber, string organisationName, DateTime expireAt, Guid sessionId)
         {
             var url = _configuration.GetValue<string>("WebsiteDomian");
-            url = $"{url}/create=wallet/details?sessionId={sessionId}";
+            url = $"{url}/{UrlConstants.PartialRoutes[UrlConstants.Routes.WebCreateWallet]}?sessionId={sessionId}";
 
             var message = ConstructWelcomeMessage(mobileNumber, organisationName, await GetShortenedUrl(url), expireAt);
             await _clickatellBroker.SendSms(message);
