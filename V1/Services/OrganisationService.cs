@@ -140,7 +140,7 @@ namespace CoviIDApiCore.V1.Services
             if (organisation == default)
                 throw new NotFoundException(Messages.Org_NotExists);
 
-            await _smsService.SendMessage(payload.MobileNumber, DefinitionConstants.SmsType.Welcome, organisation.Name, session.ExpireAt, session.Id);
+            await _smsService.SendWelcomeSms(payload.MobileNumber, organisation.Name, session.ExpireAt, session.Id);
 
             var updateCounterRequest = new UpdateCountRequest
             {

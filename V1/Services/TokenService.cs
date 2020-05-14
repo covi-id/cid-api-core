@@ -58,22 +58,22 @@ namespace CoviIDApiCore.V1.Services
             var handler = new JwtSecurityTokenHandler();
             var readableToken = handler.CanReadToken(authToken);
 
-            if(readableToken != true)
+            if (readableToken != true)
                 throw new AuthenticationException(Messages.Token_Invalid);
 
             var token = handler.ReadJwtToken(authToken);
 
             var walletClaim = token
                 .Claims?
-                .FirstOrDefault(t => string.Equals(t.Type,DefinitionConstants.IdentityClaimStrings[DefinitionConstants.IdentityClaims.UniqueName]))?
+                .FirstOrDefault(t => string.Equals(t.Type, DefinitionConstants.IdentityClaimStrings[DefinitionConstants.IdentityClaims.UniqueName]))?
                 .Value;
 
             var otpClaim = token
                 .Claims?
-                .FirstOrDefault(t => string.Equals(t.Type,DefinitionConstants.IdentityClaimStrings[DefinitionConstants.IdentityClaims.Sid]))?
+                .FirstOrDefault(t => string.Equals(t.Type, DefinitionConstants.IdentityClaimStrings[DefinitionConstants.IdentityClaims.Sid]))?
                 .Value;
 
-            if(walletClaim == null)
+            if (walletClaim == null)
                 throw new AuthenticationException(Messages.Token_Invalid);
 
             return new TokenReturn()
