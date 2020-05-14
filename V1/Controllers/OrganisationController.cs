@@ -83,10 +83,17 @@ namespace CoviIDApiCore.V1.Controllers
         /// <param name="organisationId"></param>
         /// <param name="payload"></param>
         /// <returns></returns>
-        [HttpPost("organisations/{organisationId}/mobile_entry")]
-        public async Task<IActionResult> MobileEntry(string organisationId, [FromBody] MobileEntryRequest payload)
+        [HttpPost("organisations/{organisationId}/mobile_check_in")]
+        public async Task<IActionResult> MobileCheckIn(string organisationId, [FromBody] MobileUpdateCountRequest payload)
         {
-            var response = await _organisationService.MobileEntry(organisationId, payload);
+            var response = await _organisationService.MobileCheckIn(organisationId, payload);
+            return StatusCode(StatusCodes.Status200OK, response);
+        }
+
+        [HttpPost("organisations/{organisationId}/mobile_check_out")]
+        public async Task<IActionResult> MobileCheckOut(string organisationId, [FromBody] MobileUpdateCountRequest payload)
+        {
+            var response = await _organisationService.MobileCheckOut(organisationId, payload);
             return StatusCode(StatusCodes.Status200OK, response);
         }
     }

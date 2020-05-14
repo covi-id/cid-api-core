@@ -126,7 +126,7 @@ namespace CoviIDApiCore.V1.Services
                 HttpStatusCode.OK);
         }
 
-        public async Task<Response> MobileEntry(string organisationId, MobileEntryRequest payload)
+        public async Task<Response> MobileCheckIn(string organisationId, MobileUpdateCountRequest payload)
         {
             var walletRequest = new CreateWalletRequest
             {
@@ -149,6 +149,22 @@ namespace CoviIDApiCore.V1.Services
                 WalletId = wallet.Id.ToString()
             };
             var counterResponse = await UpdateCountAsync(organisationId, updateCounterRequest, ScanType.CheckIn);
+            return counterResponse;
+        }
+
+        public async Task<Response> MobileCheckOut(string organisationId, MobileUpdateCountRequest payload)
+        {
+            var wallet = await _walletRepository.GetWallet(payload.MobileNumber);
+            if (wallet == default)
+                throw new ValidationException(Messages.Wallet_NotFound);
+
+            var updateCounterRequest = new UpdateCountRequest
+            {
+                Latitude = payload.Latitude,
+                Longitude = payload.Longitude,
+                WalletId = wallet.Id.ToString()
+            };
+            var counterResponse = await UpdateCountAsync(organisationId, updateCounterRequest, ScanType.CheckOut);
             return counterResponse;
         }
 
