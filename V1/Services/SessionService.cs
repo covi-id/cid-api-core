@@ -13,13 +13,11 @@ namespace CoviIDApiCore.V1.Services
     public class SessionService : ISessionService
     {
         private readonly ISessionRepository _sessionRepository;
-        private readonly SessionSettings _sessionSettings;
         private readonly IConfiguration _configuration;
 
-        public SessionService(ISessionRepository sessionRepository, SessionSettings sessionSettings, IConfiguration configuration)
+        public SessionService(ISessionRepository sessionRepository, IConfiguration configuration)
         {
             _sessionRepository = sessionRepository;
-            _sessionSettings = sessionSettings;
             _configuration = configuration;
         }
 
@@ -31,7 +29,9 @@ namespace CoviIDApiCore.V1.Services
                 CreatedAt = DateTime.UtcNow,
                 Wallet = wallet
             };
+
             await _sessionRepository.AddAsync(session);
+
             await _sessionRepository.SaveAsync();
 
             return session;
@@ -49,6 +49,7 @@ namespace CoviIDApiCore.V1.Services
             _sessionRepository.Update(session);
 
             await _sessionRepository.SaveAsync();
+
             return session;
         }
     }
