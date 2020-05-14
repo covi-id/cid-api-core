@@ -39,12 +39,13 @@ namespace CoviIDApiCore.V1.Services
 
         public async Task<Session> GetAndUseSession(string sessionId)
         {
-            var session = await _sessionRepository.GetAsync(Guid.Parse(sessionId));
+            var session = await _sessionRepository.GetSessionAndWalletAsync(Guid.Parse(sessionId));
 
-            if (session == default || session == null || session.isUsed || DateTime.UtcNow > session.ExpireAt)
+            if (session == null || session.isUsed || DateTime.UtcNow > session.ExpireAt)
                 throw new ValidationException(Messages.Ses_Invalid);
 
             session.isUsed = true;
+
             _sessionRepository.Update(session);
 
             await _sessionRepository.SaveAsync();

@@ -23,6 +23,7 @@ namespace CoviIDApiCore.V1.Repositories
         {
             return await _dbSet
                 .Where(w => string.Equals(w.MobileNumber, encryptedMobileNumber))
+                .Where(w => w.MobileNumberReference == default)
                 .FirstOrDefaultAsync();
         }
     }

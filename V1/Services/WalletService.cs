@@ -76,6 +76,8 @@ namespace CoviIDApiCore.V1.Services
             {
                 wallet = await GetWallet(sessionId);
 
+                _cryptoService.DecryptAsServer(wallet);
+
                 wallet.MobileNumberReference = walletRequest.MobileNumberReference;
                 wallet.MobileNumber = wallet.MobileNumber;
 
@@ -110,7 +112,11 @@ namespace CoviIDApiCore.V1.Services
         private async Task<Wallet> GetWallet(string sessionId)
         {
             var session = await _sessionService.GetAndUseSession(sessionId);
+
             var wallet = await _walletRepository.GetAsync(session.Wallet.Id);
+
+            if(wallet == default)
+                throw new NotFoundException(Messages.Wallet_NotFound);
 
             return wallet;
         }

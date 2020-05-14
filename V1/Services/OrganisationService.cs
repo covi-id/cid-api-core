@@ -86,7 +86,7 @@ namespace CoviIDApiCore.V1.Services
             return new Response(new OrganisationDTO(organisation, orgCounter, totalScans, GetAccessLogBalance(accessLogs)), HttpStatusCode.OK);
         }
 
-        public async Task<Response> UpdateCountAsync(string id, UpdateCountRequest payload, ScanType scanType, bool mobileCheckin = false)
+        public async Task<Response> UpdateCountAsync(string id, UpdateCountRequest payload, ScanType scanType, bool mobile = false)
         {
             Wallet wallet = null;
 
@@ -103,7 +103,7 @@ namespace CoviIDApiCore.V1.Services
             if (organisation == default)
                 throw new NotFoundException(Messages.Org_NotExists);
 
-            await ValidateScan(organisation.AccessLogs.ToList(), scanType, wallet, mobileCheckin);
+            await ValidateScan(organisation.AccessLogs.ToList(), scanType, wallet, mobile);
 
             await UpdateLogs(wallet, organisation, scanType);
 
@@ -136,7 +136,7 @@ namespace CoviIDApiCore.V1.Services
             await _organisationAccessLogRepository.SaveAsync();
         }
 
-        private async Task ValidateScan(List<OrganisationAccessLog> logs, ScanType scanType, Wallet wallet, bool mobileCheckin = false)
+        private async Task ValidateScan(List<OrganisationAccessLog> logs, ScanType scanType, Wallet wallet, bool mobile = false)
         {
             if (wallet != default)
             {
@@ -145,16 +145,16 @@ namespace CoviIDApiCore.V1.Services
                     .OrderByDescending(l => l.CreatedAt)
                     .ToList();
 
-                if(!userLogs.Any() && scanType == ScanType.CheckOut)
+                if(!userLogs.Any() && scanType == ScanType.CheckOut && !mobile)
                     throw new ValidationException(Messages.Org_UserNotScannedIn);
 
-                if (userLogs.FirstOrDefault()?.ScanType == ScanType.CheckIn && scanType == ScanType.CheckIn && !mobileCheckin)
+                if (userLogs.FirstOrDefault()?.ScanType == ScanType.CheckIn && scanType == ScanType.CheckIn && !mobile)
                     await UpdateLogs(wallet, userLogs.FirstOrDefault()?.Organisation, ScanType.CheckOut);
 
-                if(!userLogs.Any(l => l.ScanType == ScanType.CheckIn) && scanType == ScanType.CheckOut && !mobileCheckin)
+                if(!userLogs.Any(l => l.ScanType == ScanType.CheckIn) && scanType == ScanType.CheckOut && !mobile)
                     throw new ValidationException(Messages.Org_UserNotScannedIn);
 
-                if(userLogs.FirstOrDefault()?.ScanType == ScanType.CheckOut && scanType == ScanType.CheckOut && !mobileCheckin)
+                if(userLogs.FirstOrDefault()?.ScanType == ScanType.CheckOut && scanType == ScanType.CheckOut && !mobile)
                     throw new ValidationException(Messages.Org_UserScannedOut);
             }
 
@@ -195,7 +195,6 @@ namespace CoviIDApiCore.V1.Services
 
         public async Task<Response> MobileCheckOut(string organisationId, MobileUpdateCountRequest payload)
         {
-
             _cryptoService.EncryptAsServer(payload.MobileNumber);
 
             var wallet = await _walletRepository.GetByEncryptedMobileNumber(payload.MobileNumber);
@@ -208,7 +207,7 @@ namespace CoviIDApiCore.V1.Services
                 Longitude = payload.Longitude,
                 WalletId = wallet.Id.ToString()
             };
-            var counterResponse = await UpdateCountAsync(organisationId, updateCounterRequest, ScanType.CheckOut);
+            var counterResponse = await UpdateCountAsync(organisationId, updateCounterRequest, ScanType.CheckOut, true);
             return counterResponse;
         }
 
@@ -218,7 +217,7 @@ namespace CoviIDApiCore.V1.Services
             var checkIns = logs.Count(oal => oal.ScanType == ScanType.CheckIn);
             var checkOuts = logs.Count(oal => oal.ScanType == ScanType.CheckOut);
 
-            return checkIns - checkOuts; //TODO: Maybe improve this?
+            return checkIns - checkOuts;
         }
 
         private int GetAccessLogTotal(List<OrganisationAccessLog> logs)
