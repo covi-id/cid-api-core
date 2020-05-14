@@ -50,7 +50,7 @@
         public static readonly string Val_MobileNumber = $"Invalid mobile number.";
         public static readonly string Val_Identification = $"Invalid Identification number.";
         public static readonly string Val_DateNotInPast = $"Invalid Date, date must be in the past";
-        public static readonly string Val_FileTooLarge = $"The file size is to large.";
+        public static readonly string Val_FileTooLarge = $"The file size is too large.";
         public static readonly string Val_Url = $"Url not present.";
         public static readonly string Val_Organisation = $"Organisation name not present.";
         #endregion
