@@ -45,8 +45,7 @@ namespace CoviIDApiCore.V1.Services
                     message = ConstructOtpMessage(mobileNumber, code, validityPeriod);
                     break;
                 case SmsType.Welcome:
-                    var url = _configuration.GetValue<string>("WebsiteDomian");
-                    url = $"{url}/?sessionId={sessionId}";
+                    var url = $"{_configuration.GetValue<string>("WebsiteDomain")}?sessionId={sessionId}";
 
                     message = ConstructWelcomeMessage(mobileNumber, organisation, await GetShortenedUrl(url), expireAt);
                     break;
