@@ -21,11 +21,6 @@ namespace CoviIDApiCore.V1.Controllers
             _walletService = walletService;
         }
 
-        /// <summary>
-        /// Creates a new wallet, followed by and OTP request
-        /// </summary>
-        /// <param name="walletParameters"></param>
-        /// <returns></returns>
         [HttpPost]
         public async Task<IActionResult> CreateWallet(CreateWalletRequest walletParameters)
         {
@@ -34,12 +29,6 @@ namespace CoviIDApiCore.V1.Controllers
             return Ok(new Response(response, HttpStatusCode.OK));
         }
 
-        /// <summary>
-        /// Retrieves the wallet and covid19 test status
-        /// </summary>
-        /// <param name="walletId"></param>
-        /// <param name="payload"></param>
-        /// <returns></returns>
         [HttpPost]
         [Route("{walletId}/status")]
         public async Task<IActionResult> GetWalletStatus(string walletId, [FromBody] WalletStatusRequest payload)
