@@ -132,6 +132,7 @@ namespace CoviIDApiCore.V1.Services
             {
                 MobileNumber = payload.MobileNumber
             };
+
             var wallet = await _walletService.CreateWallet(walletRequest);
 
             var session = await _sessionService.CreateSession(payload.MobileNumber, wallet);

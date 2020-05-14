@@ -92,6 +92,7 @@ namespace CoviIDApiCore.V1.Services
             await _walletRepository.AddAsync(wallet);
 
             await _walletRepository.SaveAsync();
+
             return wallet;
         }
 
