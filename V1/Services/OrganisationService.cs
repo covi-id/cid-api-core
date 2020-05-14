@@ -198,7 +198,7 @@ namespace CoviIDApiCore.V1.Services
 
             _cryptoService.EncryptAsServer(payload.MobileNumber);
 
-            var wallet = await _walletRepository.GetWallet(payload.MobileNumber);
+            var wallet = await _walletRepository.GetByEncryptedMobileNumber(payload.MobileNumber);
             if (wallet == default)
                 throw new ValidationException(Messages.Wallet_NotFound);
 

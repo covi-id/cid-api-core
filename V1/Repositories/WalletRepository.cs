@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using CoviIDApiCore.Data;
 using CoviIDApiCore.Models.Database;
