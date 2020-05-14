@@ -195,7 +195,7 @@ namespace CoviIDApiCore.V1.Services
 
         public async Task<Response> MobileCheckOut(string organisationId, MobileUpdateCountRequest payload)
         {
-            _cryptoService.EncryptAsServer(payload.MobileNumber);
+            _cryptoService.EncryptAsServer(payload);
 
             var wallet = await _walletRepository.GetByEncryptedMobileNumber(payload.MobileNumber);
             if (wallet == default)
