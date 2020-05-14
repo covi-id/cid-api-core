@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 using CoviIDApiCore.Data;
 using CoviIDApiCore.Models.Database;
@@ -18,5 +17,12 @@ namespace CoviIDApiCore.V1.Repositories
             _context = context;
             _dbSet = _context.Wallets;
         }
+
+        public async Task<Wallet> GetWallet(string mobileNumber)
+        {
+            var wallet = await _dbSet.FirstOrDefaultAsync(w => string.Equals(w.MobileNumber, mobileNumber, StringComparison.Ordinal));
+            return wallet;
+        }
+
     }
 }
