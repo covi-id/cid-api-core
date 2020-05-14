@@ -44,7 +44,7 @@ namespace CoviIDApiCore.V1.Services
 
         public async Task SendWelcomeSms(string mobileNumber, string organisationName, DateTime expireAt, Guid sessionId)
         {
-            var url = $"{_configuration.GetValue<string>("WebsiteDomain")}/{UrlConstants.PartialRoutes[UrlConstants.Routes.WebCreateWallet]}?sessionId={sessionId}";
+            var url = $"{_configuration.GetValue<string>("WebsiteDomain")}{UrlConstants.PartialRoutes[UrlConstants.Routes.WebCreateWallet]}?sessionId={sessionId}";
 
             var message = ConstructWelcomeMessage(mobileNumber, organisationName, await GetShortenedUrl(url), expireAt);
 

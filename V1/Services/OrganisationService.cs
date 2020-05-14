@@ -112,7 +112,8 @@ namespace CoviIDApiCore.V1.Services
             return new Response(
                 new UpdateCountResponse()
                 {
-                    Balance = logs.Count == 0 ? 0 : GetAccessLogBalance(logs)
+                    Balance = logs.Count == 0 ? 0 : GetAccessLogBalance(logs),
+                    Total = logs.Count == 0 ? 0 : GetAccessLogTotal(logs)
                 },
                 true,
                 HttpStatusCode.OK);
@@ -197,6 +198,11 @@ namespace CoviIDApiCore.V1.Services
             var checkOuts = logs.Count(oal => oal.ScanType == ScanType.CheckOut);
 
             return checkIns - checkOuts; //TODO: Maybe improve this?
+        }
+
+        private int GetAccessLogTotal(List<OrganisationAccessLog> logs)
+        {
+            return logs.Count(oal => oal.ScanType == ScanType.CheckIn);
         }
 
         private async Task NotifyOrganisation(string companyName, CreateOrganisationRequest payload, Organisation organisation)
