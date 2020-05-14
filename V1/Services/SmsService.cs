@@ -28,31 +28,13 @@ namespace CoviIDApiCore.V1.Services
             _bitlyBroker = bitlyBroker;
         }
 
-        // TODO : Split up into 2 methods
-        public async Task<SmsResponse> SendMessage(string mobileNumber, SmsType smsType, string organisation = null, DateTime expireAt = default, Guid sessionId = default)
+        public async Task<SmsResponse> SendMessage(string mobileNumber)
         {
-            ClickatellTemplate message;
-            var validityPeriod = 0;
-            var code = 0;
+            var validityPeriod = _configuration.GetValue<int>("OTPSettings:ValidityPeriod");
 
-            switch (smsType)
-            {
-                case SmsType.Otp:
-                    validityPeriod = _configuration.GetValue<int>("OTPSettings:ValidityPeriod");
+            var code = Utilities.Helpers.GenerateRandom4DigitNumber();
 
-                    code = Utilities.Helpers.GenerateRandom4DigitNumber();
-
-                    message = ConstructOtpMessage(mobileNumber, code, validityPeriod);
-                    break;
-                case SmsType.Welcome:
-                    var url = $"{_configuration.GetValue<string>("WebsiteDomain")}?sessionId={sessionId}";
-
-                    message = ConstructWelcomeMessage(mobileNumber, organisation, await GetShortenedUrl(url), expireAt);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(smsType), smsType, null);
-            }
-
+            var message = ConstructOtpMessage(mobileNumber, code, validityPeriod);
             await _clickatellBroker.SendSms(message);
 
             return new SmsResponse()
@@ -61,10 +43,19 @@ namespace CoviIDApiCore.V1.Services
                 ValidityPeriod = validityPeriod
             };
         }
+        public async Task SendWelcomeSms(string mobileNumber, string organisationName, DateTime expireAt, Guid sessionId)
+        {
+            var url = _configuration.GetValue<string>("WebsiteDomian");
+            url = $"{url}/create=wallet/details?sessionId={sessionId}";
+
+            var message = ConstructWelcomeMessage(mobileNumber, organisationName, await GetShortenedUrl(url), expireAt);
+            await _clickatellBroker.SendSms(message);
+        }
+
 
         private async Task<string> GetShortenedUrl<T>(T url)
         {
-            if(EqualityComparer<T>.Default.Equals(url, default))
+            if (EqualityComparer<T>.Default.Equals(url, default))
                 throw new ValidationException(Messages.Val_Url);
 
             var payload = new BitlyTemplate()
