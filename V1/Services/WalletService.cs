@@ -68,7 +68,7 @@ namespace CoviIDApiCore.V1.Services
         {
             var otpReturn = await _otpService.GenerateAndSendOtpAsync(walletRequest.MobileNumber);
 
-            var wallet = await AddWalletToDatabase(walletRequest);
+            var wallet = await CreateWallet(walletRequest);
 
             return new TokenResponse
             {
@@ -76,20 +76,13 @@ namespace CoviIDApiCore.V1.Services
             };
         }
 
-        public async Task<Wallet> CreateWalletAndSms(CreateWalletRequest walletRequest)
-        {
-            // TODO : Send SMS
-            var wallet = await AddWalletToDatabase(walletRequest);
-            return wallet;
-        }
-
-        public async Task<Wallet> AddWalletToDatabase(CreateWalletRequest walletRequest)
+        public async Task<Wallet> CreateWallet(CreateWalletRequest walletRequest)
         {
             var wallet = new Wallet
             {
                 CreatedAt = DateTime.UtcNow,
                 MobileNumber = walletRequest.MobileNumber,
-                MobileNumberReference = walletRequest.MobileNumberReference
+                MobileNumberReference = walletRequest?.MobileNumberReference
             };
 
             _cryptoService.EncryptAsServer(wallet);

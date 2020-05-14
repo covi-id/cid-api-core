@@ -1,6 +1,5 @@
 ﻿using CoviIDApiCore.Models.AppSettings;
 using CoviIDApiCore.Models.Database;
-using CoviIDApiCore.V1.DTOs.Session;
 using CoviIDApiCore.V1.DTOs.Wallet;
 using CoviIDApiCore.V1.Interfaces.Repositories;
 using CoviIDApiCore.V1.Interfaces.Services;
@@ -21,18 +20,18 @@ namespace CoviIDApiCore.V1.Services
             _sessionSettings = sessionSettings;
         }
 
-        public async Task<Session> CreateSession(CreateSessionRequest createSessionRequest)
+        public async Task<Session> CreateSession(string mobileNumber)
         {
             var walletRequest = new CreateWalletRequest
             {
-                MobileNumber = createSessionRequest.MobileNumber,
-                MobileNumberReference = createSessionRequest.MobileNumberReference
+                MobileNumber = mobileNumber
             };
-            var wallet = await _walletService.AddWalletToDatabase(walletRequest);
+            var wallet = await _walletService.CreateWallet(walletRequest);
 
             var session = new Session
             {
                 ExpireAt = DateTime.UtcNow.AddMinutes(_sessionSettings.ExpireInMinutes),
+                CreatedAt = DateTime.UtcNow,
                 Wallet = wallet
             };
             await _sessionRepository.AddAsync(session);

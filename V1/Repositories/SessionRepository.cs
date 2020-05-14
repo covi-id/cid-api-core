@@ -13,7 +13,7 @@ namespace CoviIDApiCore.V1.Repositories
         public SessionRepository(ApplicationDbContext context) : base(context)
         {
             context = _context;
-            _dbset = _context.Session;
+            _dbset = _context.Sessions;
         }
     }
 }

@@ -8,6 +8,7 @@ using CoviIDApiCore.Models.Database;
 using CoviIDApiCore.V1.Constants;
 using CoviIDApiCore.V1.DTOs.Organisation;
 using CoviIDApiCore.V1.DTOs.System;
+using CoviIDApiCore.V1.DTOs.Wallet;
 using CoviIDApiCore.V1.Interfaces.Repositories;
 using CoviIDApiCore.V1.Interfaces.Services;
 using Newtonsoft.Json;
@@ -22,9 +23,11 @@ namespace CoviIDApiCore.V1.Services
         private readonly IQRCodeService _qrCodeService;
         private readonly IWalletRepository _walletRepository;
         private readonly IWalletService _walletService;
+        private readonly ISessionService _sessionService;
 
         public OrganisationService(IOrganisationRepository organisationRepository, IOrganisationAccessLogRepository organisationAccessLogRepository,
-            IEmailService emailService, IQRCodeService qrCodeService, IWalletRepository walletRepository, IWalletService walletService)
+            IEmailService emailService, IQRCodeService qrCodeService, IWalletRepository walletRepository, IWalletService walletService,
+            ISessionService sessionService)
         {
             _organisationRepository = organisationRepository;
             _organisationAccessLogRepository = organisationAccessLogRepository;
@@ -32,6 +35,7 @@ namespace CoviIDApiCore.V1.Services
             _qrCodeService = qrCodeService;
             _walletRepository = walletRepository;
             _walletService = walletService;
+            _sessionService = sessionService;
         }
 
         public async Task CreateAsync(CreateOrganisationRequest payload)
@@ -122,7 +126,16 @@ namespace CoviIDApiCore.V1.Services
 
         public async Task<Response> MobileEntry(string organisationId, MobileEntryRequest payload)
         {
-            var wallet = await _walletService.CreateWalletAndSms(payload.WalletRequest);
+            var walletRequest = new CreateWalletRequest
+            {
+                MobileNumber = payload.MobileNumber
+            };
+            var wallet = await _walletService.CreateWallet(walletRequest);
+
+            var session = await _sessionService.CreateSession(payload.MobileNumber);
+
+            // TODO : Send SMS
+
 
             var updateCounterRequest = new UpdateCountRequest
             {

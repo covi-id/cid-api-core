@@ -6,6 +6,6 @@ namespace CoviIDApiCore.V1.Interfaces.Services
 {
     public interface ISessionService
     {
-        Task<Session> CreateSession(CreateSessionRequest createSessionRequest);
+        Task<Session> CreateSession(string mobileNumber);
     }
 }

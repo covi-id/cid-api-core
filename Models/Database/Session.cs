@@ -7,5 +7,6 @@ namespace CoviIDApiCore.Models.Database
         public virtual Wallet Wallet { get; set; }
         public DateTime ExpireAt { get; set; }
         public bool isUsed { get; set; }
+        public DateTime CreatedAt { get; set; } 
     }
 }

@@ -65,7 +65,6 @@ namespace CoviIDApiCore
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
                 .AddJsonOptions(o => o.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver())
                 .AddJsonOptions(o => o.SerializerSettings.PreserveReferencesHandling = PreserveReferencesHandling.None)
-                .AddJsonOptions(o => o.SerializerSettings.PreserveReferencesHandling = PreserveReferencesHandling.None)
                 .ConfigureApiBehaviorOptions(options =>
                 {
                     options.InvalidModelStateResponseFactory = context =>

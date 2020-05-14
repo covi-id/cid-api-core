@@ -9,7 +9,6 @@ namespace CoviIDApiCore.V1.Interfaces.Services
     {
         Task<WalletStatusResponse> GetWalletStatus(string walletId, string key);
         Task<TokenResponse> CreateWalletAndOtp(CreateWalletRequest walletRequest);
-        Task<Wallet> CreateWalletAndSms(CreateWalletRequest walletRequest);
-        Task<Wallet> AddWalletToDatabase(CreateWalletRequest walletRequest);
+        Task<Wallet> CreateWallet(CreateWalletRequest walletRequest);
     }
 }
