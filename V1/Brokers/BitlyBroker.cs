@@ -20,14 +20,14 @@ namespace CoviIDApiCore.V1.Brokers
             _httpClient = httpClient;
         }
 
-        public async Task<string> ShortenRequest(object payload)
+        public async Task<BitlyResponse> ShortenRequest(object payload)
         {
             var response = await _httpClient.PostAsJsonAsync(_partialRoot, payload);
 
             if (!response.IsSuccessStatusCode)
                 await ProcessFailureMessage(response);
 
-            return await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<BitlyResponse>(await response.Content.ReadAsStringAsync());
         }
 
         private static async Task ProcessFailureMessage(HttpResponseMessage responseMessage)

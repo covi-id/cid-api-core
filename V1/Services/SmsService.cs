@@ -74,12 +74,10 @@ namespace CoviIDApiCore.V1.Services
 
             var bitlyResponse = await _bitlyBroker.ShortenRequest(payload);
 
-            var response = JsonConvert.DeserializeObject<BitlyResponse>(bitlyResponse);
-
-            return response.Link;
+            return bitlyResponse.Link;
         }
 
-        private ClickatellTemplate ConstructWelcomeMessage(string mobileNumber, string organisation, string url)
+        private static ClickatellTemplate ConstructWelcomeMessage(string mobileNumber, string organisation, string url)
         {
             var recipient = new[]
             {
@@ -93,7 +91,7 @@ namespace CoviIDApiCore.V1.Services
             };
         }
 
-        private ClickatellTemplate ConstructOtpMessage(string mobileNumber, int code, int validityPeriod)
+        private static ClickatellTemplate ConstructOtpMessage(string mobileNumber, int code, int validityPeriod)
         {
             var recipient = new[]
             {

@@ -1,9 +1,10 @@
 ﻿using System.Threading.Tasks;
+using CoviIDApiCore.V1.DTOs.Bitly;
 
 namespace CoviIDApiCore.V1.Interfaces.Brokers
 {
     public interface IBitlyBroker
     {
-        Task<string> ShortenRequest(object payload);
+        Task<BitlyResponse> ShortenRequest(object payload);
     }
 }
