@@ -28,7 +28,8 @@ namespace CoviIDApiCore.V1.Services
             _bitlyBroker = bitlyBroker;
         }
 
-        public async Task<SmsResponse> SendMessage(string mobileNumber, SmsType smsType, string organisation = null, string url = null)
+        public async Task<SmsResponse> SendMessage(string mobileNumber, SmsType smsType, string organisation = null,
+            string url = null)
         {
             ClickatellTemplate message;
             var validityPeriod = 0;
@@ -44,10 +45,13 @@ namespace CoviIDApiCore.V1.Services
                     message = ConstructOtpMessage(mobileNumber, code, validityPeriod);
                     break;
                 case SmsType.Welcome:
-                    if(organisation == default)
+                    if (organisation == default)
                         throw new ValidationException(Messages.Val_Organisation);
 
                     message = ConstructWelcomeMessage(mobileNumber, organisation, await GetShortenedUrl(url));
+                    break;
+                case SmsType.UpdateBalance:
+                    message = ConstructUpdateBalanceMessage(mobileNumber);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(smsType), smsType, null);
@@ -64,7 +68,7 @@ namespace CoviIDApiCore.V1.Services
 
         private async Task<string> GetShortenedUrl<T>(T url)
         {
-            if(EqualityComparer<T>.Default.Equals(url, default))
+            if (EqualityComparer<T>.Default.Equals(url, default))
                 throw new ValidationException(Messages.Val_Url);
 
             var payload = new BitlyTemplate()
@@ -101,7 +105,22 @@ namespace CoviIDApiCore.V1.Services
             return new ClickatellTemplate()
             {
                 To = recipient,
-                Content = string.Format(DefinitionConstants.SmsStrings[SmsType.Otp], code.ToString(), validityPeriod.ToString())
+                Content = string.Format(DefinitionConstants.SmsStrings[SmsType.Otp], code.ToString(),
+                    validityPeriod.ToString())
+            };
+        }
+
+        private static ClickatellTemplate ConstructUpdateBalanceMessage(string mobileNumber)
+        {
+            var recipient = new[]
+            {
+                mobileNumber
+            };
+
+            return new ClickatellTemplate()
+            {
+                To = recipient,
+                Content = DefinitionConstants.SmsStrings[SmsType.Welcome]
             };
         }
     }
