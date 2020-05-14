@@ -68,10 +68,7 @@ namespace CoviIDApiCore.V1.Services
         {
             var otpReturn = await _otpService.GenerateAndSendOtpAsync(walletRequest.MobileNumber);
 
-            var mobileWallet = await _walletRepository.GetWalletByMobileNumberAndIndicator(walletRequest.MobileNumber);
-
-            if (mobileWallet != default)
-                return await UpdateMobileWallet(mobileWallet, otpReturn, walletRequest);
+            //TODO : Check for wallet created via mobile entry
 
             var wallet = new Wallet
             {

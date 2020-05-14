@@ -6,6 +6,5 @@ namespace CoviIDApiCore.V1.Interfaces.Repositories
 {
     public interface IWalletRepository: IBaseRepository<Wallet, Guid>
     {
-        Task<Wallet> GetWalletByMobileNumberAndIndicator(string mobileNumber);
     }
 }
