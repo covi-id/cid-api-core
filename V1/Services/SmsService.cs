@@ -1,15 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Threading.Tasks;
 using CoviIDApiCore.Exceptions;
 using CoviIDApiCore.V1.Constants;
 using CoviIDApiCore.V1.DTOs.Bitly;
 using CoviIDApiCore.V1.DTOs.Clickatell;
 using CoviIDApiCore.V1.DTOs.SMS;
+using CoviIDApiCore.V1.DTOs.System;
 using CoviIDApiCore.V1.Interfaces.Brokers;
 using Microsoft.Extensions.Configuration;
 
 using CoviIDApiCore.V1.Interfaces.Services;
+using Hangfire;
 using Newtonsoft.Json;
 using SmsType = CoviIDApiCore.V1.Constants.DefinitionConstants.SmsType;
 
@@ -56,6 +59,11 @@ namespace CoviIDApiCore.V1.Services
                 default:
                     throw new ArgumentOutOfRangeException(nameof(smsType), smsType, null);
             }
+
+            var balance = (CheckBalance()).Data as ClickatellResponse;
+
+            if(balance.Balance < 1)
+                    throw new ClickatellException(Messages.Clickatell_Balance);
 
             await _clickatellBroker.SendSms(message);
 
@@ -122,6 +130,20 @@ namespace CoviIDApiCore.V1.Services
                 To = recipient,
                 Content = DefinitionConstants.SmsStrings[SmsType.Welcome]
             };
+        }
+
+        public Response CheckBalance()
+        {
+
+        }
+
+        public Response CreateBalanceJob()
+        {
+            RecurringJob.AddOrUpdate(() =>
+                SendMessage(_configuration.GetValue<string>("PlatformSettings:BalanceNotificationNumber"), SmsType.UpdateBalance, null, null),
+                Cron.Daily);
+
+            return new Response(true, HttpStatusCode.Created);
         }
     }
 }

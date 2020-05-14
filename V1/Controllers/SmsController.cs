@@ -1,4 +1,8 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
+using CoviIDApiCore.V1.Interfaces.Services;
+using Hangfire;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CoviIDApiCore.V1.Controllers
@@ -7,12 +11,22 @@ namespace CoviIDApiCore.V1.Controllers
     [Route("api/sms")]
     public class SmsController : Controller
     {
-        public SmsController()
+        private readonly ISmsService _smsService;
+
+        public SmsController(ISmsService smsService)
         {
+            _smsService = smsService;
         }
 
         [HttpPost("balance_job")]
-        public async Task<IActionResult> BalanceJob()
+        public IActionResult BalanceJob()
+        {
+            return StatusCode(StatusCodes.Status200OK,
+                _smsService.CreateBalanceJob());
+        }
+
+        [HttpGet("balance")]
+        public async Task<IActionResult> CheckBalance()
         {
 
         }
