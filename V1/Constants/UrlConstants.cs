@@ -12,7 +12,8 @@ namespace CoviIDApiCore.V1.Constants
             { Routes.ClickatellSend, "/messages"},
             { Routes.ClickatellBalance, "/public-client/balance"},
             { Routes.Organisation, "/api/organisations" },
-            { Routes.Health, "/" }
+            { Routes.Health, "/" },
+            { Routes.ShortenUrl, "v4/shorten" }
         };
 
         public enum Routes
@@ -23,7 +24,8 @@ namespace CoviIDApiCore.V1.Constants
             ClickatellSend,
             ClickatellBalance,
             Organisation,
-            Health
+            Health,
+            ShortenUrl
         }
     }
 }
