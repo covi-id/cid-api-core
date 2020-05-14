@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using CoviIDApiCore.Exceptions;
 using CoviIDApiCore.V1.Constants;
+using CoviIDApiCore.V1.DTOs.Clickatell;
 using CoviIDApiCore.V1.Interfaces.Brokers;
 using Newtonsoft.Json;
 
@@ -26,14 +27,14 @@ namespace CoviIDApiCore.V1.Brokers
                 throw new ClickatellException(await response.Content.ReadAsStringAsync());
         }
 
-        public async Task<ClickatellBroker> GetBalance()
+        public async Task<ClickatellResponse> GetBalance()
         {
             var response = await _httpClient.GetAsync(_balancePartialRoute);
 
             if(!response.IsSuccessStatusCode)
                 throw new ClickatellException(await response.Content.ReadAsStringAsync());
 
-            return JsonConvert.DeserializeObject<ClickatellBroker>(await response.Content.ReadAsStringAsync());
+            return JsonConvert.DeserializeObject<ClickatellResponse>(await response.Content.ReadAsStringAsync());
         }
     }
 }
