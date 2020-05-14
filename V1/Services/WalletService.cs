@@ -67,7 +67,7 @@ namespace CoviIDApiCore.V1.Services
             return response;
         }
 
-        public async Task<TokenResponse> CreateWalletAndOtp(CreateWalletRequest walletRequest, string sessionId = null)
+        public async Task<TokenResponse> CreateWalletAndOtp(CreateWalletRequest walletRequest)
         {
             Wallet wallet;
             // Not mobile entry
