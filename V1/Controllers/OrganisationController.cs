@@ -70,6 +70,7 @@ namespace CoviIDApiCore.V1.Controllers
             return StatusCode(StatusCodes.Status200OK,
                 await _organisationService.UpdateCountAsync(id, payload, ScanType.CheckOut));
         }
+        
         [HttpPost("organisations/{id}/denied")]
         public async Task<IActionResult> AccessDenied(string id, [FromBody] UpdateCountRequest payload)
         {
