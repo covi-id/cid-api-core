@@ -82,6 +82,11 @@ namespace CoviIDApiCore.V1.Services
                     Encrypted encrypted = attr as Encrypted;
                     if (encrypted != null && encrypted.serverManaged == serverManaged)
                     {
+                        //Don't encrypt null values
+                        var value = prop.GetValue(obj);
+                        if (value == null)
+                            continue;
+
                         encryptedProps.Add(prop);
                     }
                 }

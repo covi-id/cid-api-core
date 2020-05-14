@@ -2,6 +2,6 @@
 {
     public class SessionSettings
     {
-        public int ExpireInMinutes { get; set; }
+        public int ExpiresInMinutes { get; set; }
     }
 }

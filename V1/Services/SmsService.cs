@@ -22,7 +22,8 @@ namespace CoviIDApiCore.V1.Services
             _clickatellBroker = clickatellBroker;
         }
 
-        public async Task<SmsResponse> SendMessage(string mobileNumber, SmsType smsType, string organisation = null, DateTime expireAt = default)
+        // TODO : Split up into 2 methods
+        public async Task<SmsResponse> SendMessage(string mobileNumber, SmsType smsType, string organisation = null, DateTime expireAt = default, Guid sessionId = default)
         {
             ClickatellTemplate message;
             var validityPeriod = 0;
@@ -39,7 +40,9 @@ namespace CoviIDApiCore.V1.Services
 
                     break;
                 case SmsType.Welcome:
-                    var url = _configuration.GetValue<string>("CoviIDBaseUrl");
+                    // TODO : Shorten url with bitly
+                    var url = _configuration.GetValue<string>("WebsiteDomian");
+                    url = $"{url}/?sessionId={sessionId}";
 
                     message = ConstructWelcomeMessage(mobileNumber, organisation, url, expireAt);
                     break;

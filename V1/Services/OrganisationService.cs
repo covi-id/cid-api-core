@@ -134,11 +134,13 @@ namespace CoviIDApiCore.V1.Services
             };
             var wallet = await _walletService.CreateWallet(walletRequest);
 
-            var session = await _sessionService.CreateSession(payload.MobileNumber);
+            var session = await _sessionService.CreateSession(payload.MobileNumber, wallet);
 
             var organisation = await _organisationRepository.GetAsync(Guid.Parse(organisationId));
+            if (organisation == default)
+                throw new NotFoundException(Messages.Org_NotExists);
 
-            await _smsService.SendMessage(payload.MobileNumber, DefinitionConstants.SmsType.Welcome, organisation.Name, session.ExpireAt.Date);
+            await _smsService.SendMessage(payload.MobileNumber, DefinitionConstants.SmsType.Welcome, organisation.Name, session.ExpireAt, session.Id);
 
             var updateCounterRequest = new UpdateCountRequest
             {
