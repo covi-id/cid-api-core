@@ -25,10 +25,11 @@ namespace CoviIDApiCore.V1.Services
         private readonly IWalletService _walletService;
         private readonly ISessionService _sessionService;
         private readonly ISmsService _smsService;
+        private readonly ICryptoService _cryptoService;
 
         public OrganisationService(IOrganisationRepository organisationRepository, IOrganisationAccessLogRepository organisationAccessLogRepository,
             IEmailService emailService, IQRCodeService qrCodeService, IWalletRepository walletRepository, IWalletService walletService,
-            ISessionService sessionService, ISmsService smsService)
+            ISessionService sessionService, ISmsService smsService, ICryptoService cryptoService)
         {
             _organisationRepository = organisationRepository;
             _organisationAccessLogRepository = organisationAccessLogRepository;
@@ -38,6 +39,7 @@ namespace CoviIDApiCore.V1.Services
             _walletService = walletService;
             _sessionService = sessionService;
             _smsService = smsService;
+            _cryptoService = cryptoService;
         }
 
         public async Task CreateAsync(CreateOrganisationRequest payload)
@@ -154,6 +156,9 @@ namespace CoviIDApiCore.V1.Services
 
         public async Task<Response> MobileCheckOut(string organisationId, MobileUpdateCountRequest payload)
         {
+
+            _cryptoService.EncryptAsServer(payload.MobileNumber);
+
             var wallet = await _walletRepository.GetWallet(payload.MobileNumber);
             if (wallet == default)
                 throw new ValidationException(Messages.Wallet_NotFound);

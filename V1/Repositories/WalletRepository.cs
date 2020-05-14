@@ -20,7 +20,7 @@ namespace CoviIDApiCore.V1.Repositories
 
         public async Task<Wallet> GetWallet(string mobileNumber)
         {
-            var wallet = await _dbSet.SingleOrDefaultAsync(w => string.Equals(w.MobileNumber, mobileNumber, StringComparison.Ordinal));
+            var wallet = await _dbSet.FirstOrDefaultAsync(w => string.Equals(w.MobileNumber, mobileNumber, StringComparison.Ordinal));
             return wallet;
         }
 
