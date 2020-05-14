@@ -28,7 +28,8 @@ namespace CoviIDApiCore.V1.Services
             _bitlyBroker = bitlyBroker;
         }
 
-        public async Task<SmsResponse> SendMessage(string mobileNumber, SmsType smsType, string organisation = null, string url = null)
+        // TODO : Split up into 2 methods
+        public async Task<SmsResponse> SendMessage(string mobileNumber, SmsType smsType, string organisation = null, DateTime expireAt = default, Guid sessionId = default)
         {
             ClickatellTemplate message;
             var validityPeriod = 0;
@@ -44,10 +45,10 @@ namespace CoviIDApiCore.V1.Services
                     message = ConstructOtpMessage(mobileNumber, code, validityPeriod);
                     break;
                 case SmsType.Welcome:
-                    if(organisation == default)
-                        throw new ValidationException(Messages.Val_Organisation);
+                    var url = _configuration.GetValue<string>("WebsiteDomian");
+                    url = $"{url}/?sessionId={sessionId}";
 
-                    message = ConstructWelcomeMessage(mobileNumber, organisation, await GetShortenedUrl(url));
+                    message = ConstructWelcomeMessage(mobileNumber, organisation, await GetShortenedUrl(url), expireAt);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(smsType), smsType, null);
@@ -77,7 +78,7 @@ namespace CoviIDApiCore.V1.Services
             return bitlyResponse.Link;
         }
 
-        private static ClickatellTemplate ConstructWelcomeMessage(string mobileNumber, string organisation, string url)
+        private static ClickatellTemplate ConstructWelcomeMessage(string mobileNumber, string organisation, string url, DateTime expireAt)
         {
             var recipient = new[]
             {
@@ -87,7 +88,7 @@ namespace CoviIDApiCore.V1.Services
             return new ClickatellTemplate()
             {
                 To = recipient,
-                Content = string.Format(DefinitionConstants.SmsStrings[SmsType.Welcome], organisation, url)
+                Content = string.Format(DefinitionConstants.SmsStrings[SmsType.Welcome], organisation, url, expireAt)
             };
         }
 

@@ -64,17 +64,27 @@ namespace CoviIDApiCore.V1.Services
             return response;
         }
 
-        public async Task<TokenResponse> CreateWallet(CreateWalletRequest walletRequest)
+        public async Task<TokenResponse> CreateWalletAndOtp(CreateWalletRequest walletRequest)
         {
             var otpReturn = await _otpService.GenerateAndSendOtpAsync(walletRequest.MobileNumber);
 
+            var wallet = await CreateWallet(walletRequest);
+
+            return new TokenResponse
+            {
+                Token = _tokenService.GenerateToken(wallet.Id.ToString(), otpReturn)
+            };
+        }
+
+        public async Task<Wallet> CreateWallet(CreateWalletRequest walletRequest)
+        {
             //TODO : Check for wallet created via mobile entry
 
             var wallet = new Wallet
             {
                 CreatedAt = DateTime.UtcNow,
                 MobileNumber = walletRequest.MobileNumber,
-                MobileNumberReference = walletRequest.MobileNumberReference
+                MobileNumberReference = walletRequest?.MobileNumberReference
             };
 
             _cryptoService.EncryptAsServer(wallet);
@@ -82,11 +92,7 @@ namespace CoviIDApiCore.V1.Services
             await _walletRepository.AddAsync(wallet);
 
             await _walletRepository.SaveAsync();
-
-            return new TokenResponse
-            {
-                Token = _tokenService.GenerateToken(wallet.Id.ToString(), otpReturn)
-            };
+            return wallet;
         }
 
         private async Task<TokenResponse> UpdateMobileWallet(Wallet wallet, long otpReturn, CreateWalletRequest walletRequest)

@@ -8,6 +8,7 @@ using CoviIDApiCore.Models.Database;
 using CoviIDApiCore.V1.Constants;
 using CoviIDApiCore.V1.DTOs.Organisation;
 using CoviIDApiCore.V1.DTOs.System;
+using CoviIDApiCore.V1.DTOs.Wallet;
 using CoviIDApiCore.V1.Interfaces.Repositories;
 using CoviIDApiCore.V1.Interfaces.Services;
 using Newtonsoft.Json;
@@ -21,14 +22,22 @@ namespace CoviIDApiCore.V1.Services
         private readonly IEmailService _emailService;
         private readonly IQRCodeService _qrCodeService;
         private readonly IWalletRepository _walletRepository;
+        private readonly IWalletService _walletService;
+        private readonly ISessionService _sessionService;
+        private readonly ISmsService _smsService;
 
-        public OrganisationService(IOrganisationRepository organisationRepository, IOrganisationAccessLogRepository organisationAccessLogRepository, IEmailService emailService, IQRCodeService qrCodeService, IWalletRepository walletRepository)
+        public OrganisationService(IOrganisationRepository organisationRepository, IOrganisationAccessLogRepository organisationAccessLogRepository,
+            IEmailService emailService, IQRCodeService qrCodeService, IWalletRepository walletRepository, IWalletService walletService,
+            ISessionService sessionService, ISmsService smsService)
         {
             _organisationRepository = organisationRepository;
             _organisationAccessLogRepository = organisationAccessLogRepository;
             _emailService = emailService;
             _qrCodeService = qrCodeService;
             _walletRepository = walletRepository;
+            _walletService = walletService;
+            _sessionService = sessionService;
+            _smsService = smsService;
         }
 
         public async Task CreateAsync(CreateOrganisationRequest payload)
@@ -117,6 +126,33 @@ namespace CoviIDApiCore.V1.Services
                 HttpStatusCode.OK);
         }
 
+        public async Task<Response> MobileEntry(string organisationId, MobileEntryRequest payload)
+        {
+            var walletRequest = new CreateWalletRequest
+            {
+                MobileNumber = payload.MobileNumber
+            };
+            var wallet = await _walletService.CreateWallet(walletRequest);
+
+            var session = await _sessionService.CreateSession(payload.MobileNumber, wallet);
+
+            var organisation = await _organisationRepository.GetAsync(Guid.Parse(organisationId));
+            if (organisation == default)
+                throw new NotFoundException(Messages.Org_NotExists);
+
+            await _smsService.SendMessage(payload.MobileNumber, DefinitionConstants.SmsType.Welcome, organisation.Name, session.ExpireAt, session.Id);
+
+            var updateCounterRequest = new UpdateCountRequest
+            {
+                Latitude = payload.Latitude,
+                Longitude = payload.Longitude,
+                WalletId = wallet.Id.ToString()
+            };
+            var counterResponse = await UpdateCountAsync(organisationId, updateCounterRequest, ScanType.CheckIn);
+            return counterResponse;
+        }
+
+        #region Private Methods
         private int GetAccessLogBalance(List<OrganisationAccessLog> logs)
         {
             var checkIns = logs.Count(oal => oal.ScanType == ScanType.CheckIn);
@@ -144,5 +180,6 @@ namespace CoviIDApiCore.V1.Services
                 _qrCodeService.GenerateQRCode(organisation.Id.ToString()),
                 DefinitionConstants.EmailTemplates.OrganisationWelcome);
         }
+        #endregion
     }
 }

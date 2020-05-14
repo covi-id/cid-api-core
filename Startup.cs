@@ -28,6 +28,7 @@ using CoviIDApiCore.V1.Services;
 using Hangfire;
 using Hangfire.SqlServer;
 using Sentry;
+using Microsoft.CodeAnalysis.Operations;
 
 namespace CoviIDApiCore
 {
@@ -170,6 +171,7 @@ namespace CoviIDApiCore
             services.AddScoped<IWalletDetailService, WalletDetailService>();
             services.AddSingleton<ITokenService, TokenService>();
             services.AddTransient<ISmsService, SmsService>();
+            services.AddTransient<ISessionService, SessionService>();
             #endregion
 
             #region Repository Layer
@@ -180,6 +182,7 @@ namespace CoviIDApiCore
             services.AddScoped<ICovidTestRepository, CovidTestRepository>();
             services.AddScoped<IWalletDetailRepository, WalletDetailRepository>();
             services.AddScoped<IWalletTestResultRepository, WalletTestResultRepository>();
+            services.AddScoped<ISessionRepository, SessionRepository>();
             #endregion
 
             #region Broker Layer
@@ -312,6 +315,10 @@ namespace CoviIDApiCore
             var awsS3BucketCredentials = new AwsS3BucketCredentials();
             _configuration.Bind(nameof(AwsS3BucketCredentials), awsS3BucketCredentials);
             services.AddSingleton(awsS3BucketCredentials);
+
+            var sessionSettings = new SessionSettings();
+            _configuration.Bind(nameof(SessionSettings), sessionSettings);
+            services.AddSingleton(sessionSettings);
         }
 
         #endregion Private Configuration Methods
