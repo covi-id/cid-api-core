@@ -23,18 +23,24 @@ namespace CoviIDApiCore.V1.Brokers
         {
             var response = await _httpClient.PostAsJsonAsync(_sendPartialRoute, payload);
 
-            if (!response.IsSuccessStatusCode)
-                throw new ClickatellException(await response.Content.ReadAsStringAsync());
+            await ValidateResponse(response);
         }
 
         public async Task<ClickatellResponse> GetBalance()
         {
             var response = await _httpClient.GetAsync(_balancePartialRoute);
 
-            if(!response.IsSuccessStatusCode)
-                throw new ClickatellException(await response.Content.ReadAsStringAsync());
+            return JsonConvert.DeserializeObject<ClickatellResponse>(await (await ValidateResponse(response)).Content.ReadAsStringAsync());
+        }
 
-            return JsonConvert.DeserializeObject<ClickatellResponse>(await response.Content.ReadAsStringAsync());
+        private async Task<HttpResponseMessage> ValidateResponse(HttpResponseMessage response)
+        {
+            if (response.IsSuccessStatusCode)
+                return response;
+
+            var message = await response.Content.ReadAsStringAsync();
+
+            throw new ClickatellException($"{message} Broker status code: {response.StatusCode}");
         }
     }
 }
