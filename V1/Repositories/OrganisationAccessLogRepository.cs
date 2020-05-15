@@ -28,14 +28,6 @@ namespace CoviIDApiCore.V1.Repositories
                 .ToListAsync();
         }
 
-        public async Task<List<OrganisationAccessLog>> GetCheckedInListByWalletId(List<Guid> walletIds)
-        {
-            return await _dbSet
-                .Where(oal => walletIds.Contains(oal.Wallet.Id))
-                .Where(oal => oal.ScanType == ScanType.CheckIn)
-                .ToListAsync();
-        }
-
         public async Task<List<OrganisationAccessLog>> GetListByWalletId(List<Guid> walletIds)
         {
             return await _dbSet
