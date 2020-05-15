@@ -28,7 +28,7 @@ namespace CoviIDApiCore.V1.Repositories
                 .ToListAsync();
         }
 
-        public async Task<List<OrganisationAccessLog>> GetListByWalletId(List<Guid> walletIds)
+        public async Task<List<OrganisationAccessLog>> GetListByWalletIds(List<Guid> walletIds)
         {
             return await _dbSet
                 .Where(oal => walletIds.Contains(oal.Wallet.Id))

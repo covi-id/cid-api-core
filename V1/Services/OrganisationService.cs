@@ -212,13 +212,13 @@ namespace CoviIDApiCore.V1.Services
         #region Private Methods
         private async Task<string> GetCheckoutWalletId(string mobileNumber)
         {
-            var wallets = await _walletRepository.GetByEncryptedMobileNumber(mobileNumber);
+            var wallets = await _walletRepository.GetListByEncryptedMobileNumber(mobileNumber);
 
             if (wallets == default)
                 throw new ValidationException(Messages.Wallet_NotFound);
 
             var organisationAccessLogs = await _organisationAccessLogRepository
-                .GetListByWalletId(wallets.Select(w => w.Id).ToList());
+                .GetListByWalletIds(wallets.Select(w => w.Id).ToList());
 
             organisationAccessLogs.RemoveAll(t =>
                 organisationAccessLogs
@@ -227,9 +227,6 @@ namespace CoviIDApiCore.V1.Services
                 .Distinct()
                 .ToList()
                 .Contains(t.Wallet.Id));
-
-            if(organisationAccessLogs == null)
-                throw new ValidationException(Messages.Org_AllWalletsCheckedOut);
 
             var log = organisationAccessLogs.FirstOrDefault();
 
