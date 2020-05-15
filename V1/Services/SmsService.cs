@@ -143,7 +143,7 @@ namespace CoviIDApiCore.V1.Services
         public Response CreateBalanceJob()
         {
             RecurringJob.AddOrUpdate("recurring-balance-check",() => VerifyBalance(),
-                Cron.Daily);
+                Cron.Hourly);
 
             return new Response(true, HttpStatusCode.Created);
         }
