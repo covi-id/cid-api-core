@@ -12,5 +12,6 @@ namespace CoviIDApiCore.V1.Interfaces.Services
         Response CreateBalanceJob();
         Task SendBalanceSms();
         Task<Response> VerifyBalance();
+        Response DeleteBalanceJob();
     }
 }

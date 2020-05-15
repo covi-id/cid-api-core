@@ -12,6 +12,7 @@ using CoviIDApiCore.V1.Interfaces.Brokers;
 using Microsoft.Extensions.Configuration;
 using CoviIDApiCore.V1.Interfaces.Services;
 using Hangfire;
+using Hangfire.Storage;
 using SmsType = CoviIDApiCore.V1.Constants.DefinitionConstants.SmsType;
 
 namespace CoviIDApiCore.V1.Services
@@ -141,8 +142,15 @@ namespace CoviIDApiCore.V1.Services
 
         public Response CreateBalanceJob()
         {
-            RecurringJob.AddOrUpdate(() => VerifyBalance(),
+            RecurringJob.AddOrUpdate("recurring-balance-check",() => VerifyBalance(),
                 Cron.Daily);
+
+            return new Response(true, HttpStatusCode.Created);
+        }
+
+        public Response DeleteBalanceJob()
+        {
+            RecurringJob.RemoveIfExists("recurring-balance-check");
 
             return new Response(true, HttpStatusCode.Created);
         }

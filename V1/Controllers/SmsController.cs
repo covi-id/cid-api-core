@@ -22,10 +22,17 @@ namespace CoviIDApiCore.V1.Controllers
         }
 
         [HttpPost("balance_job")]
-        public IActionResult BalanceJob()
+        public IActionResult CreateBalanceJob()
         {
             return StatusCode(StatusCodes.Status200OK,
                 _smsService.CreateBalanceJob());
+        }
+
+        [HttpDelete("balance_job")]
+        public IActionResult DeleteBalanceJob()
+        {
+            return StatusCode(StatusCodes.Status200OK,
+                _smsService.DeleteBalanceJob());
         }
 
         [HttpGet("balance")]
