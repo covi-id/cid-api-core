@@ -19,7 +19,6 @@ using CoviIDApiCore.V1.Brokers;
 using System.Net.Http.Headers;
 using AspNetCoreRateLimit;
 using CoviIDApiCore.Data;
-using CoviIDApiCore.V1.Configuration;
 using CoviIDApiCore.V1.Interfaces.Brokers;
 using CoviIDApiCore.V1.Interfaces.Repositories;
 using CoviIDApiCore.V1.Interfaces.Services;
@@ -28,7 +27,6 @@ using CoviIDApiCore.V1.Services;
 using Hangfire;
 using Hangfire.SqlServer;
 using Sentry;
-using Microsoft.CodeAnalysis.Operations;
 
 namespace CoviIDApiCore
 {
