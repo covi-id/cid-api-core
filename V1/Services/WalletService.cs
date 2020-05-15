@@ -92,7 +92,7 @@ namespace CoviIDApiCore.V1.Services
             };
         }
 
-        public async Task<Wallet> CreateWallet(CreateWalletRequest walletRequest)
+        public async Task<Wallet> CreateWallet(CreateWalletRequest walletRequest, bool mobile = false)
         {
             var wallet = new Wallet
             {
@@ -101,7 +101,7 @@ namespace CoviIDApiCore.V1.Services
                 MobileNumberReference = walletRequest?.MobileNumberReference
             };
 
-            _cryptoService.EncryptAsServer(wallet);
+            _cryptoService.EncryptAsServer(wallet, mobile);
 
             await _walletRepository.AddAsync(wallet);
 

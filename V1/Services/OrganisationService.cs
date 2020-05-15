@@ -171,7 +171,7 @@ namespace CoviIDApiCore.V1.Services
                 MobileNumber = payload.MobileNumber
             };
 
-            var wallet = await _walletService.CreateWallet(walletRequest);
+            var wallet = await _walletService.CreateWallet(walletRequest, true);
 
             var session = await _sessionService.CreateSession(payload.MobileNumber, wallet);
 
@@ -195,7 +195,7 @@ namespace CoviIDApiCore.V1.Services
 
         public async Task<Response> MobileCheckOut(string organisationId, MobileUpdateCountRequest payload)
         {
-            _cryptoService.EncryptAsServer(payload);
+            _cryptoService.EncryptAsServer(payload, true);
 
             var wallet = await _walletRepository.GetByEncryptedMobileNumber(payload.MobileNumber);
             if (wallet == default)
