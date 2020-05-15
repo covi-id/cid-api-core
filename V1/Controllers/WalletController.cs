@@ -22,9 +22,19 @@ namespace CoviIDApiCore.V1.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateWallet(CreateWalletRequest walletParameters)
+        [Route("{sessionId}")]
+        public async Task<IActionResult> CreateWalletWithSession([FromBody] CreateWalletRequest walletParameters, string sessionId)
         {
-            var response = await _walletService.CreateWallet(walletParameters);
+            var response = await _walletService.CreateWalletAndOtp(walletParameters, sessionId);
+
+            return Ok(new Response(response, HttpStatusCode.OK));
+        }
+
+        [HttpPost]
+        [Route("")]
+        public async Task<IActionResult> CreateWallet([FromBody] CreateWalletRequest walletParameters)
+        {
+            var response = await _walletService.CreateWalletAndOtp(walletParameters, null);
 
             return Ok(new Response(response, HttpStatusCode.OK));
         }

@@ -49,7 +49,7 @@ namespace CoviIDApiCore.V1.Brokers
             return fileName;
         }
 
-        public async Task<string> GetImage(string fileName)
+        public string GetImage(string fileName)
         {
             var preSignedUrl = new GetPreSignedUrlRequest
             {

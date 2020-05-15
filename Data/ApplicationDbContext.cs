@@ -16,6 +16,7 @@ namespace CoviIDApiCore.Data
         public DbSet<CovidTest> CovidTests { get; set; }
         public DbSet<WalletTestResult> WalletTestResults { get; set; }
         public DbSet<WalletDetail> WalletDetails { get; set; }
+        public DbSet<Session> Sessions { get; set; }
 
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)

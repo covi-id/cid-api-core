@@ -24,9 +24,10 @@ namespace CoviIDApiCore.V1.Services
         private readonly ICryptoService _cryptoService;
         private readonly IAmazonS3Broker _amazonS3Broker;
         private readonly ITokenService _tokenService;
+        private readonly ISmsService _smsService;
 
         public OtpService(IOtpTokenRepository tokenRepository, IConfiguration configuration, IClickatellBroker clickatellBroker,
-                    IWalletRepository walletRepository, ITestResultService testResultService, IWalletDetailService walletDetailService, ICryptoService cryptoService, ITokenService tokenService, IAmazonS3Broker amazonS3Broker)
+                    IWalletRepository walletRepository, ITestResultService testResultService, IWalletDetailService walletDetailService, ICryptoService cryptoService, ITokenService tokenService, IAmazonS3Broker amazonS3Broker, ISmsService smsService)
         {
             _otpTokenRepository = tokenRepository;
             _configuration = configuration;
@@ -37,19 +38,14 @@ namespace CoviIDApiCore.V1.Services
             _cryptoService = cryptoService;
             _tokenService = tokenService;
             _amazonS3Broker = amazonS3Broker;
+            _smsService = smsService;
         }
 
         public async Task<long> GenerateAndSendOtpAsync(string mobileNumber)
         {
-            var expiryTime = _configuration.GetValue<int>("OTPSettings:ValidityPeriod");
+            var sms = await _smsService.SendOtpSms(mobileNumber);
 
-            var code = Utilities.Helpers.GenerateRandom4DigitNumber();
-
-            var message = ConstructMessage(mobileNumber, code, expiryTime);
-
-            await _clickatellBroker.SendSms(message);
-
-            return await SaveOtpAsync(mobileNumber, code, expiryTime);
+            return await SaveOtpAsync(mobileNumber, sms.Code, sms.ValidityPeriod);
         }
 
         private async Task<bool> ValidateOtpCreationAsync(string mobileNumberReference)
@@ -83,20 +79,6 @@ namespace CoviIDApiCore.V1.Services
             return new TokenResponse()
             {
                 Token = _tokenService.GenerateToken(wallet.Id.ToString(), otp)
-            };
-        }
-
-        private ClickatellTemplate ConstructMessage(string mobileNumber, int code, int validityPeriod)
-        {
-            var recipient = new[]
-            {
-                mobileNumber
-            };
-
-            return new ClickatellTemplate()
-            {
-                To = recipient,
-                Content = string.Format(_configuration.GetValue<string>("OTPSettings:Message"), code.ToString(), validityPeriod.ToString())
             };
         }
 

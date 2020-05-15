@@ -8,5 +8,6 @@ namespace CoviIDApiCore.V1.Interfaces.Repositories
     public interface IOrganisationAccessLogRepository : IBaseRepository<OrganisationAccessLog, Guid>
     {
         Task<List<OrganisationAccessLog>> GetByCurrentDayByOrganisation(Organisation organisation);
+        Task<List<OrganisationAccessLog>> GetListByWalletIds(List<Guid> walletIds);
     }
 }
