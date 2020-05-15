@@ -85,5 +85,9 @@
         #region Session
         public const string Ses_Invalid = "Session is invalid";
         #endregion
+
+        #region Clickatell
+        public static readonly string Clickatell_Balance = $"Clickatell balance expired.";
+        #endregion
     }
 }
