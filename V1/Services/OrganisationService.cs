@@ -197,21 +197,53 @@ namespace CoviIDApiCore.V1.Services
         {
             _cryptoService.EncryptAsServer(payload, true);
 
-            var wallet = await _walletRepository.GetByEncryptedMobileNumber(payload.MobileNumber);
-            if (wallet == default)
-                throw new ValidationException(Messages.Wallet_NotFound);
-
             var updateCounterRequest = new UpdateCountRequest
             {
                 Latitude = payload.Latitude,
                 Longitude = payload.Longitude,
-                WalletId = wallet.Id.ToString()
+                WalletId = await GetCheckoutWalletId(payload.MobileNumber)
             };
+
             var counterResponse = await UpdateCountAsync(organisationId, updateCounterRequest, ScanType.CheckOut, true);
+
             return counterResponse;
         }
 
         #region Private Methods
+        private async Task<string> GetCheckoutWalletId(string mobileNumber)
+        {
+            var wallets = await _walletRepository.GetByEncryptedMobileNumber(mobileNumber);
+
+            if (wallets == default)
+                throw new ValidationException(Messages.Wallet_NotFound);
+
+            var organisationAccessLogs = await _organisationAccessLogRepository
+                .GetListByWalletId(wallets.Select(w => w.Id).ToList());
+
+            organisationAccessLogs.RemoveAll(t =>
+                organisationAccessLogs
+                .Where(oal => oal.ScanType == ScanType.CheckOut)
+                .Select(oal => oal.Wallet.Id)
+                .Distinct()
+                .ToList()
+                .Contains(t.Wallet.Id));
+
+            if(organisationAccessLogs == null)
+                throw new ValidationException(Messages.Org_AllWalletsCheckedOut);
+
+            var log = organisationAccessLogs.FirstOrDefault();
+
+            if(log == null)
+                throw new NotFoundException();
+
+            var wallet = wallets.FirstOrDefault(w => Equals(w.Id, log.Wallet.Id));
+
+            if(wallet == null)
+                throw new NotFoundException(Messages.Wallet_NotFound);
+
+            return wallet.Id.ToString();
+        }
+
         private int GetAccessLogBalance(List<OrganisationAccessLog> logs)
         {
             var checkIns = logs.Count(oal => oal.ScanType == ScanType.CheckIn);
