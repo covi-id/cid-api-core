@@ -10,10 +10,8 @@ using CoviIDApiCore.V1.DTOs.SMS;
 using CoviIDApiCore.V1.DTOs.System;
 using CoviIDApiCore.V1.Interfaces.Brokers;
 using Microsoft.Extensions.Configuration;
-
 using CoviIDApiCore.V1.Interfaces.Services;
 using Hangfire;
-using Newtonsoft.Json;
 using SmsType = CoviIDApiCore.V1.Constants.DefinitionConstants.SmsType;
 
 namespace CoviIDApiCore.V1.Services
@@ -31,36 +29,17 @@ namespace CoviIDApiCore.V1.Services
             _bitlyBroker = bitlyBroker;
         }
 
-        public async Task<SmsResponse> SendMessage(string mobileNumber, SmsType smsType, string organisation = null,
+        public async Task<SmsResponse> SendOtpSms(string mobileNumber)
             string url = null)
         {
-            ClickatellTemplate message;
-            var validityPeriod = 0;
-            var code = 0;
+            var validityPeriod = _configuration.GetValue<int>("OTPSettings:ValidityPeriod");
 
-            switch (smsType)
-            {
-                case SmsType.Otp:
-                    validityPeriod = _configuration.GetValue<int>("OTPSettings:ValidityPeriod");
-
-                    code = Utilities.Helpers.GenerateRandom4DigitNumber();
-
-                    message = ConstructOtpMessage(mobileNumber, code, validityPeriod);
-                    break;
-                case SmsType.Welcome:
-                    if (organisation == default)
-                        throw new ValidationException(Messages.Val_Organisation);
-
-                    message = ConstructWelcomeMessage(mobileNumber, organisation, await GetShortenedUrl(url));
-                    break;
+            var code = Utilities.Helpers.GenerateRandom4DigitNumber();
                 case SmsType.UpdateBalance:
                     message = ConstructUpdateBalanceMessage(mobileNumber);
                     break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(smsType), smsType, null);
-            }
 
-            var balance = (CheckBalance()).Data as ClickatellResponse;
+            var message = ConstructOtpMessage(mobileNumber, code, validityPeriod);
 
             if(balance.Balance < 1)
                     throw new ClickatellException(Messages.Clickatell_Balance);
@@ -72,6 +51,15 @@ namespace CoviIDApiCore.V1.Services
                 Code = code,
                 ValidityPeriod = validityPeriod
             };
+        }
+
+        public async Task SendWelcomeSms(string mobileNumber, string organisationName, DateTime expireAt, Guid sessionId)
+        {
+            var url = $"{_configuration.GetValue<string>("WebsiteDomain")}{UrlConstants.PartialRoutes[UrlConstants.Routes.WebCreateWallet]}?sessionId={sessionId}";
+
+            var message = ConstructWelcomeMessage(mobileNumber, organisationName, await GetShortenedUrl(url), expireAt);
+
+            await _clickatellBroker.SendSms(message);
         }
 
         private async Task<string> GetShortenedUrl<T>(T url)
@@ -89,7 +77,7 @@ namespace CoviIDApiCore.V1.Services
             return bitlyResponse.Link;
         }
 
-        private static ClickatellTemplate ConstructWelcomeMessage(string mobileNumber, string organisation, string url)
+        private static ClickatellTemplate ConstructWelcomeMessage(string mobileNumber, string organisation, string url, DateTime expireAt)
         {
             var recipient = new[]
             {
@@ -99,7 +87,7 @@ namespace CoviIDApiCore.V1.Services
             return new ClickatellTemplate()
             {
                 To = recipient,
-                Content = string.Format(DefinitionConstants.SmsStrings[SmsType.Welcome], organisation, url)
+                Content = string.Format(DefinitionConstants.SmsStrings[SmsType.Welcome], organisation, url, expireAt)
             };
         }
 

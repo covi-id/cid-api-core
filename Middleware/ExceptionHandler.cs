@@ -38,9 +38,9 @@ namespace CoviIDApiCore.Middleware
             {
                 await HandleValidationException(context, e);
             }
-            catch (NotFoundException)
+            catch (NotFoundException e)
             {
-                await HandleNotFoundException(context);
+                await HandleNotFoundException(context, e);
             }
             catch (StreetCredBrokerException e)
             {
@@ -90,7 +90,7 @@ namespace CoviIDApiCore.Middleware
             return ReturnResult(context, rsp);
         }
 
-        private static Task HandleNotFoundException(HttpContext context)
+        private static Task HandleNotFoundException(HttpContext context, Exception e)
         {
             var code = HttpStatusCode.NotFound;
 

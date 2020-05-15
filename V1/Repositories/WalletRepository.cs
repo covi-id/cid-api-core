@@ -18,5 +18,13 @@ namespace CoviIDApiCore.V1.Repositories
             _context = context;
             _dbSet = _context.Wallets;
         }
+
+        public async Task<Wallet> GetByEncryptedMobileNumber(string encryptedMobileNumber)
+        {
+            return await _dbSet
+                .Where(w => string.Equals(w.MobileNumber, encryptedMobileNumber))
+                .Where(w => w.MobileNumberReference == default)
+                .FirstOrDefaultAsync();
+        }
     }
 }

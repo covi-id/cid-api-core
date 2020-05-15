@@ -13,7 +13,9 @@ namespace CoviIDApiCore.V1.Constants
             { Routes.ClickatellBalance, "/public-client/balance"},
             { Routes.Organisation, "/api/organisations" },
             { Routes.Health, "/" },
-            { Routes.ShortenUrl, "v4/shorten" }
+            { Routes.ShortenUrl, "v4/shorten" },
+            { Routes.WebCreateWallet, "create_wallet/details" }
+
         };
 
         public enum Routes
@@ -25,7 +27,8 @@ namespace CoviIDApiCore.V1.Constants
             ClickatellBalance,
             Organisation,
             Health,
-            ShortenUrl
+            ShortenUrl,
+            WebCreateWallet
         }
     }
 }

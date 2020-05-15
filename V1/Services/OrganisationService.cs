@@ -8,6 +8,7 @@ using CoviIDApiCore.Models.Database;
 using CoviIDApiCore.V1.Constants;
 using CoviIDApiCore.V1.DTOs.Organisation;
 using CoviIDApiCore.V1.DTOs.System;
+using CoviIDApiCore.V1.DTOs.Wallet;
 using CoviIDApiCore.V1.Interfaces.Repositories;
 using CoviIDApiCore.V1.Interfaces.Services;
 using Newtonsoft.Json;
@@ -21,14 +22,24 @@ namespace CoviIDApiCore.V1.Services
         private readonly IEmailService _emailService;
         private readonly IQRCodeService _qrCodeService;
         private readonly IWalletRepository _walletRepository;
+        private readonly IWalletService _walletService;
+        private readonly ISessionService _sessionService;
+        private readonly ISmsService _smsService;
+        private readonly ICryptoService _cryptoService;
 
-        public OrganisationService(IOrganisationRepository organisationRepository, IOrganisationAccessLogRepository organisationAccessLogRepository, IEmailService emailService, IQRCodeService qrCodeService, IWalletRepository walletRepository)
+        public OrganisationService(IOrganisationRepository organisationRepository, IOrganisationAccessLogRepository organisationAccessLogRepository,
+            IEmailService emailService, IQRCodeService qrCodeService, IWalletRepository walletRepository, IWalletService walletService,
+            ISessionService sessionService, ISmsService smsService, ICryptoService cryptoService)
         {
             _organisationRepository = organisationRepository;
             _organisationAccessLogRepository = organisationAccessLogRepository;
             _emailService = emailService;
             _qrCodeService = qrCodeService;
             _walletRepository = walletRepository;
+            _walletService = walletService;
+            _sessionService = sessionService;
+            _smsService = smsService;
+            _cryptoService = cryptoService;
         }
 
         public async Task CreateAsync(CreateOrganisationRequest payload)
@@ -75,7 +86,7 @@ namespace CoviIDApiCore.V1.Services
             return new Response(new OrganisationDTO(organisation, orgCounter, totalScans, GetAccessLogBalance(accessLogs)), HttpStatusCode.OK);
         }
 
-        public async Task<Response> UpdateCountAsync(string id, UpdateCountRequest payload, ScanType scanType)
+        public async Task<Response> UpdateCountAsync(string id, UpdateCountRequest payload, ScanType scanType, bool mobile = false)
         {
             Wallet wallet = null;
 
@@ -92,6 +103,26 @@ namespace CoviIDApiCore.V1.Services
             if (organisation == default)
                 throw new NotFoundException(Messages.Org_NotExists);
 
+            await ValidateScan(organisation.AccessLogs.ToList(), scanType, wallet, mobile);
+
+            await UpdateLogs(wallet, organisation, scanType);
+
+            var logs = organisation.AccessLogs
+                .Where(oal => oal.CreatedAt.Date.Equals(DateTime.UtcNow.Date))
+                .ToList();
+
+            return new Response(
+                new UpdateCountResponse()
+                {
+                    Balance = logs.Count == 0 ? 0 : GetAccessLogBalance(logs),
+                    Total = logs.Count == 0 ? 0 : GetAccessLogTotal(logs)
+                },
+                true,
+                HttpStatusCode.OK);
+        }
+
+        private async Task UpdateLogs(Wallet wallet, Organisation organisation, ScanType scanType)
+        {
             var newCount = new OrganisationAccessLog()
             {
                 Wallet = wallet,
@@ -103,26 +134,95 @@ namespace CoviIDApiCore.V1.Services
             await _organisationAccessLogRepository.AddAsync(newCount);
 
             await _organisationAccessLogRepository.SaveAsync();
-
-            var logs = organisation.AccessLogs
-                .Where(oal => oal.CreatedAt.Date.Equals(DateTime.UtcNow.Date))
-                .ToList();
-
-            return new Response(
-                new UpdateCountResponse()
-                {
-                    Balance = logs.Count == 0 ? 0 : GetAccessLogBalance(logs)
-                },
-                true,
-                HttpStatusCode.OK);
         }
 
+        private async Task ValidateScan(List<OrganisationAccessLog> logs, ScanType scanType, Wallet wallet, bool mobile = false)
+        {
+            if (wallet != default && !mobile)
+            {
+                var userLogs = logs
+                    .Where(l => l.Wallet == wallet && l.CreatedAt.Date == DateTime.Now.Date)
+                    .OrderByDescending(l => l.CreatedAt)
+                    .ToList();
+
+                if(!userLogs.Any() && scanType == ScanType.CheckOut)
+                    throw new ValidationException(Messages.Org_UserNotScannedIn);
+
+                if (userLogs.FirstOrDefault()?.ScanType == ScanType.CheckIn && scanType == ScanType.CheckIn)
+                    await UpdateLogs(wallet, userLogs.FirstOrDefault()?.Organisation, ScanType.CheckOut);
+
+                if(!userLogs.Any(l => l.ScanType == ScanType.CheckIn) && scanType == ScanType.CheckOut)
+                    throw new ValidationException(Messages.Org_UserNotScannedIn);
+
+                if(userLogs.FirstOrDefault()?.ScanType == ScanType.CheckOut && scanType == ScanType.CheckOut)
+                    throw new ValidationException(Messages.Org_UserScannedOut);
+            }
+
+            var balance = GetAccessLogBalance(logs);
+
+            if(balance < 1 && scanType == ScanType.CheckOut)
+                throw new ValidationException(Messages.Org_NegBalance);
+        }
+
+        public async Task<Response> MobileCheckIn(string organisationId, MobileUpdateCountRequest payload)
+        {
+            var walletRequest = new CreateWalletRequest
+            {
+                MobileNumber = payload.MobileNumber
+            };
+
+            var wallet = await _walletService.CreateWallet(walletRequest, true);
+
+            var session = await _sessionService.CreateSession(payload.MobileNumber, wallet);
+
+            var organisation = await _organisationRepository.GetAsync(Guid.Parse(organisationId));
+            if (organisation == default)
+                throw new NotFoundException(Messages.Org_NotExists);
+
+            await _smsService.SendWelcomeSms(payload.MobileNumber, organisation.Name, session.ExpireAt, session.Id);
+
+            var updateCounterRequest = new UpdateCountRequest
+            {
+                Latitude = payload.Latitude,
+                Longitude = payload.Longitude,
+                WalletId = wallet.Id.ToString()
+            };
+
+            var counterResponse = await UpdateCountAsync(organisationId, updateCounterRequest, ScanType.CheckIn, true);
+
+            return counterResponse;
+        }
+
+        public async Task<Response> MobileCheckOut(string organisationId, MobileUpdateCountRequest payload)
+        {
+            _cryptoService.EncryptAsServer(payload, true);
+
+            var wallet = await _walletRepository.GetByEncryptedMobileNumber(payload.MobileNumber);
+            if (wallet == default)
+                throw new ValidationException(Messages.Wallet_NotFound);
+
+            var updateCounterRequest = new UpdateCountRequest
+            {
+                Latitude = payload.Latitude,
+                Longitude = payload.Longitude,
+                WalletId = wallet.Id.ToString()
+            };
+            var counterResponse = await UpdateCountAsync(organisationId, updateCounterRequest, ScanType.CheckOut, true);
+            return counterResponse;
+        }
+
+        #region Private Methods
         private int GetAccessLogBalance(List<OrganisationAccessLog> logs)
         {
             var checkIns = logs.Count(oal => oal.ScanType == ScanType.CheckIn);
             var checkOuts = logs.Count(oal => oal.ScanType == ScanType.CheckOut);
 
-            return checkIns - checkOuts; //TODO: Maybe improve this?
+            return checkIns - checkOuts;
+        }
+
+        private int GetAccessLogTotal(List<OrganisationAccessLog> logs)
+        {
+            return logs.Count(oal => oal.ScanType == ScanType.CheckIn);
         }
 
         private async Task NotifyOrganisation(string companyName, CreateOrganisationRequest payload, Organisation organisation)
@@ -144,5 +244,6 @@ namespace CoviIDApiCore.V1.Services
                 _qrCodeService.GenerateQRCode(organisation.Id.ToString()),
                 DefinitionConstants.EmailTemplates.OrganisationWelcome);
         }
+        #endregion
     }
 }
