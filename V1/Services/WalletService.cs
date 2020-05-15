@@ -10,7 +10,6 @@ using CoviIDApiCore.Exceptions;
 using CoviIDApiCore.V1.Constants;
 using CoviIDApiCore.V1.DTOs.WalletTestResult;
 using CoviIDApiCore.V1.Interfaces.Brokers;
-using Microsoft.AspNetCore.Http;
 
 namespace CoviIDApiCore.V1.Services
 {
@@ -70,22 +69,22 @@ namespace CoviIDApiCore.V1.Services
         public async Task<TokenResponse> CreateWalletAndOtp(CreateWalletRequest walletRequest, string sessionId)
         {
             Wallet wallet;
-            // Not mobile entry
+
             if (sessionId == null)
-            {
                 wallet = await CreateWallet(walletRequest);
-            }
-            // Mobile entry
             else
             {
                 wallet = await GetWallet(sessionId);
+
+                _cryptoService.DecryptAsServer(wallet);
+
                 wallet.MobileNumberReference = walletRequest.MobileNumberReference;
                 wallet.MobileNumber = wallet.MobileNumber;
+
                 await UpdateWallet(wallet);
             }
 
             var otpId = await _otpService.GenerateAndSendOtpAsync(walletRequest.MobileNumber);
-
 
             return new TokenResponse
             {
@@ -107,12 +106,17 @@ namespace CoviIDApiCore.V1.Services
             await _walletRepository.AddAsync(wallet);
 
             await _walletRepository.SaveAsync();
+
             return wallet;
         }
         private async Task<Wallet> GetWallet(string sessionId)
         {
             var session = await _sessionService.GetAndUseSession(sessionId);
+
             var wallet = await _walletRepository.GetAsync(session.Wallet.Id);
+
+            if(wallet == default)
+                throw new NotFoundException(Messages.Wallet_NotFound);
 
             return wallet;
         }

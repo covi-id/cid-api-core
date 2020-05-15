@@ -86,7 +86,7 @@ namespace CoviIDApiCore.V1.Services
             return new Response(new OrganisationDTO(organisation, orgCounter, totalScans, GetAccessLogBalance(accessLogs)), HttpStatusCode.OK);
         }
 
-        public async Task<Response> UpdateCountAsync(string id, UpdateCountRequest payload, ScanType scanType)
+        public async Task<Response> UpdateCountAsync(string id, UpdateCountRequest payload, ScanType scanType, bool mobile = false)
         {
             Wallet wallet = null;
 
@@ -103,6 +103,26 @@ namespace CoviIDApiCore.V1.Services
             if (organisation == default)
                 throw new NotFoundException(Messages.Org_NotExists);
 
+            await ValidateScan(organisation.AccessLogs.ToList(), scanType, wallet, mobile);
+
+            await UpdateLogs(wallet, organisation, scanType);
+
+            var logs = organisation.AccessLogs
+                .Where(oal => oal.CreatedAt.Date.Equals(DateTime.UtcNow.Date))
+                .ToList();
+
+            return new Response(
+                new UpdateCountResponse()
+                {
+                    Balance = logs.Count == 0 ? 0 : GetAccessLogBalance(logs),
+                    Total = logs.Count == 0 ? 0 : GetAccessLogTotal(logs)
+                },
+                true,
+                HttpStatusCode.OK);
+        }
+
+        private async Task UpdateLogs(Wallet wallet, Organisation organisation, ScanType scanType)
+        {
             var newCount = new OrganisationAccessLog()
             {
                 Wallet = wallet,
@@ -114,18 +134,34 @@ namespace CoviIDApiCore.V1.Services
             await _organisationAccessLogRepository.AddAsync(newCount);
 
             await _organisationAccessLogRepository.SaveAsync();
+        }
 
-            var logs = organisation.AccessLogs
-                .Where(oal => oal.CreatedAt.Date.Equals(DateTime.UtcNow.Date))
-                .ToList();
+        private async Task ValidateScan(List<OrganisationAccessLog> logs, ScanType scanType, Wallet wallet, bool mobile = false)
+        {
+            if (wallet != default && !mobile)
+            {
+                var userLogs = logs
+                    .Where(l => l.Wallet == wallet && l.CreatedAt.Date == DateTime.Now.Date)
+                    .OrderByDescending(l => l.CreatedAt)
+                    .ToList();
 
-            return new Response(
-                new UpdateCountResponse()
-                {
-                    Balance = logs.Count == 0 ? 0 : GetAccessLogBalance(logs)
-                },
-                true,
-                HttpStatusCode.OK);
+                if(!userLogs.Any() && scanType == ScanType.CheckOut)
+                    throw new ValidationException(Messages.Org_UserNotScannedIn);
+
+                if (userLogs.FirstOrDefault()?.ScanType == ScanType.CheckIn && scanType == ScanType.CheckIn)
+                    await UpdateLogs(wallet, userLogs.FirstOrDefault()?.Organisation, ScanType.CheckOut);
+
+                if(!userLogs.Any(l => l.ScanType == ScanType.CheckIn) && scanType == ScanType.CheckOut)
+                    throw new ValidationException(Messages.Org_UserNotScannedIn);
+
+                if(userLogs.FirstOrDefault()?.ScanType == ScanType.CheckOut && scanType == ScanType.CheckOut)
+                    throw new ValidationException(Messages.Org_UserScannedOut);
+            }
+
+            var balance = GetAccessLogBalance(logs);
+
+            if(balance < 1 && scanType == ScanType.CheckOut)
+                throw new ValidationException(Messages.Org_NegBalance);
         }
 
         public async Task<Response> MobileCheckIn(string organisationId, MobileUpdateCountRequest payload)
@@ -134,6 +170,7 @@ namespace CoviIDApiCore.V1.Services
             {
                 MobileNumber = payload.MobileNumber
             };
+
             var wallet = await _walletService.CreateWallet(walletRequest);
 
             var session = await _sessionService.CreateSession(payload.MobileNumber, wallet);
@@ -150,7 +187,9 @@ namespace CoviIDApiCore.V1.Services
                 Longitude = payload.Longitude,
                 WalletId = wallet.Id.ToString()
             };
-            var counterResponse = await UpdateCountAsync(organisationId, updateCounterRequest, ScanType.CheckIn);
+
+            var counterResponse = await UpdateCountAsync(organisationId, updateCounterRequest, ScanType.CheckIn, true);
+
             return counterResponse;
         }
 
@@ -158,7 +197,7 @@ namespace CoviIDApiCore.V1.Services
         {
             _cryptoService.EncryptAsServer(payload);
 
-            var wallet = await _walletRepository.GetWallet(payload.MobileNumber);
+            var wallet = await _walletRepository.GetByEncryptedMobileNumber(payload.MobileNumber);
             if (wallet == default)
                 throw new ValidationException(Messages.Wallet_NotFound);
 
@@ -168,7 +207,7 @@ namespace CoviIDApiCore.V1.Services
                 Longitude = payload.Longitude,
                 WalletId = wallet.Id.ToString()
             };
-            var counterResponse = await UpdateCountAsync(organisationId, updateCounterRequest, ScanType.CheckOut);
+            var counterResponse = await UpdateCountAsync(organisationId, updateCounterRequest, ScanType.CheckOut, true);
             return counterResponse;
         }
 
@@ -178,7 +217,12 @@ namespace CoviIDApiCore.V1.Services
             var checkIns = logs.Count(oal => oal.ScanType == ScanType.CheckIn);
             var checkOuts = logs.Count(oal => oal.ScanType == ScanType.CheckOut);
 
-            return checkIns - checkOuts; //TODO: Maybe improve this?
+            return checkIns - checkOuts;
+        }
+
+        private int GetAccessLogTotal(List<OrganisationAccessLog> logs)
+        {
+            return logs.Count(oal => oal.ScanType == ScanType.CheckIn);
         }
 
         private async Task NotifyOrganisation(string companyName, CreateOrganisationRequest payload, Organisation organisation)

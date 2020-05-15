@@ -41,15 +41,15 @@ namespace CoviIDApiCore.V1.Services
                 ValidityPeriod = validityPeriod
             };
         }
+
         public async Task SendWelcomeSms(string mobileNumber, string organisationName, DateTime expireAt, Guid sessionId)
         {
-            var url = _configuration.GetValue<string>("WebsiteDomian");
-            url = $"{url}/{UrlConstants.PartialRoutes[UrlConstants.Routes.WebCreateWallet]}?sessionId={sessionId}";
+            var url = $"{_configuration.GetValue<string>("WebsiteDomain")}{UrlConstants.PartialRoutes[UrlConstants.Routes.WebCreateWallet]}?sessionId={sessionId}";
 
             var message = ConstructWelcomeMessage(mobileNumber, organisationName, await GetShortenedUrl(url), expireAt);
+
             await _clickatellBroker.SendSms(message);
         }
-
 
         private async Task<string> GetShortenedUrl<T>(T url)
         {
