@@ -30,19 +30,14 @@ namespace CoviIDApiCore.V1.Services
         }
 
         public async Task<SmsResponse> SendOtpSms(string mobileNumber)
-            string url = null)
         {
             var validityPeriod = _configuration.GetValue<int>("OTPSettings:ValidityPeriod");
 
             var code = Utilities.Helpers.GenerateRandom4DigitNumber();
-                case SmsType.UpdateBalance:
-                    message = ConstructUpdateBalanceMessage(mobileNumber);
-                    break;
 
             var message = ConstructOtpMessage(mobileNumber, code, validityPeriod);
 
-            if(balance.Balance < 1)
-                    throw new ClickatellException(Messages.Clickatell_Balance);
+            await VerifyBalance();
 
             await _clickatellBroker.SendSms(message);
 
@@ -58,6 +53,18 @@ namespace CoviIDApiCore.V1.Services
             var url = $"{_configuration.GetValue<string>("WebsiteDomain")}{UrlConstants.PartialRoutes[UrlConstants.Routes.WebCreateWallet]}?sessionId={sessionId}";
 
             var message = ConstructWelcomeMessage(mobileNumber, organisationName, await GetShortenedUrl(url), expireAt);
+
+            await VerifyBalance();
+
+            await _clickatellBroker.SendSms(message);
+        }
+
+        public async Task SendBalanceSms()
+        {
+            var mobileNumber = _configuration.GetValue<string>("PlatformSettings:BalanceNotificationNumber");
+            var threshold = _configuration.GetValue<int>("PlatformSettings:BalanceMinThreshold");
+
+            var message = ConstructUpdateBalanceMessage(mobileNumber, threshold);
 
             await _clickatellBroker.SendSms(message);
         }
@@ -106,7 +113,7 @@ namespace CoviIDApiCore.V1.Services
             };
         }
 
-        private static ClickatellTemplate ConstructUpdateBalanceMessage(string mobileNumber)
+        private static ClickatellTemplate ConstructUpdateBalanceMessage(string mobileNumber, int threshold)
         {
             var recipient = new[]
             {
@@ -116,19 +123,25 @@ namespace CoviIDApiCore.V1.Services
             return new ClickatellTemplate()
             {
                 To = recipient,
-                Content = DefinitionConstants.SmsStrings[SmsType.Welcome]
+                Content = string.Format(DefinitionConstants.SmsStrings[SmsType.UpdateBalance], threshold.ToString())
             };
         }
 
-        public Response CheckBalance()
+        public async Task<Response> VerifyBalance()
         {
+            var balanceThreshold = _configuration.GetValue<int>("PlatformSettings:BalanceMinThreshold");
 
+            var balanceResponse = await _clickatellBroker.GetBalance();
+
+            if (balanceResponse.Balance < balanceThreshold)
+                await SendBalanceSms();
+
+            return new Response(balanceResponse, HttpStatusCode.OK);
         }
 
         public Response CreateBalanceJob()
         {
-            RecurringJob.AddOrUpdate(() =>
-                SendMessage(_configuration.GetValue<string>("PlatformSettings:BalanceNotificationNumber"), SmsType.UpdateBalance, null, null),
+            RecurringJob.AddOrUpdate(() => VerifyBalance(),
                 Cron.Daily);
 
             return new Response(true, HttpStatusCode.Created);

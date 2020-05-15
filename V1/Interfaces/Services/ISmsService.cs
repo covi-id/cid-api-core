@@ -10,5 +10,7 @@ namespace CoviIDApiCore.V1.Interfaces.Services
         Task<SmsResponse> SendOtpSms(string mobileNumber);
         Task SendWelcomeSms(string mobileNumber, string organisationName, DateTime expireAt, Guid sessionId);
         Response CreateBalanceJob();
+        Task SendBalanceSms();
+        Task<Response> VerifyBalance();
     }
 }

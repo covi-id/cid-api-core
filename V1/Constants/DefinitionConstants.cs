@@ -73,8 +73,8 @@ namespace CoviIDApiCore.V1.Constants
         public static Dictionary<SmsType, string> SmsStrings = new Dictionary<SmsType, string>()
         {
             { SmsType.Otp, "Your OTP: {0}. This OTP will expire in {1} minutes." },
-            { SmsType.Welcome, "A Covi-ID was generated for you today at {0}. Navigate to {1} to download and use going forward. This link will expire at {2}"}
-            { SmsType.UpdateBalance, "Covi-ID account balance below R150. Please update balance."}
+            { SmsType.Welcome, "A Covi-ID was generated for you today at {0}. Navigate to {1} to download and use going forward. This link will expire at {2}"},
+            { SmsType.UpdateBalance, "Covi-ID account balance below R{0}. Please update balance."}
         };
 
         public enum SmsType

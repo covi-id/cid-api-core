@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Net;
 using System.Threading.Tasks;
+using CoviIDApiCore.V1.Constants;
+using CoviIDApiCore.V1.DTOs.System;
 using CoviIDApiCore.V1.Interfaces.Services;
 using Hangfire;
 using Microsoft.AspNetCore.Http;
@@ -28,7 +31,8 @@ namespace CoviIDApiCore.V1.Controllers
         [HttpGet("balance")]
         public async Task<IActionResult> CheckBalance()
         {
-
+            return StatusCode(StatusCodes.Status200OK,
+                await _smsService.VerifyBalance());
         }
     }
 }
