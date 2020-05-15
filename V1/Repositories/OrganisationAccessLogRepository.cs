@@ -27,5 +27,14 @@ namespace CoviIDApiCore.V1.Repositories
                 .Where(oal => oal.CreatedAt.Date.Equals(DateTime.UtcNow.Date))
                 .ToListAsync();
         }
+
+        public async Task<List<OrganisationAccessLog>> GetListByWalletIds(List<Guid> walletIds)
+        {
+            return await _dbSet
+                .Where(oal => walletIds.Contains(oal.Wallet.Id))
+                .Where(oal => oal.CreatedAt.Date == DateTime.UtcNow.Date)
+                .Include(oal => oal.Wallet)
+                .ToListAsync();
+        }
     }
 }

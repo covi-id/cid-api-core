@@ -12,5 +12,6 @@ namespace CoviIDApiCore.V1.DTOs.Organisation
     public class UpdateCountResponse
     {
         public int Balance { get; set; }
+        public int Total { get; set; }
     }
 }

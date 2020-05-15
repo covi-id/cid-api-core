@@ -26,6 +26,8 @@
         public static readonly string Org_UserNotScannedIn = $"User can not be scanned out if no scan in has been recorded.";
         public static readonly string Org_UserScannedOut = $"User has already been scanned out.";
         public static readonly string Org_UserDeniedScanIn = $"User can not be scanned in. User was denied access today.";
+
+        public static readonly string Org_AllWalletsCheckedOut = $"All instances of wallet has been logged out.";
         #endregion
 
         #region QRCode
@@ -53,7 +55,9 @@
         public static readonly string Val_MobileNumber = $"Invalid mobile number.";
         public static readonly string Val_Identification = $"Invalid Identification number.";
         public static readonly string Val_DateNotInPast = $"Invalid Date, date must be in the past";
-        public static readonly string Val_FileTooLarge = $"The File size is to large.";
+        public static readonly string Val_FileTooLarge = $"The file size is too large.";
+        public static readonly string Val_Url = $"Url not present.";
+        public static readonly string Val_Organisation = $"Organisation name not present.";
         #endregion
 
         #region Verifier
@@ -76,7 +80,10 @@
         #region Amazon S3
         public static readonly string S3_NotFound = $"Could not find the item";
         public static readonly string S3_FailedToAdd = $"Failed to add to S3 bucket.";
+        #endregion
 
+        #region Session
+        public const string Ses_Invalid = "Session is invalid";
         #endregion
     }
 }

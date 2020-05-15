@@ -11,7 +11,10 @@ namespace CoviIDApiCore.V1.Constants
             { Routes.Sendgrid, "v3/mail/send"},
             { Routes.ClickatellSend, "/messages"},
             { Routes.Organisation, "/api/organisations" },
-            { Routes.Health, "/" }
+            { Routes.Health, "/" },
+            { Routes.ShortenUrl, "v4/shorten" },
+            { Routes.WebCreateWallet, "create_wallet/details" }
+
         };
 
         public enum Routes
@@ -21,7 +24,9 @@ namespace CoviIDApiCore.V1.Constants
             Sendgrid,
             ClickatellSend,
             Organisation,
-            Health
+            Health,
+            ShortenUrl,
+            WebCreateWallet
         }
     }
 }

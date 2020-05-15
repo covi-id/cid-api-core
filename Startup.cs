@@ -19,7 +19,6 @@ using CoviIDApiCore.V1.Brokers;
 using System.Net.Http.Headers;
 using AspNetCoreRateLimit;
 using CoviIDApiCore.Data;
-using CoviIDApiCore.V1.Configuration;
 using CoviIDApiCore.V1.Interfaces.Brokers;
 using CoviIDApiCore.V1.Interfaces.Repositories;
 using CoviIDApiCore.V1.Interfaces.Services;
@@ -169,6 +168,8 @@ namespace CoviIDApiCore
             services.AddSingleton<ICryptoService, CryptoService>();
             services.AddScoped<IWalletDetailService, WalletDetailService>();
             services.AddSingleton<ITokenService, TokenService>();
+            services.AddTransient<ISmsService, SmsService>();
+            services.AddTransient<ISessionService, SessionService>();
             #endregion
 
             #region Repository Layer
@@ -179,6 +180,7 @@ namespace CoviIDApiCore
             services.AddScoped<ICovidTestRepository, CovidTestRepository>();
             services.AddScoped<IWalletDetailRepository, WalletDetailRepository>();
             services.AddScoped<IWalletTestResultRepository, WalletTestResultRepository>();
+            services.AddScoped<ISessionRepository, SessionRepository>();
             #endregion
 
             #region Broker Layer
@@ -187,6 +189,7 @@ namespace CoviIDApiCore
             services.AddTransient<ISendGridBroker, SendGridBroker>();
             services.AddTransient<IClickatellBroker, ClickatellBroker>();
             services.AddSingleton<IAmazonS3Broker, AmazonS3Broker>();
+            services.AddTransient<IBitlyBroker, BitlyBroker>();
             #endregion
         }
 
@@ -203,6 +206,9 @@ namespace CoviIDApiCore
 
             var clickatellCredentials = new ClickatellCredentials();
             _configuration.Bind(nameof(ClickatellCredentials), clickatellCredentials);
+
+            var bitlyCredentials = new BitlyCredentials();
+            _configuration.Bind(nameof(BitlyCredentials), bitlyCredentials);
 
             services.AddHttpClient<IAgencyBroker, AgencyBroker>(client =>
             {
@@ -235,6 +241,13 @@ namespace CoviIDApiCore
                     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(_applicationJson));
                 }
             );
+
+            services.AddHttpClient<IBitlyBroker, BitlyBroker>(client =>
+            {
+                client.BaseAddress = new Uri(bitlyCredentials.BaseUrl);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", bitlyCredentials.Key);
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(_applicationJson));
+            });
         }
 
         private void ConfigureSwagger(IServiceCollection services)
@@ -300,6 +313,10 @@ namespace CoviIDApiCore
             var awsS3BucketCredentials = new AwsS3BucketCredentials();
             _configuration.Bind(nameof(AwsS3BucketCredentials), awsS3BucketCredentials);
             services.AddSingleton(awsS3BucketCredentials);
+
+            var sessionSettings = new SessionSettings();
+            _configuration.Bind(nameof(SessionSettings), sessionSettings);
+            services.AddSingleton(sessionSettings);
         }
 
         #endregion Private Configuration Methods
