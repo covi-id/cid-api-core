@@ -14,7 +14,7 @@ namespace CoviIDApiCore.V1.Constants
             { Routes.Organisation, "/api/organisations" },
             { Routes.Health, "/" },
             { Routes.ShortenUrl, "v4/shorten" },
-            { Routes.WebCreateWallet, "create_wallet/details" }
+            { Routes.WebCreateWallet, "create-wallet/details" }
 
         };
 
