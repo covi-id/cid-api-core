@@ -30,14 +30,14 @@ namespace CoviIDApiCore.V1.Services
             return Encrypt(Convert.ToBase64String(key), serverKey);
         }
 
-        public void EncryptAsServer<T>(T obj, bool mobile = false)
+        public void EncryptAsServer<T>(T obj, bool isStatic = false)
         {
-            TransformObj(TransformDirection.ToCipher, obj, serverKey, true, mobile);
+            TransformObj(TransformDirection.ToCipher, obj, serverKey, true, isStatic);
         }
 
-        public void DecryptAsServer<T>(T obj, bool mobile = false)
+        public void DecryptAsServer<T>(T obj, bool isStatic = false)
         {
-            TransformObj(TransformDirection.FromCipher, obj, serverKey, true, mobile);
+            TransformObj(TransformDirection.FromCipher, obj, serverKey, true, isStatic);
         }
 
         public void EncryptAsUser<T>(T obj, string encryptedSecretKey)
@@ -52,7 +52,7 @@ namespace CoviIDApiCore.V1.Services
             TransformObj(TransformDirection.FromCipher, obj, secretKey, false);
         }
 
-        private void TransformObj<T>(TransformDirection direction, T obj, string key, bool serverManaged = false, bool mobile = false)
+        private void TransformObj<T>(TransformDirection direction, T obj, string key, bool serverManaged = false, bool isStatic = false)
         {
             foreach (PropertyInfo prop in GetEncryptedProperties(obj, serverManaged))
             {
@@ -61,9 +61,9 @@ namespace CoviIDApiCore.V1.Services
                 var before = prop.GetValue(obj) as string;
                 string after;
                 if (direction == TransformDirection.ToCipher) {
-                    after = Encrypt(before, key, mobile);
+                    after = Encrypt(before, key, isStatic);
                 } else {
-                    after = Decrypt(before, key, mobile);
+                    after = Decrypt(before, key, isStatic);
                 }
                 prop.SetValue(obj, after);
             }
@@ -95,12 +95,12 @@ namespace CoviIDApiCore.V1.Services
             return encryptedProps;
         }
 
-        private string Encrypt (string plainText, string key, bool mobile = false) {
+        private string Encrypt (string plainText, string key, bool isStatic = false) {
             using (var aes = Aes.Create())
             {
                 var iv = new byte[16];
 
-                if (mobile)
+                if (isStatic)
                     Array.Copy(Encoding.ASCII.GetBytes(key), 0, iv, 0, iv.Length);
                 else
                     iv = aes.IV;
@@ -122,13 +122,13 @@ namespace CoviIDApiCore.V1.Services
             }
         }
 
-        private string Decrypt (string cipherText, string key, bool mobile = false)
+        private string Decrypt (string cipherText, string key, bool isStatic = false)
         {
             var cipherBytes = Convert.FromBase64String(cipherText);
 
             var iv = new byte[16];
 
-            Array.Copy(mobile ? Encoding.ASCII.GetBytes(key) : cipherBytes, 0, iv, 0, iv.Length);
+            Array.Copy(isStatic ? Encoding.ASCII.GetBytes(key) : cipherBytes, 0, iv, 0, iv.Length);
 
             using (var aes = Aes.Create())
             {
