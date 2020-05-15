@@ -138,23 +138,23 @@ namespace CoviIDApiCore.V1.Services
 
         private async Task ValidateScan(List<OrganisationAccessLog> logs, ScanType scanType, Wallet wallet, bool mobile = false)
         {
-            if (wallet != default)
+            if (wallet != default && !mobile)
             {
                 var userLogs = logs
                     .Where(l => l.Wallet == wallet && l.CreatedAt.Date == DateTime.Now.Date)
                     .OrderByDescending(l => l.CreatedAt)
                     .ToList();
 
-                if(!userLogs.Any() && scanType == ScanType.CheckOut && !mobile)
+                if(!userLogs.Any() && scanType == ScanType.CheckOut)
                     throw new ValidationException(Messages.Org_UserNotScannedIn);
 
-                if (userLogs.FirstOrDefault()?.ScanType == ScanType.CheckIn && scanType == ScanType.CheckIn && !mobile)
+                if (userLogs.FirstOrDefault()?.ScanType == ScanType.CheckIn && scanType == ScanType.CheckIn)
                     await UpdateLogs(wallet, userLogs.FirstOrDefault()?.Organisation, ScanType.CheckOut);
 
-                if(!userLogs.Any(l => l.ScanType == ScanType.CheckIn) && scanType == ScanType.CheckOut && !mobile)
+                if(!userLogs.Any(l => l.ScanType == ScanType.CheckIn) && scanType == ScanType.CheckOut)
                     throw new ValidationException(Messages.Org_UserNotScannedIn);
 
-                if(userLogs.FirstOrDefault()?.ScanType == ScanType.CheckOut && scanType == ScanType.CheckOut && !mobile)
+                if(userLogs.FirstOrDefault()?.ScanType == ScanType.CheckOut && scanType == ScanType.CheckOut)
                     throw new ValidationException(Messages.Org_UserScannedOut);
             }
 
