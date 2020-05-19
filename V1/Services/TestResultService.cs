@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using CoviIDApiCore.Exceptions;
 using CoviIDApiCore.V1.Constants;
 using Microsoft.EntityFrameworkCore.Internal;
+using Hangfire;
 
 namespace CoviIDApiCore.V1.Services
 {
@@ -15,10 +16,12 @@ namespace CoviIDApiCore.V1.Services
     {
         private readonly IWalletTestResultRepository _walletTestResultRepository;
         private readonly IWalletRepository _walletRepository;
-        public TestResultService(IWalletTestResultRepository walletTestResultRepository, IWalletRepository walletRepository)
+        private readonly IStaySafeService _staySafeService;
+        public TestResultService(IWalletTestResultRepository walletTestResultRepository, IWalletRepository walletRepository, IStaySafeService staySafeService)
         {
             _walletTestResultRepository = walletTestResultRepository;
             _walletRepository = walletRepository;
+            _staySafeService = staySafeService;
         }
 
         public async Task<TestResultResponse> GetTestResult(Guid walletId)
@@ -73,6 +76,9 @@ namespace CoviIDApiCore.V1.Services
             await _walletTestResultRepository.AddAsync(testResults);
 
             await _walletTestResultRepository.SaveAsync();
+
+            if (testResultRequest.ResultStatus == ResultStatus.Positive)
+                BackgroundJob.Enqueue(() => _staySafeService.CaptureData(wallet.Id, testResultRequest.TestedAt));
         }
 
         public async Task AddTestResult(Wallet wallet, TestResultRequest testResultRequest)

@@ -16,7 +16,7 @@ namespace CoviIDApiCore.Middleware
     {
         private readonly RequestDelegate _next;
         private readonly IAuthenticationService _authentication;
-
+        private const string _applicationJson = "application/json";
         public ExceptionHandler(RequestDelegate next, IAuthenticationService authentication)
         {
             _next = next;
@@ -70,19 +70,38 @@ namespace CoviIDApiCore.Middleware
             {
                 await HandleBitlyException(context, e);
             }
+            catch (SafePlacesException e)
+            {
+                await HandleSafePlacesException(context, e);
+            }
             catch (Exception e)
             {
                 await HandleUnexpectedException(context, e);
             }
         }
-    
+
         #region Exception Handler Methods
+        private Task HandleSafePlacesException(HttpContext context, SafePlacesException e)
+        {
+            SentrySdk.CaptureException(e);
+
+            var statusCode = HttpStatusCode.InternalServerError;
+            context.Response.ContentType = _applicationJson;
+            context.Response.StatusCode = (int)statusCode;
+            var message = Messages.Misc_ThirdParty;
+
+            #if DEBUG
+            message = e.Message;
+            #endif
+            var rsp = new Response(false, statusCode, message);
+            return ReturnResult(context, rsp);
+        }
 
         private static Task HandleValidationException(HttpContext context, Exception e)
         {
             var code = HttpStatusCode.BadRequest;
 
-            context.Response.ContentType = "application/json";
+            context.Response.ContentType = _applicationJson;
             context.Response.StatusCode = (int) code;
 
             var rsp = new Response(false, code, e.Message);
@@ -94,7 +113,7 @@ namespace CoviIDApiCore.Middleware
         {
             var code = HttpStatusCode.NotFound;
 
-            context.Response.ContentType = "application/json";
+            context.Response.ContentType = _applicationJson;
             context.Response.StatusCode = (int)code;
 
             var rsp = new Response(false, HttpStatusCode.NotFound);
@@ -106,7 +125,7 @@ namespace CoviIDApiCore.Middleware
             SentrySdk.CaptureException(e);
 
             var statusCode = HttpStatusCode.InternalServerError;
-            context.Response.ContentType = "application/json";
+            context.Response.ContentType = _applicationJson;
             context.Response.StatusCode = (int)statusCode;
             var message = Messages.Misc_ThirdParty;
 
@@ -122,7 +141,7 @@ namespace CoviIDApiCore.Middleware
             SentrySdk.CaptureException(e);
 
             var statusCode = HttpStatusCode.InternalServerError;
-            context.Response.ContentType = "application/json";
+            context.Response.ContentType = _applicationJson;
             context.Response.StatusCode = (int)statusCode;
             var message = Messages.Misc_ThirdParty;
 
@@ -138,7 +157,7 @@ namespace CoviIDApiCore.Middleware
             SentrySdk.CaptureException(e);
 
             var statusCode = HttpStatusCode.InternalServerError;
-            context.Response.ContentType = "application/json";
+            context.Response.ContentType = _applicationJson;
             context.Response.StatusCode = (int)statusCode;
             var message = Messages.Misc_ThirdParty;
 
@@ -153,7 +172,7 @@ namespace CoviIDApiCore.Middleware
             SentrySdk.CaptureException(e);
 
             var statusCode = HttpStatusCode.InternalServerError;
-            context.Response.ContentType = "application/json";
+            context.Response.ContentType = _applicationJson;
             context.Response.StatusCode = (int)statusCode;
             var message = Messages.Misc_ThirdParty;
 
@@ -169,7 +188,7 @@ namespace CoviIDApiCore.Middleware
             SentrySdk.CaptureException(e);
 
             var statusCode = HttpStatusCode.InternalServerError;
-            context.Response.ContentType = "application/json";
+            context.Response.ContentType = _applicationJson;
             context.Response.StatusCode = (int)statusCode;
             var message = Messages.Misc_ThirdParty;
 
@@ -186,7 +205,7 @@ namespace CoviIDApiCore.Middleware
 
             var code = HttpStatusCode.InternalServerError;
 
-            context.Response.ContentType = "application/json";
+            context.Response.ContentType = _applicationJson;
             context.Response.StatusCode = (int)code;
 
             var message = Messages.Misc_SomethingWentWrong;
@@ -204,7 +223,7 @@ namespace CoviIDApiCore.Middleware
 
             var code = HttpStatusCode.InternalServerError;
 
-            context.Response.ContentType = "application/json";
+            context.Response.ContentType = _applicationJson;
             context.Response.StatusCode = (int)code;
 
             var message = Messages.Misc_ThirdParty;
@@ -217,7 +236,7 @@ namespace CoviIDApiCore.Middleware
         {
             var code = HttpStatusCode.Unauthorized;
 
-            context.Response.ContentType = "application/json";
+            context.Response.ContentType = _applicationJson;
             context.Response.StatusCode = (int)code;
 
             var message = Messages.Misc_Unauthorized;

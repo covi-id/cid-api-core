@@ -170,6 +170,8 @@ namespace CoviIDApiCore
             services.AddSingleton<ITokenService, TokenService>();
             services.AddTransient<ISmsService, SmsService>();
             services.AddTransient<ISessionService, SessionService>();
+            services.AddTransient<IStaySafeService, StaySafeService>();
+
             #endregion
 
             #region Repository Layer
@@ -190,6 +192,7 @@ namespace CoviIDApiCore
             services.AddTransient<IClickatellBroker, ClickatellBroker>();
             services.AddSingleton<IAmazonS3Broker, AmazonS3Broker>();
             services.AddTransient<IBitlyBroker, BitlyBroker>();
+            services.AddSingleton<ISafePlacesBroker, SafePlacesBroker>();
             #endregion
         }
 
@@ -296,7 +299,7 @@ namespace CoviIDApiCore
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
         }
-        
+
         private void ConfigureSentry()
         {
             var url = _configuration?.GetSection("Sentry")?.GetSection("Url").Value ?? throw new Exception("Failed to setup sentry.");
@@ -317,6 +320,10 @@ namespace CoviIDApiCore
             var sessionSettings = new SessionSettings();
             _configuration.Bind(nameof(SessionSettings), sessionSettings);
             services.AddSingleton(sessionSettings);
+
+            var safePlacesCredentials = new SafePlacesCredentials();
+            _configuration.Bind(nameof(SafePlacesCredentials), safePlacesCredentials);
+            services.AddSingleton(safePlacesCredentials);
         }
 
         #endregion Private Configuration Methods

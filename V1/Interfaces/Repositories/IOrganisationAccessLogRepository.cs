@@ -9,5 +9,6 @@ namespace CoviIDApiCore.V1.Interfaces.Repositories
     {
         Task<List<OrganisationAccessLog>> GetByCurrentDayByOrganisation(Organisation organisation);
         Task<List<OrganisationAccessLog>> GetListByWalletIds(List<Guid> walletIds);
+        Task<List<OrganisationAccessLog>> GetLogsForLastTwoWeeks(Guid walletId, DateTime testedAt);
     }
 }
