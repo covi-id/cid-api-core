@@ -77,11 +77,11 @@ namespace CoviIDApiCore.V1.Services
 
             var orgCounter = accessLogs
                 .Where(oal => oal.Organisation == organisation)
-                .Where(oal => oal.CreatedAt.Date == DateTime.UtcNow.Date)
+                .Where(oal => oal.CreatedAt.Value.Date == DateTime.UtcNow.Date)
                 .OrderByDescending(t => t.CreatedAt)
                 .FirstOrDefault();
 
-            var totalScans = accessLogs.Count(oal => oal.Organisation == organisation && oal.CreatedAt.Date == DateTime.UtcNow.Date);
+            var totalScans = accessLogs.Count(oal => oal.Organisation == organisation && oal.CreatedAt.Value.Date == DateTime.UtcNow.Date);
 
             return new Response(new OrganisationDTO(organisation, orgCounter, totalScans, GetAccessLogBalance(accessLogs)), HttpStatusCode.OK);
         }
@@ -108,7 +108,7 @@ namespace CoviIDApiCore.V1.Services
             await UpdateLogs(wallet, organisation, scanType);
 
             var logs = organisation.AccessLogs
-                .Where(oal => oal.CreatedAt.Date.Equals(DateTime.UtcNow.Date))
+                .Where(oal => oal.CreatedAt.Value.Date.Equals(DateTime.UtcNow.Date))
                 .ToList();
 
             return new Response(
@@ -141,7 +141,7 @@ namespace CoviIDApiCore.V1.Services
             if (wallet != default && !mobile)
             {
                 var userLogs = logs
-                    .Where(l => l.Wallet == wallet && l.CreatedAt.Date == DateTime.Now.Date)
+                    .Where(l => l.Wallet == wallet && l.CreatedAt.Value.Date == DateTime.Now.Date)
                     .OrderByDescending(l => l.CreatedAt)
                     .ToList();
 
@@ -179,7 +179,7 @@ namespace CoviIDApiCore.V1.Services
             if (organisation == default)
                 throw new NotFoundException(Messages.Org_NotExists);
 
-            await _smsService.SendWelcomeSms(payload.MobileNumber, organisation.Name, session.ExpireAt, session.Id);
+            await _smsService.SendWelcomeSms(payload.MobileNumber, organisation.Name, session.ExpireAt.Value, session.Id);
 
             var updateCounterRequest = new UpdateCountRequest
             {
