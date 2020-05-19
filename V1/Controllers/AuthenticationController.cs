@@ -33,5 +33,12 @@ namespace CoviIDApiCore.V1.Controllers
             return StatusCode(StatusCodes.Status200OK,
                 new Response(await _otpService.ResendOtpAsync(payload, Request.Headers["Authorization"]),true, HttpStatusCode.OK, Messages.Misc_Success));
         }
+
+        [HttpPost("otp/delete_wallet")]
+        public async Task<IActionResult> ConfirmDeleteWallet(OtpDeleteWalletRequest request, [FromHeader(Name ="Authorization")] string authToken)
+        {
+            await _otpService.ConfirmDeleteWallet(request, authToken);
+            return StatusCode(StatusCodes.Status200OK);
+        }
     }
 }

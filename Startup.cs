@@ -317,6 +317,10 @@ namespace CoviIDApiCore
             var sessionSettings = new SessionSettings();
             _configuration.Bind(nameof(SessionSettings), sessionSettings);
             services.AddSingleton(sessionSettings);
+
+            var tokenSettings = new TokenSettings();
+            _configuration.Bind(nameof(tokenSettings), tokenSettings);
+            services.AddSingleton(tokenSettings);
         }
 
         #endregion Private Configuration Methods

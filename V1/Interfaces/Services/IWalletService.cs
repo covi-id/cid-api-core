@@ -2,6 +2,8 @@
 using System.Threading.Tasks;
 using CoviIDApiCore.V1.DTOs.Authentication;
 using CoviIDApiCore.Models.Database;
+using System.Collections.Generic;
+using System;
 
 namespace CoviIDApiCore.V1.Interfaces.Services
 {
@@ -9,6 +11,8 @@ namespace CoviIDApiCore.V1.Interfaces.Services
     {
         Task<WalletStatusResponse> GetWalletStatus(string walletId, string key);
         Task<TokenResponse> CreateWalletAndOtp(CreateWalletRequest walletRequest, string sessionId);
-        Task<Wallet> CreateWallet(CreateWalletRequest walletRequest, bool mobile = false);
+        Task<Wallet> CreateWallet(CreateWalletRequest walletRequest, bool isStatic = false);
+        Task<TokenResponse> DeleteWalletAndOtpRequest(DeleteWalletAndOtpRequest request);
+        Task DeleteAllWalletData(List<Guid> walletIds);
     }
 }

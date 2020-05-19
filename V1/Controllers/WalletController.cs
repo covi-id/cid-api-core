@@ -5,7 +5,6 @@ using CoviIDApiCore.V1.DTOs.Wallet;
 using CoviIDApiCore.V1.Interfaces.Services;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
-using System;
 
 namespace CoviIDApiCore.V1.Controllers
 {
@@ -45,6 +44,13 @@ namespace CoviIDApiCore.V1.Controllers
         {
             var response = await _walletService.GetWalletStatus(walletId, payload.Key);
 
+            return Ok(new Response(response, HttpStatusCode.OK));
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> DeleteWalletAndOtpRequest(DeleteWalletAndOtpRequest request)
+        {
+            var response = await _walletService.DeleteWalletAndOtpRequest(request);
             return Ok(new Response(response, HttpStatusCode.OK));
         }
     }

@@ -10,6 +10,8 @@ using CoviIDApiCore.Exceptions;
 using CoviIDApiCore.V1.Constants;
 using CoviIDApiCore.V1.DTOs.WalletTestResult;
 using CoviIDApiCore.V1.Interfaces.Brokers;
+using System.Collections.Generic;
+using System.Security.Claims;
 
 namespace CoviIDApiCore.V1.Services
 {
@@ -92,7 +94,7 @@ namespace CoviIDApiCore.V1.Services
             };
         }
 
-        public async Task<Wallet> CreateWallet(CreateWalletRequest walletRequest, bool mobile = false)
+        public async Task<Wallet> CreateWallet(CreateWalletRequest walletRequest, bool isStatic = false)
         {
             var wallet = new Wallet
             {
@@ -101,7 +103,7 @@ namespace CoviIDApiCore.V1.Services
                 MobileNumberReference = walletRequest?.MobileNumberReference
             };
 
-            _cryptoService.EncryptAsServer(wallet, mobile);
+            _cryptoService.EncryptAsServer(wallet, isStatic);
 
             await _walletRepository.AddAsync(wallet);
 
@@ -109,13 +111,63 @@ namespace CoviIDApiCore.V1.Services
 
             return wallet;
         }
+
+        public async Task<TokenResponse> DeleteWalletAndOtpRequest(DeleteWalletAndOtpRequest request)
+        {
+            var claims = new List<Claim>();
+
+            _cryptoService.EncryptAsServer(request);
+
+            var wallets = await _walletRepository.GetListByEncryptedMobileNumber(request.MobileNumber);
+
+            if (wallets == default || wallets == null)
+                throw new NotFoundException(Messages.Wallet_NotFound);
+
+            var otpId = await _otpService.GenerateAndSendOtpAsync(request.MobileNumber);
+
+            foreach (var wallet in wallets)
+            {
+                claims.Add(new Claim(ClaimTypes.Name, wallet.Id.ToString()));
+            }
+
+            claims.Add(new Claim(ClaimTypes.Sid, otpId.ToString()));
+            
+            var token = _tokenService.CreateToken(claims);
+
+            return new TokenResponse
+            {
+                Token = token
+            };
+        }
+        
+        public async Task DeleteAllWalletData(List<Guid> walletIds)
+        {
+            foreach (var walletId in walletIds)
+            {
+                var walletDetail = await _walletDetailRepository.GetAsync(walletId);
+                
+                _walletDetailRepository.Delete(walletDetail);
+
+                var wallet = await _walletRepository.GetAsync(walletId);
+                
+                wallet.MobileNumber = null;
+                wallet.MobileNumberReference = null;
+
+                _walletRepository.Update(wallet);
+
+                // TODO : check for data in OTP table
+            }
+            return;
+        }
+
+        #region Private Methods
         private async Task<Wallet> GetWallet(string sessionId)
         {
             var session = await _sessionService.GetAndUseSession(sessionId);
 
             var wallet = await _walletRepository.GetAsync(session.Wallet.Id);
 
-            if(wallet == default)
+            if (wallet == default)
                 throw new NotFoundException(Messages.Wallet_NotFound);
 
             return wallet;
@@ -129,5 +181,6 @@ namespace CoviIDApiCore.V1.Services
 
             await _walletRepository.SaveAsync();
         }
+        #endregion
     }
 }
