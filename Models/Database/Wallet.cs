@@ -9,7 +9,7 @@ namespace CoviIDApiCore.Models.Database
         public string MobileNumber { get; set; }
         [Encrypted(true)]
         public string MobileNumberReference { get; set; }
-        public DateTime MobileNumberVerifiedAt { get; set; }
-        public DateTime CreatedAt { get; set; }
+        public DateTime? MobileNumberVerifiedAt { get; set; }
+        public DateTime? CreatedAt { get; set; }
     }
 }
