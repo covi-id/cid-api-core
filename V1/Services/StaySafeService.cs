@@ -21,10 +21,12 @@ namespace CoviIDApiCore.V1.Services
             _safePlacesBroker = safePlacesBroker;
         }
 
-        public async Task CaptureData(Guid walletId, DateTime testedAt)
+
+
+        public async Task CaptureData(Guid walletId, DateTime twoWeeksFromDate)
         {
             var trails = new List<Trail>();
-            var logs = await _organisationAccessLogRepository.GetLogsForLastTwoWeeks(walletId, testedAt);
+            var logs = await _organisationAccessLogRepository.GetLogsForLastTwoWeeks(walletId, twoWeeksFromDate);
 
             if (logs == null)
                 throw new NotFoundException(Messages.Oal_NotFound);
@@ -43,14 +45,16 @@ namespace CoviIDApiCore.V1.Services
                         });
                     }
                 }
-
-                var request = new RedactedRequest
+                if (trails.Count > 0)
                 {
-                    Identifier = Guid.NewGuid().ToString(),
-                    Trails = trails
-                };
-
-                await _safePlacesBroker.AddRedacted(request);
+                    var request = new RedactedRequest
+                    {
+                        Identifier = Guid.NewGuid().ToString(),
+                        Trails = trails
+                    };
+                 
+                    await _safePlacesBroker.AddRedacted(request);
+                }
             }
             return;
         }

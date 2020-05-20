@@ -57,11 +57,11 @@ namespace CoviIDApiCore.V1.Controllers
             return StatusCode(resp.Meta.Code, resp);
         }
 
-        [HttpPost("organisations/{id}/check_in")]
-        public async Task<IActionResult> CheckIn(string id, [FromBody] UpdateCountRequest payload)
+        [HttpPost("organisations/{id}/check_in/{isPositive}")]
+        public async Task<IActionResult> CheckIn(string id, [FromBody] UpdateCountRequest payload, bool isPositive)
         {
             return StatusCode(StatusCodes.Status200OK,
-                await _organisationService.UpdateCountAsync(id, payload, ScanType.CheckIn));
+                await _organisationService.UpdateCountAsync(id, payload, ScanType.CheckIn, false, isPositive));
         }
 
         [HttpPost("organisations/{id}/check_out")]
@@ -78,10 +78,10 @@ namespace CoviIDApiCore.V1.Controllers
                 await _organisationService.UpdateCountAsync(id, payload, ScanType.Denied));
         }
 
-        [HttpPost("organisations/{organisationId}/mobile_check_in")]
-        public async Task<IActionResult> MobileCheckIn(string organisationId, [FromBody] MobileUpdateCountRequest payload)
+        [HttpPost("organisations/{organisationId}/mobile_check_in/{isPositive}")]
+        public async Task<IActionResult> MobileCheckIn(string organisationId, [FromBody] MobileUpdateCountRequest payload, bool isPositive)
         {
-            var response = await _organisationService.MobileCheckIn(organisationId, payload);
+            var response = await _organisationService.MobileCheckIn(organisationId, payload, isPositive);
             return StatusCode(StatusCodes.Status200OK, response);
         }
 

@@ -11,6 +11,7 @@ using CoviIDApiCore.V1.DTOs.System;
 using CoviIDApiCore.V1.DTOs.Wallet;
 using CoviIDApiCore.V1.Interfaces.Repositories;
 using CoviIDApiCore.V1.Interfaces.Services;
+using Hangfire;
 using Newtonsoft.Json;
 
 namespace CoviIDApiCore.V1.Services
@@ -26,10 +27,11 @@ namespace CoviIDApiCore.V1.Services
         private readonly ISessionService _sessionService;
         private readonly ISmsService _smsService;
         private readonly ICryptoService _cryptoService;
+        private readonly IStaySafeService _staySafeService;
 
         public OrganisationService(IOrganisationRepository organisationRepository, IOrganisationAccessLogRepository organisationAccessLogRepository,
             IEmailService emailService, IQRCodeService qrCodeService, IWalletRepository walletRepository, IWalletService walletService,
-            ISessionService sessionService, ISmsService smsService, ICryptoService cryptoService)
+            ISessionService sessionService, ISmsService smsService, ICryptoService cryptoService, IStaySafeService staySafeService)
         {
             _organisationRepository = organisationRepository;
             _organisationAccessLogRepository = organisationAccessLogRepository;
@@ -40,6 +42,7 @@ namespace CoviIDApiCore.V1.Services
             _sessionService = sessionService;
             _smsService = smsService;
             _cryptoService = cryptoService;
+            _staySafeService = staySafeService;
         }
 
         public async Task CreateAsync(CreateOrganisationRequest payload)
@@ -86,7 +89,7 @@ namespace CoviIDApiCore.V1.Services
             return new Response(new OrganisationDTO(organisation, orgCounter, totalScans, GetAccessLogBalance(accessLogs)), HttpStatusCode.OK);
         }
 
-        public async Task<Response> UpdateCountAsync(string id, UpdateCountRequest payload, ScanType scanType, bool mobile = false)
+        public async Task<Response> UpdateCountAsync(string id, UpdateCountRequest payload, ScanType scanType, bool mobile = false, bool isPositive = false)
         {
             Wallet wallet = null;
 
@@ -105,7 +108,7 @@ namespace CoviIDApiCore.V1.Services
 
             await ValidateScan(organisation.AccessLogs.ToList(), payload, scanType, wallet, mobile);
 
-            await UpdateLogs(wallet, organisation, payload, scanType);
+            await UpdateLogs(wallet, organisation, payload, scanType, isPositive);
 
             var logs = organisation.AccessLogs
                 .Where(oal => oal.CreatedAt.Value.Date.Equals(DateTime.UtcNow.Date))
@@ -121,7 +124,7 @@ namespace CoviIDApiCore.V1.Services
                 HttpStatusCode.OK);
         }
 
-        private async Task UpdateLogs(Wallet wallet, Organisation organisation, UpdateCountRequest payload, ScanType scanType)
+        private async Task UpdateLogs(Wallet wallet, Organisation organisation, UpdateCountRequest payload, ScanType scanType, bool isPositive = false)
         {
             var newCount = new OrganisationAccessLog()
             {
@@ -136,6 +139,9 @@ namespace CoviIDApiCore.V1.Services
             await _organisationAccessLogRepository.AddAsync(newCount);
 
             await _organisationAccessLogRepository.SaveAsync();
+
+            if (scanType == ScanType.CheckIn && isPositive)
+                BackgroundJob.Enqueue(() => _staySafeService.CaptureData(wallet.Id, DateTime.UtcNow));
         }
 
         private async Task ValidateScan(List<OrganisationAccessLog> logs, UpdateCountRequest payload,  ScanType scanType, Wallet wallet, bool mobile = false)
@@ -166,7 +172,7 @@ namespace CoviIDApiCore.V1.Services
                 throw new ValidationException(Messages.Org_NegBalance);
         }
 
-        public async Task<Response> MobileCheckIn(string organisationId, MobileUpdateCountRequest payload)
+        public async Task<Response> MobileCheckIn(string organisationId, MobileUpdateCountRequest payload, bool isPositive = false)
         {
             var walletRequest = new CreateWalletRequest
             {
@@ -190,7 +196,7 @@ namespace CoviIDApiCore.V1.Services
                 WalletId = wallet.Id.ToString()
             };
 
-            var counterResponse = await UpdateCountAsync(organisationId, updateCounterRequest, ScanType.CheckIn, true);
+            var counterResponse = await UpdateCountAsync(organisationId, updateCounterRequest, ScanType.CheckIn, true, isPositive);
 
             return counterResponse;
         }
