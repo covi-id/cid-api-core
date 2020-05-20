@@ -149,9 +149,24 @@ namespace CoviIDApiCore.V1.Services
                     throw new ValidationException(Messages.Org_UserNotScannedIn);
 
                 if (userLogs.FirstOrDefault()?.ScanType == ScanType.CheckIn && scanType == ScanType.CheckIn)
+                {
                     await UpdateLogs(wallet, userLogs.FirstOrDefault()?.Organisation, ScanType.CheckOut);
 
-                if(!userLogs.Any(l => l.ScanType == ScanType.CheckIn) && scanType == ScanType.CheckOut)
+                    var organisation = logs.FirstOrDefault().Organisation;
+
+                    logs.Clear();
+
+                    userLogs.Clear();
+
+                    logs = await _organisationAccessLogRepository.GetByCurrentDayByOrganisation(organisation);
+
+                    userLogs = logs
+                        .Where(l => l.Wallet == wallet && l.CreatedAt.Value.Date == DateTime.Now.Date)
+                        .OrderByDescending(l => l.CreatedAt)
+                        .ToList();
+                }
+                
+                if(userLogs.FirstOrDefault().ScanType != ScanType.CheckIn && scanType == ScanType.CheckOut)
                     throw new ValidationException(Messages.Org_UserNotScannedIn);
 
                 if(userLogs.FirstOrDefault()?.ScanType == ScanType.CheckOut && scanType == ScanType.CheckOut)
