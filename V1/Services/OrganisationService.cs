@@ -103,7 +103,7 @@ namespace CoviIDApiCore.V1.Services
             if (organisation == default)
                 throw new NotFoundException(Messages.Org_NotExists);
 
-            await ValidateScan(organisation.AccessLogs.ToList(), scanType, wallet, mobile);
+            ValidateScan(organisation.AccessLogs.ToList(), scanType, wallet, mobile);
 
             await UpdateLogs(wallet, organisation, scanType);
 
@@ -136,7 +136,7 @@ namespace CoviIDApiCore.V1.Services
             await _organisationAccessLogRepository.SaveAsync();
         }
 
-        private async Task ValidateScan(List<OrganisationAccessLog> logs, ScanType scanType, Wallet wallet, bool mobile = false)
+        private void ValidateScan(List<OrganisationAccessLog> logs, ScanType scanType, Wallet wallet, bool mobile = false)
         {
             if (wallet != default && !mobile)
             {
@@ -149,9 +149,9 @@ namespace CoviIDApiCore.V1.Services
                     throw new ValidationException(Messages.Org_UserNotScannedIn);
 
                 if (userLogs.FirstOrDefault()?.ScanType == ScanType.CheckIn && scanType == ScanType.CheckIn)
-                    await UpdateLogs(wallet, userLogs.FirstOrDefault()?.Organisation, ScanType.CheckOut);
-
-                if(!userLogs.Any(l => l.ScanType == ScanType.CheckIn) && scanType == ScanType.CheckOut)
+                    throw new ValidationException(Messages.Org_UserScannedIn);
+                
+                if(userLogs.FirstOrDefault()?.ScanType != ScanType.CheckIn && scanType == ScanType.CheckOut)
                     throw new ValidationException(Messages.Org_UserNotScannedIn);
 
                 if(userLogs.FirstOrDefault()?.ScanType == ScanType.CheckOut && scanType == ScanType.CheckOut)
