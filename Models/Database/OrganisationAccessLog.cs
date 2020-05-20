@@ -15,7 +15,7 @@ namespace CoviIDApiCore.Models.Database
 
         public ScanType ScanType { get; set; }
 
-        public DateTime CreatedAt { get; set; }
+        public DateTime? CreatedAt { get; set; }
 
         public OrganisationAccessLog()
         {
