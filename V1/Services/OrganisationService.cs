@@ -103,9 +103,9 @@ namespace CoviIDApiCore.V1.Services
             if (organisation == default)
                 throw new NotFoundException(Messages.Org_NotExists);
 
-            await ValidateScan(organisation.AccessLogs.ToList(), scanType, wallet, mobile);
+            await ValidateScan(organisation.AccessLogs.ToList(), payload, scanType, wallet, mobile);
 
-            await UpdateLogs(wallet, organisation, scanType);
+            await UpdateLogs(wallet, organisation, payload, scanType);
 
             var logs = organisation.AccessLogs
                 .Where(oal => oal.CreatedAt.Value.Date.Equals(DateTime.UtcNow.Date))
@@ -121,14 +121,16 @@ namespace CoviIDApiCore.V1.Services
                 HttpStatusCode.OK);
         }
 
-        private async Task UpdateLogs(Wallet wallet, Organisation organisation, ScanType scanType)
+        private async Task UpdateLogs(Wallet wallet, Organisation organisation, UpdateCountRequest payload, ScanType scanType)
         {
             var newCount = new OrganisationAccessLog()
             {
                 Wallet = wallet,
                 Organisation = organisation,
                 CreatedAt = DateTime.UtcNow,
-                ScanType = scanType
+                ScanType = scanType,
+                Latitude = payload.Latitude,
+                Longitude = payload.Longitude
             };
 
             await _organisationAccessLogRepository.AddAsync(newCount);
@@ -136,7 +138,7 @@ namespace CoviIDApiCore.V1.Services
             await _organisationAccessLogRepository.SaveAsync();
         }
 
-        private async Task ValidateScan(List<OrganisationAccessLog> logs, ScanType scanType, Wallet wallet, bool mobile = false)
+        private async Task ValidateScan(List<OrganisationAccessLog> logs, UpdateCountRequest payload,  ScanType scanType, Wallet wallet, bool mobile = false)
         {
             if (wallet != default && !mobile)
             {
@@ -145,22 +147,22 @@ namespace CoviIDApiCore.V1.Services
                     .OrderByDescending(l => l.CreatedAt)
                     .ToList();
 
-                if(!userLogs.Any() && scanType == ScanType.CheckOut)
+                if (!userLogs.Any() && scanType == ScanType.CheckOut)
                     throw new ValidationException(Messages.Org_UserNotScannedIn);
 
                 if (userLogs.FirstOrDefault()?.ScanType == ScanType.CheckIn && scanType == ScanType.CheckIn)
-                    await UpdateLogs(wallet, userLogs.FirstOrDefault()?.Organisation, ScanType.CheckOut);
+                    await UpdateLogs(wallet, userLogs.FirstOrDefault()?.Organisation, payload, ScanType.CheckOut);
 
-                if(!userLogs.Any(l => l.ScanType == ScanType.CheckIn) && scanType == ScanType.CheckOut)
+                if (!userLogs.Any(l => l.ScanType == ScanType.CheckIn) && scanType == ScanType.CheckOut)
                     throw new ValidationException(Messages.Org_UserNotScannedIn);
 
-                if(userLogs.FirstOrDefault()?.ScanType == ScanType.CheckOut && scanType == ScanType.CheckOut)
+                if (userLogs.FirstOrDefault()?.ScanType == ScanType.CheckOut && scanType == ScanType.CheckOut)
                     throw new ValidationException(Messages.Org_UserScannedOut);
             }
 
             var balance = GetAccessLogBalance(logs);
 
-            if(balance < 1 && scanType == ScanType.CheckOut)
+            if (balance < 1 && scanType == ScanType.CheckOut)
                 throw new ValidationException(Messages.Org_NegBalance);
         }
 
@@ -230,12 +232,12 @@ namespace CoviIDApiCore.V1.Services
 
             var log = organisationAccessLogs.FirstOrDefault();
 
-            if(log == null)
-                throw new NotFoundException();
+            if (log == null)
+                throw new NotFoundException(Messages.Oal_NotFound);
 
             var wallet = wallets.FirstOrDefault(w => Equals(w.Id, log.Wallet.Id));
 
-            if(wallet == null)
+            if (wallet == null)
                 throw new NotFoundException(Messages.Wallet_NotFound);
 
             return wallet.Id.ToString();

@@ -1,4 +1,6 @@
-﻿using CoviIDApiCore.V1.DTOs.SafePlaces;
+﻿using CoviIDApiCore.Exceptions;
+using CoviIDApiCore.V1.Constants;
+using CoviIDApiCore.V1.DTOs.SafePlaces;
 using CoviIDApiCore.V1.Interfaces.Brokers;
 using CoviIDApiCore.V1.Interfaces.Repositories;
 using CoviIDApiCore.V1.Interfaces.Services;
@@ -24,23 +26,32 @@ namespace CoviIDApiCore.V1.Services
             var trails = new List<Trail>();
             var logs = await _organisationAccessLogRepository.GetLogsForLastTwoWeeks(walletId, testedAt);
 
-            foreach (var log in logs)
+            if (logs == null)
+                throw new NotFoundException(Messages.Oal_NotFound);
+
+            if (logs.Count > 0)
             {
-                trails.Add(new Trail
+                foreach (var log in logs)
                 {
-                    Time = log.CreatedAt.ToString(),
-                    Latitude = decimal.ToDouble(log.Latitude),
-                    Longitude = decimal.ToDouble(log.Longitude)
-                });
+                    if (!(log.Latitude == 0 && log.Longitude == 0))
+                    {
+                        trails.Add(new Trail
+                        {
+                            Time = log.CreatedAt.ToString(),
+                            Latitude = decimal.ToDouble(log.Latitude),
+                            Longitude = decimal.ToDouble(log.Longitude)
+                        });
+                    }
+                }
+
+                var request = new RedactedRequest
+                {
+                    Identifier = Guid.NewGuid().ToString(),
+                    Trails = trails
+                };
+
+                await _safePlacesBroker.AddRedacted(request);
             }
-
-            var request = new RedactedRequest
-            {
-                Identifier = Guid.NewGuid().ToString(),
-                Trails = trails
-            };
-
-            await _safePlacesBroker.AddRedacted(request);
             return;
         }
     }
