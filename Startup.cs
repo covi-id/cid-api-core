@@ -213,6 +213,10 @@ namespace CoviIDApiCore
             var bitlyCredentials = new BitlyCredentials();
             _configuration.Bind(nameof(BitlyCredentials), bitlyCredentials);
 
+            var safePlacesCredentials = new SafePlacesCredentials();
+            _configuration.Bind(nameof(SafePlacesCredentials), safePlacesCredentials);
+            services.AddSingleton(safePlacesCredentials);
+
             services.AddHttpClient<IAgencyBroker, AgencyBroker>(client =>
             {
                 client.BaseAddress = new Uri(agencyApiBaseUrl);
@@ -249,6 +253,12 @@ namespace CoviIDApiCore
             {
                 client.BaseAddress = new Uri(bitlyCredentials.BaseUrl);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", bitlyCredentials.Key);
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(_applicationJson));
+            });
+
+            services.AddHttpClient<ISafePlacesBroker, SafePlacesBroker>(client =>
+            {
+                client.BaseAddress = new Uri(safePlacesCredentials.BaseUrl);
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(_applicationJson));
             });
         }
@@ -320,10 +330,6 @@ namespace CoviIDApiCore
             var sessionSettings = new SessionSettings();
             _configuration.Bind(nameof(SessionSettings), sessionSettings);
             services.AddSingleton(sessionSettings);
-
-            var safePlacesCredentials = new SafePlacesCredentials();
-            _configuration.Bind(nameof(SafePlacesCredentials), safePlacesCredentials);
-            services.AddSingleton(safePlacesCredentials);
         }
 
         #endregion Private Configuration Methods

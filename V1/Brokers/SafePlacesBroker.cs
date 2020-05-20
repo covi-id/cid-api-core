@@ -4,7 +4,6 @@ using CoviIDApiCore.V1.Constants;
 using CoviIDApiCore.V1.DTOs.SafePlaces;
 using CoviIDApiCore.V1.Interfaces.Brokers;
 using Newtonsoft.Json;
-using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
@@ -21,11 +20,14 @@ namespace CoviIDApiCore.V1.Brokers
         {
             _httpClient = httpClient;
             _credentials = credentials;
-            //Login(new LoginRequest
-            //{
-            //    Password = _credentials.Password,
-            //    Username = _credentials.Username
-            //});
+         
+            //Task.Run(() => 
+            //    Login(new LoginRequest
+            //    {
+            //        Password = _credentials.Password,
+            //        Username = _credentials.Username
+            //    })
+            //).ConfigureAwait(false).GetAwaiter().GetResult();
         }
 
         public async Task<Redacted> AddRedacted(RedactedRequest request)
