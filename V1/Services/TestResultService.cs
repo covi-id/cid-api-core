@@ -77,9 +77,8 @@ namespace CoviIDApiCore.V1.Services
 
             await _walletTestResultRepository.SaveAsync();
 
-            // Commented out untill the Safe Places service is set up
-            //if (testResultRequest.ResultStatus == ResultStatus.Positive)
-            //    BackgroundJob.Enqueue(() => _staySafeService.CaptureData(wallet.Id, testResultRequest.TestedAt));
+            if (testResultRequest.ResultStatus == ResultStatus.Positive)
+                BackgroundJob.Enqueue(() => _staySafeService.CaptureData(wallet.Id, testResultRequest.TestedAt));
         }
 
         public async Task AddTestResult(Wallet wallet, TestResultRequest testResultRequest)
