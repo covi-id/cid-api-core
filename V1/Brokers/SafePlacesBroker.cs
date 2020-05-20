@@ -20,14 +20,14 @@ namespace CoviIDApiCore.V1.Brokers
         {
             _httpClient = httpClient;
             _credentials = credentials;
-         
-            //Task.Run(() => 
-            //    Login(new LoginRequest
-            //    {
-            //        Password = _credentials.Password,
-            //        Username = _credentials.Username
-            //    })
-            //).ConfigureAwait(false).GetAwaiter().GetResult();
+
+            Task.Run(() =>
+                Login(new LoginRequest
+                {
+                    Password = _credentials.Password,
+                    Username = _credentials.Username
+                })
+            ).ConfigureAwait(false).GetAwaiter().GetResult();
         }
 
         public async Task<Redacted> AddRedacted(RedactedRequest request)
