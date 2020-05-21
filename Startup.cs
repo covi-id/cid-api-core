@@ -68,7 +68,7 @@ namespace CoviIDApiCore
                     options.InvalidModelStateResponseFactory = context =>
                     {
                         var problems = new CustomBadRequestMiddleware(context);
-                        return new BadRequestObjectResult(problems);
+                        return new BadRequestObjectResult(new V1.DTOs.System.Response(problems,false, HttpStatusCode.BadRequest));
                     };
                 });
 

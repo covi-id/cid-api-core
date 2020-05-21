@@ -37,7 +37,7 @@ namespace CoviIDApiCore.V1.Services
             {
                 // TODO : Do calculation based on all test results
             }
-            var test = tests.OrderBy(t => t.TestedAt).FirstOrDefault();
+            var test = tests.OrderByDescending(t => t.IssuedAt).FirstOrDefault();
             response.HasConsent = test.HasConsent;
             response.IssuedAt = test.IssuedAt;
             response.Laboratory = test.Laboratory;

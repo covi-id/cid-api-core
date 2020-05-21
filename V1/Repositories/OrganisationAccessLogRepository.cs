@@ -24,7 +24,7 @@ namespace CoviIDApiCore.V1.Repositories
         {
             return await _dbSet
                 .Where(oal => Equals(oal.Organisation, organisation))
-                .Where(oal => oal.CreatedAt.Date.Equals(DateTime.UtcNow.Date))
+                .Where(oal => oal.CreatedAt.Value.Date.Equals(DateTime.UtcNow.Date))
                 .ToListAsync();
         }
 
@@ -32,7 +32,7 @@ namespace CoviIDApiCore.V1.Repositories
         {
             return await _dbSet
                 .Where(oal => walletIds.Contains(oal.Wallet.Id))
-                .Where(oal => oal.CreatedAt.Date == DateTime.UtcNow.Date)
+                .Where(oal => oal.CreatedAt.Value.Date == DateTime.UtcNow.Date)
                 .Include(oal => oal.Wallet)
                 .ToListAsync();
         }
