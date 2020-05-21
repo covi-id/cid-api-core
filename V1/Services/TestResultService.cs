@@ -53,12 +53,18 @@ namespace CoviIDApiCore.V1.Services
             return response;
         }
 
-        public async Task AddTestResult(TestResultRequest testResultRequest)
+        public async Task AddTestResult(TestResultRequest testResultRequest, Wallet wallet = null)
         {
-            var wallet = await _walletRepository.GetAsync(testResultRequest.walletId);
+            if (!testResultRequest.isValid())
+                throw new ValidationException(Messages.TestResult_Invalid);
 
             if (wallet == null)
-                throw new ValidationException(Messages.Wallet_NotFound);
+            {
+                wallet = await _walletRepository.GetAsync(testResultRequest.walletId);
+
+                if (wallet == null)
+                    throw new ValidationException(Messages.Wallet_NotFound);
+            }
 
             var testResults = new WalletTestResult
             {
@@ -81,27 +87,5 @@ namespace CoviIDApiCore.V1.Services
                 BackgroundJob.Enqueue(() => _staySafeService.CaptureData(wallet.Id, testResultRequest.TestedAt));
         }
 
-        public async Task AddTestResult(Wallet wallet, TestResultRequest testResultRequest)
-        {
-            if (!testResultRequest.isValid())
-                throw new ValidationException(Messages.TestResult_Invalid);
-
-            var testResults = new WalletTestResult
-            {
-                Wallet = wallet,
-                Laboratory = testResultRequest.Laboratory,
-                ReferenceNumber = testResultRequest.ReferenceNumber,
-                TestedAt = testResultRequest.TestedAt,
-                ResultStatus = testResultRequest.ResultStatus,
-                LaboratoryStatus = LaboratoryStatus.Unsent,
-                TestType = TestType.Covid19,
-                HasConsent = testResultRequest.HasConsent,
-                PermissionGrantedAt = DateTime.UtcNow
-            };
-
-            await _walletTestResultRepository.AddAsync(testResults);
-
-            await _walletTestResultRepository.SaveAsync();
-        }
     }
 }

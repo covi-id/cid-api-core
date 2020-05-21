@@ -41,7 +41,6 @@ namespace CoviIDApiCore.V1.Repositories
         {
           return await _dbSet.Where(oal => oal.Wallet.Id.ToString().Equals(walletId.ToString()))
                 .Where(oal => oal.CreatedAt >= testedAt.AddDays(-14) && oal.ScanType == ScanType.CheckIn)
-                .Include(oal => oal.Wallet)
                 .ToListAsync();
         }
     }

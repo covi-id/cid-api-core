@@ -138,7 +138,7 @@ namespace CoviIDApiCore.V1.Services
             await _walletDetailService.AddWalletDetailsAsync(wallet, payload.WalletDetails, key);
 
             if (payload.TestResult != null)
-                await _testResultService.AddTestResult(wallet, payload.TestResult);
+                await _testResultService.AddTestResult(payload.TestResult, wallet);
 
             return new OtpConfirmationResponse()
             {
