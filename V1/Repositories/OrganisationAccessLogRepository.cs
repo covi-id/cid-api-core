@@ -39,9 +39,10 @@ namespace CoviIDApiCore.V1.Repositories
 
         public async Task<List<OrganisationAccessLog>> GetLogsForLastTwoWeeks(Guid walletId, DateTime testedAt)
         {
-          return await _dbSet.Where(oal => oal.Wallet.Id.ToString().Equals(walletId.ToString()))
-                .Where(oal => oal.CreatedAt >= testedAt.AddDays(-14) && oal.ScanType == ScanType.CheckIn)
-                .ToListAsync();
+            return await _dbSet.Where(oal => Equals(oal.Wallet.Id, walletId))
+                  .Where(oal => oal.CreatedAt >= testedAt.AddDays(-14) && oal.ScanType == ScanType.CheckIn)
+                  .ToListAsync();
+
         }
     }
 }
