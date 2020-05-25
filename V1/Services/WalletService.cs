@@ -10,8 +10,6 @@ using CoviIDApiCore.Exceptions;
 using CoviIDApiCore.V1.Constants;
 using CoviIDApiCore.V1.DTOs.WalletTestResult;
 using CoviIDApiCore.V1.Interfaces.Brokers;
-using System.Collections.Generic;
-using System.Security.Claims;
 
 namespace CoviIDApiCore.V1.Services
 {
@@ -20,6 +18,7 @@ namespace CoviIDApiCore.V1.Services
         private readonly IOtpService _otpService;
         private readonly IWalletRepository _walletRepository;
         private readonly IWalletDetailRepository _walletDetailRepository;
+        private readonly IWalletDetailService _walletDetailService;
         private readonly ITestResultService _testResultService;
         private readonly ITokenService _tokenService;
         private readonly ICryptoService _cryptoService;
@@ -28,7 +27,7 @@ namespace CoviIDApiCore.V1.Services
 
         public WalletService(IOtpService otpService, IWalletRepository walletRepository, IWalletDetailRepository walletDetailRepository,
             ITestResultService testResultService, ITokenService tokenService, ICryptoService cryptoService,
-            IAmazonS3Broker amazonS3Broker, ISessionService sessionService)
+            IAmazonS3Broker amazonS3Broker, ISessionService sessionService, IWalletDetailService walletDetailService)
         {
             _walletDetailRepository = walletDetailRepository;
             _testResultService = testResultService;
@@ -36,6 +35,7 @@ namespace CoviIDApiCore.V1.Services
             _cryptoService = cryptoService;
             _amazonS3Broker = amazonS3Broker;
             _sessionService = sessionService;
+            _walletDetailService = walletDetailService;
             _otpService = otpService;
             _walletRepository = walletRepository;
         }
@@ -112,54 +112,19 @@ namespace CoviIDApiCore.V1.Services
             return wallet;
         }
 
-        public async Task<TokenResponse> DeleteWalletAndOtpRequest(DeleteWalletAndOtpRequest request)
+        public async Task DeleteWallet(string walletId)
         {
-            var claims = new List<Claim>();
-
-            _cryptoService.EncryptAsServer(request);
-
-            var wallets = await _walletRepository.GetListByEncryptedMobileNumber(request.MobileNumber);
-
-            if (wallets == default || wallets == null)
+            var wallet = await _walletRepository.GetAsync(Guid.Parse(walletId));
+            
+            if (wallet == null)
                 throw new NotFoundException(Messages.Wallet_NotFound);
 
-            var otpId = await _otpService.GenerateAndSendOtpAsync(request.MobileNumber);
-
-            foreach (var wallet in wallets)
-            {
-                claims.Add(new Claim(ClaimTypes.Name, wallet.Id.ToString()));
-            }
-
-            claims.Add(new Claim(ClaimTypes.Sid, otpId.ToString()));
+            await _walletDetailService.DeleteWalletDetails(wallet);
             
-            var token = _tokenService.CreateToken(claims);
-
-            return new TokenResponse
-            {
-                Token = token
-            };
-        }
-        
-        public async Task DeleteAllWalletData(List<Guid> walletIds)
-        {
-            foreach (var walletId in walletIds)
-            {
-                var walletDetail = await _walletDetailRepository.GetAsync(walletId);
-                
-                _walletDetailRepository.Delete(walletDetail);
-
-                var wallet = await _walletRepository.GetAsync(walletId);
-                
-                wallet.MobileNumber = null;
-                wallet.MobileNumberReference = null;
-
-                _walletRepository.Update(wallet);
-
-                // TODO : check for data in OTP table
-            }
+            await _testResultService.DeleteTestResults(wallet.Id);
             return;
         }
-
+        
         #region Private Methods
         private async Task<Wallet> GetWallet(string sessionId)
         {

@@ -8,5 +8,6 @@ namespace CoviIDApiCore.V1.Interfaces.Repositories
     public interface IWalletTestResultRepository : IBaseRepository<WalletTestResult, Guid>
     {
         Task<List<WalletTestResult>> GetTestResults(Guid walletId);
+
     }
 }

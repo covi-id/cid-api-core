@@ -99,7 +99,7 @@ namespace CoviIDApiCore.V1.Services
 
             var key = _cryptoService.GenerateEncryptedSecretKey();
 
-            await _walletDetailService.AddWalletDetailsAsync(wallet, payload.WalletDetails, key);
+            await _walletDetailService.AddWalletDetails(wallet, payload.WalletDetails, key);
 
             if (payload.TestResult != null)
                 await _testResultService.AddTestResult(wallet, payload.TestResult);
