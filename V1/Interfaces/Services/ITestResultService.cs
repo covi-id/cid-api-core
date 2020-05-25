@@ -9,6 +9,5 @@ namespace CoviIDApiCore.V1.Interfaces.Services
     {
         Task<TestResultResponse> GetTestResult(Guid walletId);
         Task AddTestResult(TestResultRequest testResultRequest);
-        Task AddTestResult(Wallet wallet, TestResultRequest testResultRequest);
     }
 }

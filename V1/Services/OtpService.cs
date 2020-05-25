@@ -5,7 +5,6 @@ using CoviIDApiCore.Exceptions;
 using CoviIDApiCore.Models.Database;
 using CoviIDApiCore.V1.Constants;
 using CoviIDApiCore.V1.DTOs.Authentication;
-using CoviIDApiCore.V1.DTOs.Clickatell;
 using CoviIDApiCore.V1.Interfaces.Brokers;
 using CoviIDApiCore.V1.Interfaces.Repositories;
 using CoviIDApiCore.V1.Interfaces.Services;
@@ -17,23 +16,19 @@ namespace CoviIDApiCore.V1.Services
     {
         private readonly IConfiguration _configuration;
         private readonly IOtpTokenRepository _otpTokenRepository;
-        private readonly IClickatellBroker _clickatellBroker;
         private readonly IWalletRepository _walletRepository;
-        private readonly ITestResultService _testResultService;
         private readonly IWalletDetailService _walletDetailService;
         private readonly ICryptoService _cryptoService;
         private readonly IAmazonS3Broker _amazonS3Broker;
         private readonly ITokenService _tokenService;
         private readonly ISmsService _smsService;
 
-        public OtpService(IOtpTokenRepository tokenRepository, IConfiguration configuration, IClickatellBroker clickatellBroker,
-                    IWalletRepository walletRepository, ITestResultService testResultService, IWalletDetailService walletDetailService, ICryptoService cryptoService, ITokenService tokenService, IAmazonS3Broker amazonS3Broker, ISmsService smsService)
+        public OtpService(IOtpTokenRepository tokenRepository, IConfiguration configuration, IWalletRepository walletRepository, 
+            IWalletDetailService walletDetailService, ICryptoService cryptoService, ITokenService tokenService, IAmazonS3Broker amazonS3Broker, ISmsService smsService)
         {
             _otpTokenRepository = tokenRepository;
             _configuration = configuration;
-            _clickatellBroker = clickatellBroker;
             _walletRepository = walletRepository;
-            _testResultService = testResultService;
             _walletDetailService = walletDetailService;
             _cryptoService = cryptoService;
             _tokenService = tokenService;
@@ -103,9 +98,6 @@ namespace CoviIDApiCore.V1.Services
         //TODO: Improve this
         public async Task<OtpConfirmationResponse> ConfirmOtpAsync(RequestOtpConfirmation payload, string authToken)
         {
-            if (payload.TestResult != null && !payload.isValid())
-                throw new ValidationException(Messages.Token_InvaldPayload);
-
             var authTokenDetails = _tokenService.GetDetailsFromToken(authToken);
 
             var token = await _otpTokenRepository.GetAsync(authTokenDetails.OtpId);
@@ -136,9 +128,6 @@ namespace CoviIDApiCore.V1.Services
             var key = _cryptoService.GenerateEncryptedSecretKey();
 
             await _walletDetailService.AddWalletDetailsAsync(wallet, payload.WalletDetails, key);
-
-            if (payload.TestResult != null)
-                await _testResultService.AddTestResult(wallet, payload.TestResult);
 
             return new OtpConfirmationResponse()
             {
