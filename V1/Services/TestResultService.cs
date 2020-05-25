@@ -74,5 +74,28 @@ namespace CoviIDApiCore.V1.Services
 
             await _walletTestResultRepository.SaveAsync();
         }
+
+        public async Task AddTestResult(Wallet wallet, TestResultRequest testResultRequest)
+        {
+            if (!testResultRequest.isValid())
+                throw new ValidationException(Messages.TestResult_Invalid);
+
+            var testResults = new WalletTestResult
+            {
+                Wallet = wallet,
+                Laboratory = testResultRequest.Laboratory,
+                ReferenceNumber = testResultRequest.ReferenceNumber,
+                TestedAt = testResultRequest.TestedAt,
+                ResultStatus = testResultRequest.ResultStatus,
+                LaboratoryStatus = LaboratoryStatus.Unsent,
+                TestType = TestType.Covid19,
+                HasConsent = testResultRequest.HasConsent,
+                PermissionGrantedAt = DateTime.UtcNow
+            };
+
+            await _walletTestResultRepository.AddAsync(testResults);
+
+            await _walletTestResultRepository.SaveAsync();
+        }
     }
 }
