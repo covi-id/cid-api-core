@@ -15,5 +15,6 @@ namespace CoviIDApiCore.V1.DTOs.Organisation
     {
         public int Balance { get; set; }
         public int Total { get; set; }
+        public string OrganisationName { get; set; }
     }
 }

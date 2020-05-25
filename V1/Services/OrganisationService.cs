@@ -85,7 +85,7 @@ namespace CoviIDApiCore.V1.Services
 
             return new Response(new OrganisationDTO(organisation, orgCounter, totalScans, GetAccessLogBalance(accessLogs)), HttpStatusCode.OK);
         }
-
+      
         public async Task<Response> UpdateCountAsync(string id, UpdateCountRequest payload, ScanType scanType, bool mobile = false)
         {
             Wallet wallet = null;
@@ -115,7 +115,8 @@ namespace CoviIDApiCore.V1.Services
                 new UpdateCountResponse()
                 {
                     Balance = logs.Count == 0 ? 0 : GetAccessLogBalance(logs),
-                    Total = logs.Count == 0 ? 0 : GetAccessLogTotal(logs)
+                    Total = logs.Count == 0 ? 0 : GetAccessLogTotal(logs),
+                    OrganisationName = organisation.Name
                 },
                 true,
                 HttpStatusCode.OK);
