@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using CoviIDApiCore.V1.DTOs.Wallet;
-using CoviIDApiCore.V1.DTOs.WalletTestResult;
 
 namespace CoviIDApiCore.V1.DTOs.Authentication
 {
@@ -8,13 +7,7 @@ namespace CoviIDApiCore.V1.DTOs.Authentication
     {
         [Required]
         public int Otp { get; set; }
-        public TestResultRequest TestResult { get; set; }
         public WalletDetailsRequest WalletDetails { get; set; }
-
-        public bool isValid()
-        {
-            return TestResult.isValid();
-        }
     }
 
     public class WalletDetailsRequest
