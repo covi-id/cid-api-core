@@ -48,7 +48,8 @@ namespace CoviIDApiCore.V1.Controllers
         }
 
         [HttpDelete]
-        public async Task<IActionResult> DeleteWalletAndOtpRequest([FromBody] string walletId)
+        [Route("{walletId}")]
+        public async Task<IActionResult> DeleteWalletAndOtpRequest(string walletId)
         {
             await _walletService.DeleteWallet(walletId);
             return Ok(new Response(true, HttpStatusCode.OK));
