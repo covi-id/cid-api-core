@@ -37,10 +37,11 @@ namespace CoviIDApiCore.V1.Services
         {
             var walletDetails = await _walletDetailRepository.GetWalletDetailsByWallet(wallet);
 
-            if (walletDetails == null)
+            if (walletDetails == null || walletDetails.Count < 1)
                 return;
 
             _walletDetailRepository.DeleteRange(walletDetails);
+            await _walletDetailRepository.SaveAsync();
             return;
         }
     }
