@@ -77,5 +77,17 @@ namespace CoviIDApiCore.V1.Services
 
             await _walletTestResultRepository.SaveAsync();
         }
+
+        public async Task DeleteTestResults(Guid walletId)
+        {
+            var tests = await _walletTestResultRepository.GetTestResults(walletId);
+
+            if (tests == null || tests.Count < 1)
+                return;
+
+            _walletTestResultRepository.DeleteRange(tests);
+            await _walletTestResultRepository.SaveAsync();
+            return;
+        }
     }
 }

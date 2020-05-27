@@ -17,7 +17,7 @@ namespace CoviIDApiCore.V1.Services
             _cryptoService = cryptoService;
         }
 
-        public async Task AddWalletDetailsAsync(Wallet wallet, WalletDetailsRequest walletDetails, string key)
+        public async Task AddWalletDetails(Wallet wallet, WalletDetailsRequest walletDetails, string key)
         {
             //TODO: Validation
 
@@ -31,6 +31,18 @@ namespace CoviIDApiCore.V1.Services
             await _walletDetailRepository.AddAsync(details);
 
             await _walletDetailRepository.SaveAsync();
+        }
+
+        public async Task DeleteWalletDetails(Wallet wallet)
+        {
+            var walletDetails = await _walletDetailRepository.GetWalletDetailsByWallet(wallet);
+
+            if (walletDetails == null || walletDetails.Count < 1)
+                return;
+
+            _walletDetailRepository.DeleteRange(walletDetails);
+            await _walletDetailRepository.SaveAsync();
+            return;
         }
     }
 }
