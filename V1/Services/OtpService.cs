@@ -22,9 +22,11 @@ namespace CoviIDApiCore.V1.Services
         private readonly IAmazonS3Broker _amazonS3Broker;
         private readonly ITokenService _tokenService;
         private readonly ISmsService _smsService;
+        private readonly IWalletService _walletService;
 
         public OtpService(IOtpTokenRepository tokenRepository, IConfiguration configuration, IWalletRepository walletRepository, 
-            IWalletDetailService walletDetailService, ICryptoService cryptoService, ITokenService tokenService, IAmazonS3Broker amazonS3Broker, ISmsService smsService)
+            IWalletDetailService walletDetailService, ICryptoService cryptoService, ITokenService tokenService, IAmazonS3Broker amazonS3Broker, 
+            ISmsService smsService, IWalletService walletService)
         {
             _otpTokenRepository = tokenRepository;
             _configuration = configuration;
@@ -34,6 +36,7 @@ namespace CoviIDApiCore.V1.Services
             _tokenService = tokenService;
             _amazonS3Broker = amazonS3Broker;
             _smsService = smsService;
+            _walletService = walletService;
         }
 
         public async Task<long> GenerateAndSendOtpAsync(string mobileNumber)
@@ -95,7 +98,6 @@ namespace CoviIDApiCore.V1.Services
             return newToken.Id;
         }
 
-        //TODO: Improve this
         public async Task<OtpConfirmationResponse> ConfirmOtpAsync(RequestOtpConfirmation payload, string authToken)
         {
             var authTokenDetails = _tokenService.GetDetailsFromToken(authToken);
@@ -111,23 +113,14 @@ namespace CoviIDApiCore.V1.Services
 
             await _otpTokenRepository.SaveAsync();
 
-            var wallet = await _walletRepository.GetAsync(Guid.Parse(authTokenDetails.WalletId));
-
-            if (wallet == null)
-                throw new NotFoundException(Messages.Wallet_NotFound);
-
-            wallet.MobileNumberVerifiedAt = DateTime.UtcNow;
-
-            _walletRepository.Update(wallet);
-
-            await _walletRepository.SaveAsync();
+            var wallet = await _walletService.UpdateWalletToVerified(authTokenDetails.WalletId);
 
             var fileReference = await _amazonS3Broker.AddImageToBucket(payload.WalletDetails.Photo, Guid.NewGuid().ToString());
             payload.WalletDetails.Photo = fileReference;
 
             var key = _cryptoService.GenerateEncryptedSecretKey();
 
-            await _walletDetailService.AddWalletDetails(wallet, payload.WalletDetails, key);
+            await _walletDetailService.CreateWalletDetails(wallet, payload.WalletDetails, key);
 
             return new OtpConfirmationResponse()
             {

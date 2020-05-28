@@ -1,5 +1,7 @@
 ﻿using System.Threading.Tasks;
+using CoviIDApiCore.Exceptions;
 using CoviIDApiCore.Models.Database;
+using CoviIDApiCore.V1.Constants;
 using CoviIDApiCore.V1.DTOs.Authentication;
 using CoviIDApiCore.V1.Interfaces.Repositories;
 using CoviIDApiCore.V1.Interfaces.Services;
@@ -17,20 +19,23 @@ namespace CoviIDApiCore.V1.Services
             _cryptoService = cryptoService;
         }
 
-        public async Task AddWalletDetails(Wallet wallet, WalletDetailsRequest walletDetails, string key)
+        public async Task<WalletDetail> CreateWalletDetails(Wallet wallet, WalletDetailsRequest request, string key)
         {
-            //TODO: Validation
-
-            var details = new WalletDetail(walletDetails)
+            var walletDetails = new WalletDetail(request)
             {
                 Wallet = wallet
             };
 
-            _cryptoService.EncryptAsUser(details, key);
+            if (walletDetails == null || walletDetails == default)
+                throw new ValidationException(Messages.WalltDetails_Invalid);
 
-            await _walletDetailRepository.AddAsync(details);
+            _cryptoService.EncryptAsUser(walletDetails, key);
+
+            await _walletDetailRepository.AddAsync(walletDetails);
 
             await _walletDetailRepository.SaveAsync();
+
+            return walletDetails;
         }
 
         public async Task DeleteWalletDetails(Wallet wallet)

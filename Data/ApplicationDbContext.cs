@@ -13,7 +13,6 @@ namespace CoviIDApiCore.Data
         public DbSet<OrganisationAccessLog> OrganisationAccessLogs { get; set; }
         public DbSet<OtpToken> OtpTokens { get; set; }
         public DbSet<Wallet> Wallets { get; set; }
-        public DbSet<CovidTest> CovidTests { get; set; }
         public DbSet<WalletTestResult> WalletTestResults { get; set; }
         public DbSet<WalletDetail> WalletDetails { get; set; }
         public DbSet<Session> Sessions { get; set; }
@@ -31,30 +30,6 @@ namespace CoviIDApiCore.Data
 
         private void ConvertEnumsToString(ModelBuilder modelBuilder)
         {
-            modelBuilder
-             .Entity<CovidTest>()
-             .Property(e => e.Laboratory)
-             .HasConversion(
-                 v => v.ToString().ToLower(),
-                 v => (V1.DTOs.Credentials.Laboratory)Enum.Parse(typeof(V1.DTOs.Credentials.Laboratory), v, true)
-             );
-
-            modelBuilder
-               .Entity<CovidTest>()
-               .Property(e => e.CovidStatus)
-               .HasConversion(
-                   v => v.ToString().ToLower(),
-                   v => (CovidStatus)Enum.Parse(typeof(CovidStatus), v, true)
-               );
-
-            modelBuilder
-             .Entity<CovidTest>()
-             .Property(e => e.CredentialIndicator)
-             .HasConversion(
-                 v => v.ToString().ToLower(),
-                 v => (CredentialIndicator)Enum.Parse(typeof(CredentialIndicator), v, true)
-             );
-
             modelBuilder
                .Entity<WalletTestResult>()
                .Property(e => e.Laboratory)

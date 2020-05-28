@@ -8,8 +8,9 @@ namespace CoviIDApiCore.V1.Interfaces.Services
     public interface IWalletService
     {
         Task<WalletStatusResponse> GetWalletStatus(string walletId, string key);
-        Task<TokenResponse> CreateWalletAndOtp(CreateWalletRequest walletRequest, string sessionId);
+        Task<TokenResponse> CreateWalletAndOtp(CreateWalletRequest walletRequest, string sessionId = null);
         Task<Wallet> CreateWallet(CreateWalletRequest walletRequest, bool mobile = false);
         Task DeleteWallet(string walletId);
+        Task<Wallet> UpdateWalletToVerified(string walletId);
     }
 }

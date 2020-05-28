@@ -68,7 +68,7 @@ namespace CoviIDApiCore.V1.Services
             return response;
         }
 
-        public async Task<TokenResponse> CreateWalletAndOtp(CreateWalletRequest walletRequest, string sessionId)
+        public async Task<TokenResponse> CreateWalletAndOtp(CreateWalletRequest walletRequest, string sessionId = null)
         {
             Wallet wallet;
 
@@ -77,20 +77,15 @@ namespace CoviIDApiCore.V1.Services
             else
             {
                 wallet = await GetWallet(sessionId);
-
-                _cryptoService.DecryptAsServer(wallet);
-
-                wallet.MobileNumberReference = walletRequest.MobileNumberReference;
-                wallet.MobileNumber = wallet.MobileNumber;
-
-                await UpdateWallet(wallet);
             }
 
             var otpId = await _otpService.GenerateAndSendOtpAsync(walletRequest.MobileNumber);
 
+            var token = _tokenService.GenerateToken(wallet.Id.ToString(), otpId);
+            
             return new TokenResponse
             {
-                Token = _tokenService.GenerateToken(wallet.Id.ToString(), otpId)
+                Token = token
             };
         }
 
@@ -98,9 +93,7 @@ namespace CoviIDApiCore.V1.Services
         {
             var wallet = new Wallet
             {
-                CreatedAt = DateTime.UtcNow,
-                MobileNumber = walletRequest.MobileNumber,
-                MobileNumberReference = walletRequest?.MobileNumberReference
+                CreatedAt = DateTime.UtcNow
             };
 
             _cryptoService.EncryptAsServer(wallet, mobile);
@@ -128,6 +121,23 @@ namespace CoviIDApiCore.V1.Services
             return;
         }
 
+        public async Task<Wallet> UpdateWalletToVerified(string walletId)
+        {
+            var wallet = await _walletRepository.GetAsync(Guid.Parse(walletId));
+
+            if (wallet == null)
+                throw new NotFoundException(Messages.Wallet_NotFound);
+
+            wallet.MobileNumberVerifiedAt = DateTime.UtcNow;
+
+            _walletRepository.Update(wallet);
+
+            await _walletRepository.SaveAsync();
+
+            return wallet;
+        }
+        
+
         #region Private Methods
         private async Task<Wallet> GetWallet(string sessionId)
         {
@@ -139,15 +149,6 @@ namespace CoviIDApiCore.V1.Services
                 throw new NotFoundException(Messages.Wallet_NotFound);
 
             return wallet;
-        }
-
-        private async Task UpdateWallet(Wallet wallet)
-        {
-            _cryptoService.EncryptAsServer(wallet);
-
-            _walletRepository.Update(wallet);
-
-            await _walletRepository.SaveAsync();
         }
         #endregion
     }
