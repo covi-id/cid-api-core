@@ -1,7 +1,5 @@
 ﻿using CoviIDApiCore.Models.Database;
-using CoviIDApiCore.V1.DTOs.Credentials;
 using CoviIDApiCore.V1.DTOs.WalletTestResult;
-using CoviIDApiCore.V1.DTOs.Wallet;
 using Microsoft.EntityFrameworkCore;
 using System;
 
@@ -16,6 +14,7 @@ namespace CoviIDApiCore.Data
         public DbSet<WalletTestResult> WalletTestResults { get; set; }
         public DbSet<WalletDetail> WalletDetails { get; set; }
         public DbSet<Session> Sessions { get; set; }
+        public DbSet<WalletLocationReceipt> WalletLocationReceipts { get; set; }
 
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
@@ -67,6 +66,14 @@ namespace CoviIDApiCore.Data
                     v => v.ToString().ToLower(),
                     v => (TestType)Enum.Parse(typeof(TestType), v, true)
                 );
+
+            modelBuilder
+             .Entity<WalletLocationReceipt>()
+             .Property(e => e.ScanType)
+             .HasConversion(
+                 v => v.ToString().ToLower(),
+                 v => (ScanType)Enum.Parse(typeof(ScanType), v, true)
+             );
         }
     }
 }
