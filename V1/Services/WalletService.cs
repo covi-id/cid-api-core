@@ -117,7 +117,9 @@ namespace CoviIDApiCore.V1.Services
             await _testResultService.DeleteTestResults(wallet.Id);
 
             _walletRepository.Delete(wallet);
+
             await _walletRepository.SaveAsync();
+            
             return;
         }
 
