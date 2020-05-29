@@ -21,6 +21,5 @@ namespace CoviIDApiCore.V1.DTOs.Authentication
         public bool isMyMobileNumber { get; set; }
         public string Photo { get; set; }
         public bool HasConsent { get; set; }
-        public DateTime? CreatedAt { get; set; }
     }
 }

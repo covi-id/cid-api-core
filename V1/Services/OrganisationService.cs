@@ -220,20 +220,14 @@ namespace CoviIDApiCore.V1.Services
         {
             var walletDetails = await _walletDetailRepository.GetByEncryptedMobileNumber(mobileNumber);
 
-            if (walletDetails == default)
+            if (walletDetails == default || walletDetails == null)
                 throw new ValidationException(Messages.WalltDetails_NotFound);
 
-            var organisationAccessLogs = await _organisationAccessLogRepository
-                .GetListByWalletIds(walletDetails.Select(w => w.Id).ToList());
-
-            
-
-            var log = organisationAccessLogs.FirstOrDefault();
-
-            if (log == null)
-                throw new NotFoundException();
-
-            var wallet = walletDetails.FirstOrDefault(w => Equals(w.Id, log.Wallet.Id));
+            // TODO better identify the wallet to checkout
+            var wallet = walletDetails
+                .OrderByDescending(wd => wd.CreatedAt)
+                .FirstOrDefault()?
+                .Wallet;
 
             if (wallet == null)
                 throw new NotFoundException(Messages.Wallet_NotFound);
