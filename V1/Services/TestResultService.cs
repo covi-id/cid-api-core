@@ -52,6 +52,9 @@ namespace CoviIDApiCore.V1.Services
 
         public async Task AddTestResult(TestResultRequest testResultRequest)
         {
+            if (testResultRequest == null || !testResultRequest.isValid())
+                throw new ValidationException(Messages.Token_InvaldPayload);
+
             var wallet = await _walletRepository.GetAsync(testResultRequest.walletId);
 
             if (wallet == null)
@@ -75,27 +78,16 @@ namespace CoviIDApiCore.V1.Services
             await _walletTestResultRepository.SaveAsync();
         }
 
-        public async Task AddTestResult(Wallet wallet, TestResultRequest testResultRequest)
+        public async Task DeleteTestResults(Guid walletId)
         {
-            if (!testResultRequest.isValid())
-                throw new ValidationException(Messages.TestResult_Invalid);
+            var tests = await _walletTestResultRepository.GetTestResults(walletId);
 
-            var testResults = new WalletTestResult
-            {
-                Wallet = wallet,
-                Laboratory = testResultRequest.Laboratory,
-                ReferenceNumber = testResultRequest.ReferenceNumber,
-                TestedAt = testResultRequest.TestedAt,
-                ResultStatus = testResultRequest.ResultStatus,
-                LaboratoryStatus = LaboratoryStatus.Unsent,
-                TestType = TestType.Covid19,
-                HasConsent = testResultRequest.HasConsent,
-                PermissionGrantedAt = DateTime.UtcNow
-            };
+            if (tests == null || tests.Count < 1)
+                return;
 
-            await _walletTestResultRepository.AddAsync(testResults);
-
+            _walletTestResultRepository.DeleteRange(tests);
             await _walletTestResultRepository.SaveAsync();
+            return;
         }
     }
 }

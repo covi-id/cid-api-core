@@ -78,14 +78,6 @@ namespace CoviIDApiCore.Data
              );
 
             modelBuilder
-             .Entity<WalletDetail>()
-             .Property(e => e.IdType)
-             .HasConversion(
-                 v => v.ToString().ToLower(),
-                 v => (IdType)Enum.Parse(typeof(IdType), v, true)
-             );
-
-            modelBuilder
                 .Entity<OrganisationAccessLog>()
                 .Property(e => e.ScanType)
                 .HasConversion(

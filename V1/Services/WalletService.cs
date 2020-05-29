@@ -19,6 +19,7 @@ namespace CoviIDApiCore.V1.Services
         private readonly IWalletRepository _walletRepository;
         private readonly IWalletDetailRepository _walletDetailRepository;
         private readonly ITestResultService _testResultService;
+        private readonly IWalletDetailService _walletDetailService;
         private readonly ITokenService _tokenService;
         private readonly ICryptoService _cryptoService;
         private readonly IAmazonS3Broker _amazonS3Broker;
@@ -26,7 +27,7 @@ namespace CoviIDApiCore.V1.Services
 
         public WalletService(IOtpService otpService, IWalletRepository walletRepository, IWalletDetailRepository walletDetailRepository,
             ITestResultService testResultService, ITokenService tokenService, ICryptoService cryptoService,
-            IAmazonS3Broker amazonS3Broker, ISessionService sessionService)
+            IAmazonS3Broker amazonS3Broker, ISessionService sessionService, IWalletDetailService walletDetailService)
         {
             _walletDetailRepository = walletDetailRepository;
             _testResultService = testResultService;
@@ -34,6 +35,7 @@ namespace CoviIDApiCore.V1.Services
             _cryptoService = cryptoService;
             _amazonS3Broker = amazonS3Broker;
             _sessionService = sessionService;
+            _walletDetailService = walletDetailService;
             _otpService = otpService;
             _walletRepository = walletRepository;
         }
@@ -109,6 +111,24 @@ namespace CoviIDApiCore.V1.Services
 
             return wallet;
         }
+
+        public async Task DeleteWallet(string walletId)
+        {
+            var wallet = await _walletRepository.GetAsync(Guid.Parse(walletId));
+
+            if (wallet == null)
+                throw new NotFoundException(Messages.Wallet_NotFound);
+
+            await _walletDetailService.DeleteWalletDetails(wallet);
+
+            await _testResultService.DeleteTestResults(wallet.Id);
+
+            _walletRepository.Delete(wallet);
+            await _walletRepository.SaveAsync();
+            return;
+        }
+
+        #region Private Methods
         private async Task<Wallet> GetWallet(string sessionId)
         {
             var session = await _sessionService.GetAndUseSession(sessionId);
@@ -129,5 +149,6 @@ namespace CoviIDApiCore.V1.Services
 
             await _walletRepository.SaveAsync();
         }
+        #endregion
     }
 }
