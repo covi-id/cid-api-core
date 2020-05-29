@@ -1,7 +1,6 @@
 ﻿using CoviIDApiCore.Models.Database;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace CoviIDApiCore.V1.Interfaces.Repositories
@@ -9,5 +8,6 @@ namespace CoviIDApiCore.V1.Interfaces.Repositories
     public interface IWalletDetailRepository : IBaseRepository<WalletDetail, Guid>
     {
         Task<List<WalletDetail>> GetWalletDetailsByWallet(Wallet wallet);
+        Task<List<WalletDetail>> GetByEncryptedMobileNumber(string encryptedMobileNumber);
     }
 }

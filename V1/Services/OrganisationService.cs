@@ -22,14 +22,17 @@ namespace CoviIDApiCore.V1.Services
         private readonly IEmailService _emailService;
         private readonly IQRCodeService _qrCodeService;
         private readonly IWalletRepository _walletRepository;
+        private readonly IWalletDetailRepository _walletDetailRepository;
         private readonly IWalletService _walletService;
         private readonly ISessionService _sessionService;
         private readonly ISmsService _smsService;
         private readonly ICryptoService _cryptoService;
+        private readonly IWalletLocationReceiptService _walletLocationReceiptService;
 
         public OrganisationService(IOrganisationRepository organisationRepository, IOrganisationAccessLogRepository organisationAccessLogRepository,
             IEmailService emailService, IQRCodeService qrCodeService, IWalletRepository walletRepository, IWalletService walletService,
-            ISessionService sessionService, ISmsService smsService, ICryptoService cryptoService)
+            ISessionService sessionService, ISmsService smsService, ICryptoService cryptoService, IWalletLocationReceiptService walletLocationReceiptService,
+            IWalletDetailRepository walletDetailRepository)
         {
             _organisationRepository = organisationRepository;
             _organisationAccessLogRepository = organisationAccessLogRepository;
@@ -40,6 +43,8 @@ namespace CoviIDApiCore.V1.Services
             _sessionService = sessionService;
             _smsService = smsService;
             _cryptoService = cryptoService;
+            _walletLocationReceiptService = walletLocationReceiptService;
+            _walletDetailRepository = walletDetailRepository;
         }
 
         public async Task CreateAsync(CreateOrganisationRequest payload)
@@ -85,7 +90,7 @@ namespace CoviIDApiCore.V1.Services
 
             return new Response(new OrganisationDTO(organisation, orgCounter, totalScans, GetAccessLogBalance(accessLogs)), HttpStatusCode.OK);
         }
-      
+
         public async Task<Response> UpdateCountAsync(string id, UpdateCountRequest payload, ScanType scanType, bool mobile = false)
         {
             Wallet wallet = null;
@@ -103,13 +108,15 @@ namespace CoviIDApiCore.V1.Services
             if (organisation == default)
                 throw new NotFoundException(Messages.Org_NotExists);
 
-            ValidateScan(organisation.AccessLogs.ToList(), scanType, wallet, mobile);
-
-            await UpdateLogs(wallet, organisation, scanType);
-
             var logs = organisation.AccessLogs
                 .Where(oal => oal.CreatedAt.Value.Date.Equals(DateTime.UtcNow.Date))
                 .ToList();
+
+            await ValidateScan(logs, scanType, wallet, mobile);
+
+            await UpdateOrganisationAccessLogs(organisation, scanType);
+
+            await _walletLocationReceiptService.CreateReceipt(wallet, payload.Longitude, payload.Latitude, scanType);
 
             return new Response(
                 new UpdateCountResponse()
@@ -122,11 +129,10 @@ namespace CoviIDApiCore.V1.Services
                 HttpStatusCode.OK);
         }
 
-        private async Task UpdateLogs(Wallet wallet, Organisation organisation, ScanType scanType)
+        private async Task UpdateOrganisationAccessLogs(Organisation organisation, ScanType scanType)
         {
             var newCount = new OrganisationAccessLog()
             {
-                Wallet = wallet,
                 Organisation = organisation,
                 CreatedAt = DateTime.UtcNow,
                 ScanType = scanType
@@ -135,33 +141,31 @@ namespace CoviIDApiCore.V1.Services
             await _organisationAccessLogRepository.AddAsync(newCount);
 
             await _organisationAccessLogRepository.SaveAsync();
+
         }
 
-        private void ValidateScan(List<OrganisationAccessLog> logs, ScanType scanType, Wallet wallet, bool mobile = false)
+        private async Task ValidateScan(List<OrganisationAccessLog> logs, ScanType scanType, Wallet wallet, bool mobile = false)
         {
             if (wallet != default && !mobile)
             {
-                var userLogs = logs
-                    .Where(l => l.Wallet == wallet && l.CreatedAt.Value.Date == DateTime.Now.Date)
-                    .OrderByDescending(l => l.CreatedAt)
-                    .ToList();
+                var locationReceipts = await _walletLocationReceiptService.GetReceiptsForToday(wallet);
 
-                if(!userLogs.Any() && scanType == ScanType.CheckOut)
+                if (!locationReceipts.Any() && scanType == ScanType.CheckOut)
                     throw new ValidationException(Messages.Org_UserNotScannedIn);
 
-                if (userLogs.FirstOrDefault()?.ScanType == ScanType.CheckIn && scanType == ScanType.CheckIn)
+                if (locationReceipts.FirstOrDefault()?.ScanType == ScanType.CheckIn && scanType == ScanType.CheckIn)
                     throw new ValidationException(Messages.Org_UserScannedIn);
-                
-                if(userLogs.FirstOrDefault()?.ScanType != ScanType.CheckIn && scanType == ScanType.CheckOut)
+
+                if (locationReceipts.FirstOrDefault()?.ScanType != ScanType.CheckIn && scanType == ScanType.CheckOut)
                     throw new ValidationException(Messages.Org_UserNotScannedIn);
 
-                if(userLogs.FirstOrDefault()?.ScanType == ScanType.CheckOut && scanType == ScanType.CheckOut)
+                if (locationReceipts.FirstOrDefault()?.ScanType == ScanType.CheckOut && scanType == ScanType.CheckOut)
                     throw new ValidationException(Messages.Org_UserScannedOut);
             }
 
             var balance = GetAccessLogBalance(logs);
 
-            if(balance < 1 && scanType == ScanType.CheckOut)
+            if (balance < 1 && scanType == ScanType.CheckOut)
                 throw new ValidationException(Messages.Org_NegBalance);
         }
 
@@ -177,6 +181,7 @@ namespace CoviIDApiCore.V1.Services
             var session = await _sessionService.CreateSession(payload.MobileNumber, wallet);
 
             var organisation = await _organisationRepository.GetAsync(Guid.Parse(organisationId));
+
             if (organisation == default)
                 throw new NotFoundException(Messages.Org_NotExists);
 
@@ -202,7 +207,7 @@ namespace CoviIDApiCore.V1.Services
             {
                 Latitude = payload.Latitude,
                 Longitude = payload.Longitude,
-                WalletId = await GetCheckoutWalletId(payload.MobileNumber)
+                WalletId = await GetWalletToCheckOut(payload.MobileNumber)
             };
 
             var counterResponse = await UpdateCountAsync(organisationId, updateCounterRequest, ScanType.CheckOut, true);
@@ -211,32 +216,26 @@ namespace CoviIDApiCore.V1.Services
         }
 
         #region Private Methods
-        private async Task<string> GetCheckoutWalletId(string mobileNumber)
+        private async Task<string> GetWalletToCheckOut(string mobileNumber)
         {
-            var wallets = await _walletRepository.GetListByEncryptedMobileNumber(mobileNumber);
+            var walletDetails = await _walletDetailRepository.GetByEncryptedMobileNumber(mobileNumber);
 
-            if (wallets == default)
-                throw new ValidationException(Messages.Wallet_NotFound);
+            if (walletDetails == default)
+                throw new ValidationException(Messages.WalltDetails_NotFound);
 
             var organisationAccessLogs = await _organisationAccessLogRepository
-                .GetListByWalletIds(wallets.Select(w => w.Id).ToList());
+                .GetListByWalletIds(walletDetails.Select(w => w.Id).ToList());
 
-            organisationAccessLogs.RemoveAll(t =>
-                organisationAccessLogs
-                .Where(oal => oal.ScanType == ScanType.CheckOut)
-                .Select(oal => oal.Wallet.Id)
-                .Distinct()
-                .ToList()
-                .Contains(t.Wallet.Id));
+            
 
             var log = organisationAccessLogs.FirstOrDefault();
 
-            if(log == null)
+            if (log == null)
                 throw new NotFoundException();
 
-            var wallet = wallets.FirstOrDefault(w => Equals(w.Id, log.Wallet.Id));
+            var wallet = walletDetails.FirstOrDefault(w => Equals(w.Id, log.Wallet.Id));
 
-            if(wallet == null)
+            if (wallet == null)
                 throw new NotFoundException(Messages.Wallet_NotFound);
 
             return wallet.Id.ToString();
@@ -247,7 +246,9 @@ namespace CoviIDApiCore.V1.Services
             var checkIns = logs.Count(oal => oal.ScanType == ScanType.CheckIn);
             var checkOuts = logs.Count(oal => oal.ScanType == ScanType.CheckOut);
 
-            return checkIns - checkOuts;
+            var balance = checkIns - checkOuts; 
+
+            return balance;
         }
 
         private int GetAccessLogTotal(List<OrganisationAccessLog> logs)
