@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using CoviIDApiCore.Exceptions;
 using CoviIDApiCore.Models.Database;
 using CoviIDApiCore.V1.Constants;
@@ -38,6 +39,34 @@ namespace CoviIDApiCore.V1.Services
             return walletDetails;
         }
 
+        public async Task<WalletDetail> CreateMobileWalletDetails(Wallet wallet, string mobileNumber)
+        {
+            var walletDetails = new WalletDetail()
+            {
+                Wallet = wallet,
+                MobileNumber = mobileNumber
+            };
+
+            _cryptoService.EncryptAsServer(walletDetails, true);
+
+            await _walletDetailRepository.AddAsync(walletDetails);
+
+            await _walletDetailRepository.SaveAsync();
+
+            return walletDetails;
+        }
+
+        public async Task<List<WalletDetail>> GetWalletDetailsByMobileNumber(string mobileNumber)
+        {
+            _cryptoService.EncryptAsServer(mobileNumber);
+            
+            var walletDetails = await _walletDetailRepository.GetByEncryptedMobileNumber(mobileNumber);
+
+            if (walletDetails == default || walletDetails == null)
+                throw new ValidationException(Messages.WalltDetails_NotFound);
+            
+            return walletDetails;
+        }
         public async Task DeleteWalletDetails(Wallet wallet)
         {
             var walletDetails = await _walletDetailRepository.GetWalletDetailsByWallet(wallet);

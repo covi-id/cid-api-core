@@ -24,15 +24,12 @@ namespace CoviIDApiCore.V1.Services
         private readonly IWalletRepository _walletRepository;
         private readonly IWalletDetailRepository _walletDetailRepository;
         private readonly IWalletService _walletService;
-        private readonly ISessionService _sessionService;
-        private readonly ISmsService _smsService;
         private readonly ICryptoService _cryptoService;
         private readonly IWalletLocationReceiptService _walletLocationReceiptService;
 
         public OrganisationService(IOrganisationRepository organisationRepository, IOrganisationAccessLogRepository organisationAccessLogRepository,
             IEmailService emailService, IQRCodeService qrCodeService, IWalletRepository walletRepository, IWalletService walletService,
-            ISessionService sessionService, ISmsService smsService, ICryptoService cryptoService, IWalletLocationReceiptService walletLocationReceiptService,
-            IWalletDetailRepository walletDetailRepository)
+            ICryptoService cryptoService, IWalletLocationReceiptService walletLocationReceiptService, IWalletDetailRepository walletDetailRepository)
         {
             _organisationRepository = organisationRepository;
             _organisationAccessLogRepository = organisationAccessLogRepository;
@@ -40,8 +37,6 @@ namespace CoviIDApiCore.V1.Services
             _qrCodeService = qrCodeService;
             _walletRepository = walletRepository;
             _walletService = walletService;
-            _sessionService = sessionService;
-            _smsService = smsService;
             _cryptoService = cryptoService;
             _walletLocationReceiptService = walletLocationReceiptService;
             _walletDetailRepository = walletDetailRepository;
@@ -171,21 +166,17 @@ namespace CoviIDApiCore.V1.Services
 
         public async Task<Response> MobileCheckIn(string organisationId, MobileUpdateCountRequest payload)
         {
-            var walletRequest = new CreateWalletRequest
-            {
-                MobileNumber = payload.MobileNumber
-            };
-
-            var wallet = await _walletService.CreateWallet(walletRequest, true);
-
-            var session = await _sessionService.CreateSession(payload.MobileNumber, wallet);
-
             var organisation = await _organisationRepository.GetAsync(Guid.Parse(organisationId));
 
             if (organisation == default)
                 throw new NotFoundException(Messages.Org_NotExists);
 
-            await _smsService.SendWelcomeSms(payload.MobileNumber, organisation.Name, session.ExpireAt.Value, session.Id);
+            var walletRequest = new CreateWalletRequest
+            {
+                MobileNumber = payload.MobileNumber
+            };
+
+            var wallet = await _walletService.CreateMobileWallet(walletRequest, organisation.Name);
 
             var updateCounterRequest = new UpdateCountRequest
             {
@@ -203,11 +194,13 @@ namespace CoviIDApiCore.V1.Services
         {
             _cryptoService.EncryptAsServer(payload, true);
 
+            var wallet = await _walletService.GetWalletByMobileNumebr(payload.MobileNumber);
+
             var updateCounterRequest = new UpdateCountRequest
             {
                 Latitude = payload.Latitude,
                 Longitude = payload.Longitude,
-                WalletId = await GetWalletToCheckOut(payload.MobileNumber)
+                WalletId = wallet.Id.ToString()
             };
 
             var counterResponse = await UpdateCountAsync(organisationId, updateCounterRequest, ScanType.CheckOut, true);
@@ -216,25 +209,6 @@ namespace CoviIDApiCore.V1.Services
         }
 
         #region Private Methods
-        private async Task<string> GetWalletToCheckOut(string mobileNumber)
-        {
-            var walletDetails = await _walletDetailRepository.GetByEncryptedMobileNumber(mobileNumber);
-
-            if (walletDetails == default || walletDetails == null)
-                throw new ValidationException(Messages.WalltDetails_NotFound);
-
-            // TODO better identify the wallet to checkout
-            var wallet = walletDetails
-                .OrderByDescending(wd => wd.CreatedAt)
-                .FirstOrDefault()?
-                .Wallet;
-
-            if (wallet == null)
-                throw new NotFoundException(Messages.Wallet_NotFound);
-
-            return wallet.Id.ToString();
-        }
-
         private int GetAccessLogBalance(List<OrganisationAccessLog> logs)
         {
             var checkIns = logs.Count(oal => oal.ScanType == ScanType.CheckIn);

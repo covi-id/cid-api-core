@@ -24,10 +24,12 @@ namespace CoviIDApiCore.V1.Services
         private readonly ICryptoService _cryptoService;
         private readonly IAmazonS3Broker _amazonS3Broker;
         private readonly ISessionService _sessionService;
+        private readonly ISmsService _smsService;
 
         public WalletService(IOtpService otpService, IWalletRepository walletRepository, IWalletDetailRepository walletDetailRepository,
             ITestResultService testResultService, ITokenService tokenService, ICryptoService cryptoService,
-            IAmazonS3Broker amazonS3Broker, ISessionService sessionService, IWalletDetailService walletDetailService)
+            IAmazonS3Broker amazonS3Broker, ISessionService sessionService, IWalletDetailService walletDetailService,
+            ISmsService smsService)
         {
             _walletDetailRepository = walletDetailRepository;
             _testResultService = testResultService;
@@ -36,6 +38,7 @@ namespace CoviIDApiCore.V1.Services
             _amazonS3Broker = amazonS3Broker;
             _sessionService = sessionService;
             _walletDetailService = walletDetailService;
+            _smsService = smsService;
             _otpService = otpService;
             _walletRepository = walletRepository;
         }
@@ -73,7 +76,7 @@ namespace CoviIDApiCore.V1.Services
             Wallet wallet;
 
             if (sessionId == null)
-                wallet = await CreateWallet(walletRequest);
+                wallet = await CreateWallet();
             else
             {
                 wallet = await GetWallet(sessionId);
@@ -82,28 +85,43 @@ namespace CoviIDApiCore.V1.Services
             var otpId = await _otpService.GenerateAndSendOtpAsync(walletRequest.MobileNumber);
 
             var token = _tokenService.GenerateToken(wallet.Id.ToString(), otpId);
-            
+
             return new TokenResponse
             {
                 Token = token
             };
         }
 
-        public async Task<Wallet> CreateWallet(CreateWalletRequest walletRequest, bool mobile = false)
+        public async Task<Wallet> CreateMobileWallet(CreateWalletRequest request, string organisationName)
         {
-            var wallet = new Wallet
-            {
-                CreatedAt = DateTime.UtcNow
-            };
+            var wallet = await CreateWallet();
 
-            _cryptoService.EncryptAsServer(wallet, mobile);
+            var session = await _sessionService.CreateSession(request.MobileNumber, wallet);
 
-            await _walletRepository.AddAsync(wallet);
+            await _smsService.SendWelcomeSms(request.MobileNumber, organisationName, session.ExpireAt.Value, session.Id);
 
-            await _walletRepository.SaveAsync();
+            await _walletDetailService.CreateMobileWalletDetails(wallet, request.MobileNumber);
 
             return wallet;
         }
+
+        public async Task<Wallet> GetWalletByMobileNumebr(string mobileNumber)
+        {
+            var walletDetails = await _walletDetailService.GetWalletDetailsByMobileNumber(mobileNumber);
+
+            // TODO better identify the wallet to checkout
+            var wallet = walletDetails
+                .OrderByDescending(wd => wd.CreatedAt)
+                .FirstOrDefault()?
+                .Wallet;
+
+            if (wallet == null)
+                throw new NotFoundException(Messages.Wallet_NotFound);
+
+            return wallet;
+        }
+
+
 
         public async Task DeleteWallet(string walletId)
         {
@@ -119,7 +137,7 @@ namespace CoviIDApiCore.V1.Services
             _walletRepository.Delete(wallet);
 
             await _walletRepository.SaveAsync();
-            
+
             return;
         }
 
@@ -138,16 +156,31 @@ namespace CoviIDApiCore.V1.Services
 
             return wallet;
         }
-        
+
 
         #region Private Methods
+        private async Task<Wallet> CreateWallet()
+        {
+            var wallet = new Wallet
+            {
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _walletRepository.AddAsync(wallet);
+
+            await _walletRepository.SaveAsync();
+
+            return wallet;
+        }
+
+
         private async Task<Wallet> GetWallet(string sessionId)
         {
             var session = await _sessionService.GetAndUseSession(sessionId);
 
             var wallet = await _walletRepository.GetAsync(session.Wallet.Id);
 
-            if(wallet == default)
+            if (wallet == default)
                 throw new NotFoundException(Messages.Wallet_NotFound);
 
             return wallet;
