@@ -34,5 +34,11 @@ namespace CoviIDApiCore.Models.Database
             PermissionGrantedAt = request.PermissionGrantedAt;
             CreatedAt = DateTime.UtcNow;
         }
+
+        public WalletTestResult()
+        {
+
+        }
+
     }
 }

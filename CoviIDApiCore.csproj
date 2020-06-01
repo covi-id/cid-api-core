@@ -24,6 +24,8 @@
     <Compile Remove="Migrations\20200508073119_ConverionofTestType.Designer.cs" />
     <Compile Remove="Migrations\20200508110323_RenameCountersOnOrg.cs" />
     <Compile Remove="Migrations\20200508110323_RenameCountersOnOrg.Designer.cs" />
+    <Compile Remove="Migrations\20200601083521_PrivacyPreserving_Restructure.cs" />
+    <Compile Remove="Migrations\20200601083521_PrivacyPreserving_Restructure.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>
