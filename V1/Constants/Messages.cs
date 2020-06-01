@@ -20,7 +20,6 @@
 
         #region Organisations
         public static readonly string Org_NotExists = $"Organisation does not exist.";
-        public static readonly string Org_PayloadInvalid = $"Payload is invalid.";
         public static readonly string Org_NegBalance = $"User can not be scanned out. Balance can not be less than 0."; //TODO: Copy change
         public static readonly string Org_EmailEmpty = $"Organisation email is empty.";
         public static readonly string Org_UserNotScannedIn = $"User can not be scanned out if no scan in has been recorded.";
@@ -39,7 +38,7 @@
         public static readonly string Token_OTPExpired = $"OTP has expired.";
         public static readonly string Token_OTPFailed = $"OTP is invalid.";
         public static readonly string Token_OTPThreshold = $"Too many OTPs."; //TODO: Copy change
-        public static readonly string Token_InvaldPayload = $"OTP Payload is invalid."; //TODO: Copy change
+        public static readonly string Token_InvaldPayload = $"OTP Payload is invalid."; 
         public static readonly string Token_Invalid = $"OTP session token is invalid";
         #endregion
 
@@ -74,7 +73,7 @@
 
         #region TestResults
         public static readonly string TestResult_NotFound = $"Could not find any test resulst.";
-        public static readonly string TestResult_Invalid = $"Test result is invalid."; //TODO: Copy change
+        public static readonly string TestResult_Invalid = $"Test result is invalid."; 
         #endregion
 
         #region Amazon S3

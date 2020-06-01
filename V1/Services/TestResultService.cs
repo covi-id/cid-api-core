@@ -53,7 +53,7 @@ namespace CoviIDApiCore.V1.Services
         public async Task AddTestResult(TestResultRequest testResultRequest)
         {
             if (testResultRequest == null || !testResultRequest.isValid())
-                throw new ValidationException(Messages.Token_InvaldPayload);
+                throw new ValidationException(Messages.TestResult_Invalid);
 
             var wallet = await _walletRepository.GetAsync(testResultRequest.walletId);
 

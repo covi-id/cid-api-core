@@ -11,10 +11,5 @@ namespace CoviIDApiCore.Utilities
             var random = new Random();
             return random.Next(min, max);
         }
-
-        public static string GenerateSessionToken()
-        {
-            return Guid.NewGuid().ToString();
-        }
     }
 }
