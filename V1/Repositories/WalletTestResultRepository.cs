@@ -22,7 +22,11 @@ namespace CoviIDApiCore.V1.Repositories
 
         public async Task<List<WalletTestResult>> GetTestResults(Guid walletId)
         {
-            var tests = await _dbset.Where(r => string.Equals(r.Wallet.Id.ToString(), walletId.ToString()))?.ToListAsync();
+            var tests = await _dbset
+                .Where(r => string.Equals(r.Wallet.Id.ToString(), walletId.ToString()))?
+                .OrderByDescending(r => r.CreatedAt)
+                .ToListAsync();
+
             return tests;
         }
     }

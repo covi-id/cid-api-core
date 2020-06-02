@@ -11,16 +11,26 @@ namespace CoviIDApiCore.Models.Database
         public string FirstName { get; set; }
         [Encrypted]
         public string LastName { get; set; }
+        [Encrypted(true)]
+        public string MobileNumber { get; set; }
+        public bool isMyMobileNumber { get; set; }
+        [Encrypted]
         public string PhotoReference { get; set; }
+        public bool HasConsent { get; set; }
+        public DateTime? CreatedAt { get; set; }
         public WalletDetail()
         {
         }
 
-        public WalletDetail(WalletDetailsRequest detailsRequest)
+        public WalletDetail(WalletDetailsRequest request)
         {
-            FirstName = detailsRequest.FirstName;
-            LastName = detailsRequest.LastName;
-            PhotoReference = detailsRequest.Photo;
+            FirstName = request.FirstName;
+            LastName = request.LastName;
+            MobileNumber = request.MobileNumber;
+            isMyMobileNumber = request.isMyMobileNumber;
+            PhotoReference = request.Photo;
+            HasConsent = request.HasConsent;
+            CreatedAt = DateTime.UtcNow;
         }
     }
 }

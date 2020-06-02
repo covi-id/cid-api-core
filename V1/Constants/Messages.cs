@@ -70,6 +70,7 @@
 
         #region WalletDetails
         public static readonly string WalltDetails_NotFound = $"Could not find wallet details.";
+        public static readonly string WalltDetails_Invalid = $"Invalid wallet details.";
         #endregion
 
         #region TestResults

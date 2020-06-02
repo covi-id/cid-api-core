@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.ResponseCompression;
+using System;
 using System.Collections.Generic;
 
 namespace CoviIDApiCore.Models.Database
