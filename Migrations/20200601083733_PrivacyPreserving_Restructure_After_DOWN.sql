@@ -1,21 +1,19 @@
-﻿INSERT INTO  [dbo].[OrganisationAccessLogs] ([Id], [WalletId], [Longitude], [Latitude], [ScanType], [CreatedAt] )
-SELECT [Id], [WalletId], [Longitude], [Latitude], [ScanType], [CreatedAt],
-	CASE 
-		WHEN Movement < 0 THEN 'checkout'
-		WHEN Movement > 0 THEN 'checkin'
-		ELSE 'denied'
-	END
-FROM #TempOrganisationAccessLogsDown
+﻿
+INSERT INTO  [dbo].[OrganisationAccessLogs] ([Id], [OrganisationId], [WalletId], [Longitude], [Latitude], [ScanType], [CreatedAt])
+SELECT [Id], null, [WalletId], [Longitude], [Latitude], [ScanType], [CreatedAt]
+	
+FROM #TempWalletLocationReceipts
 
-DROP TABLE #TempOrganisationAccessLogsDown
+DROP TABLE #TempWalletLocationReceipts
 
-  
-INSERT INTO  [dbo].[Wallets] ([Id] ,[WalletId], [MobileNumber])
-SELECT [Id], [MobileNumber]
-FROM #TempWalletDown
-WHERE WalletId = #TempWalletDown.Id
 
-DROP TABLE #TempWalletDown
+UPDATE [dbo].[Wallets]
+SET [dbo].[Wallets].MobileNumber = wd.MobileNumber
+FROM #TempWalletDetailsDown wd
+JOIN [dbo].[Wallets] w
+ON w.Id = wd.WalletId
+
+DROP TABLE #TempWalletDetailsDown
 
 
 

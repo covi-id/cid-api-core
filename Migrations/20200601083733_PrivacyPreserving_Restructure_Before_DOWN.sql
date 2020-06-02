@@ -1,11 +1,11 @@
-﻿DROP TABLE IF EXISTS #TempOrganisationAccessLogsDown
-
-  SELECT * 
-INTO #TempOrganisationAccessLogsDown
-FROM [dbo].[OrganisationAccessLogs]
-
-DROP TABLE IF EXISTS #TempWalletDown
+﻿DROP TABLE IF EXISTS #TempWalletLocationReceipts
 
 SELECT * 
-INTO #TempWalletDown
-FROM [dbo].[Wallets]
+INTO #TempWalletLocationReceipts
+FROM [dbo].[WalletLocationReceipts]
+
+DROP TABLE IF EXISTS #TempWalletDetailsDown
+
+SELECT * 
+INTO #TempWalletDetailsDown
+FROM [dbo].[WalletDetails]
