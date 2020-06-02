@@ -60,7 +60,7 @@ namespace CoviIDApiCore.V1.Services
         {
             _cryptoService.EncryptAsServer(mobileNumber);
             
-            var walletDetails = await _walletDetailRepository.GetByEncryptedMobileNumber(mobileNumber);
+            var walletDetails = await _walletDetailRepository.GeWalletDetailstByEncryptedMobileNumber(mobileNumber);
 
             if (walletDetails == default || walletDetails == null)
                 throw new ValidationException(Messages.WalltDetails_NotFound);

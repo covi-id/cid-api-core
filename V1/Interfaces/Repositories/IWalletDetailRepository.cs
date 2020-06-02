@@ -8,6 +8,6 @@ namespace CoviIDApiCore.V1.Interfaces.Repositories
     public interface IWalletDetailRepository : IBaseRepository<WalletDetail, Guid>
     {
         Task<List<WalletDetail>> GetWalletDetailsByWallet(Wallet wallet);
-        Task<List<WalletDetail>> GetByEncryptedMobileNumber(string encryptedMobileNumber);
+        Task<List<WalletDetail>> GeWalletDetailstByEncryptedMobileNumber(string encryptedMobileNumber);
     }
 }
