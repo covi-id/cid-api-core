@@ -9,7 +9,7 @@ namespace CoviIDApiCore.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql(
-              new FileInfo("20200601083733_PrivacyPreserving_Restructure_Before_UP.sql")
+              new FileInfo("Migrations/20200601083733_PrivacyPreserving_Restructure_Before_UP.sql")
                   .OpenText()
                   .ReadToEnd()
                   );
@@ -106,7 +106,7 @@ namespace CoviIDApiCore.Migrations
                 column: "WalletId");
 
             migrationBuilder.Sql(
-              new FileInfo("20200601083733_PrivacyPreserving_Restructure_After_UP.sql")
+              new FileInfo("Migrations/20200601083733_PrivacyPreserving_Restructure_After_UP.sql")
                   .OpenText()
                   .ReadToEnd()
                   );
@@ -116,7 +116,7 @@ namespace CoviIDApiCore.Migrations
         {
 
             migrationBuilder.Sql(
-           new FileInfo("20200601083733_PrivacyPreserving_Restructure_Before_DOWN.sql")
+           new FileInfo("Migrations/20200601083733_PrivacyPreserving_Restructure_Before_DOWN.sql")
                .OpenText()
                .ReadToEnd()
                );
@@ -210,7 +210,7 @@ namespace CoviIDApiCore.Migrations
                 onDelete: ReferentialAction.Restrict);
 
             migrationBuilder.Sql(
-           new FileInfo("20200601083733_PrivacyPreserving_Restructure_After_DOWN.sql")
+           new FileInfo("Migrations/20200601083733_PrivacyPreserving_Restructure_After_DOWN.sql")
                .OpenText()
                .ReadToEnd()
                );
