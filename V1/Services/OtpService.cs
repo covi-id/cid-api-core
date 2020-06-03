@@ -5,7 +5,6 @@ using CoviIDApiCore.Exceptions;
 using CoviIDApiCore.Models.Database;
 using CoviIDApiCore.V1.Constants;
 using CoviIDApiCore.V1.DTOs.Authentication;
-using CoviIDApiCore.V1.DTOs.Clickatell;
 using CoviIDApiCore.V1.Interfaces.Brokers;
 using CoviIDApiCore.V1.Interfaces.Repositories;
 using CoviIDApiCore.V1.Interfaces.Services;
@@ -17,28 +16,27 @@ namespace CoviIDApiCore.V1.Services
     {
         private readonly IConfiguration _configuration;
         private readonly IOtpTokenRepository _otpTokenRepository;
-        private readonly IClickatellBroker _clickatellBroker;
         private readonly IWalletRepository _walletRepository;
-        private readonly ITestResultService _testResultService;
         private readonly IWalletDetailService _walletDetailService;
         private readonly ICryptoService _cryptoService;
         private readonly IAmazonS3Broker _amazonS3Broker;
         private readonly ITokenService _tokenService;
         private readonly ISmsService _smsService;
+        private readonly IWalletService _walletService;
 
-        public OtpService(IOtpTokenRepository tokenRepository, IConfiguration configuration, IClickatellBroker clickatellBroker,
-                    IWalletRepository walletRepository, ITestResultService testResultService, IWalletDetailService walletDetailService, ICryptoService cryptoService, ITokenService tokenService, IAmazonS3Broker amazonS3Broker, ISmsService smsService)
+        public OtpService(IOtpTokenRepository tokenRepository, IConfiguration configuration, IWalletRepository walletRepository, 
+            IWalletDetailService walletDetailService, ICryptoService cryptoService, ITokenService tokenService, IAmazonS3Broker amazonS3Broker, 
+            ISmsService smsService, IWalletService walletService)
         {
             _otpTokenRepository = tokenRepository;
             _configuration = configuration;
-            _clickatellBroker = clickatellBroker;
             _walletRepository = walletRepository;
-            _testResultService = testResultService;
             _walletDetailService = walletDetailService;
             _cryptoService = cryptoService;
             _tokenService = tokenService;
             _amazonS3Broker = amazonS3Broker;
             _smsService = smsService;
+            _walletService = walletService;
         }
 
         public async Task<long> GenerateAndSendOtpAsync(string mobileNumber)
@@ -100,12 +98,8 @@ namespace CoviIDApiCore.V1.Services
             return newToken.Id;
         }
 
-        //TODO: Improve this
         public async Task<OtpConfirmationResponse> ConfirmOtpAsync(RequestOtpConfirmation payload, string authToken)
         {
-            if (payload.TestResult != null && !payload.isValid())
-                throw new ValidationException(Messages.Token_InvaldPayload);
-
             var authTokenDetails = _tokenService.GetDetailsFromToken(authToken);
 
             var token = await _otpTokenRepository.GetAsync(authTokenDetails.OtpId);
@@ -119,23 +113,14 @@ namespace CoviIDApiCore.V1.Services
 
             await _otpTokenRepository.SaveAsync();
 
-            var wallet = await _walletRepository.GetAsync(Guid.Parse(authTokenDetails.WalletId));
-
-            if (wallet == null)
-                throw new NotFoundException(Messages.Wallet_NotFound);
-
-            wallet.MobileNumberVerifiedAt = DateTime.UtcNow;
-
-            _walletRepository.Update(wallet);
-
-            await _walletRepository.SaveAsync();
+            var wallet = await _walletService.UpdateWalletToVerified(authTokenDetails.WalletId);
 
             var fileReference = await _amazonS3Broker.AddImageToBucket(payload.WalletDetails.Photo, Guid.NewGuid().ToString());
             payload.WalletDetails.Photo = fileReference;
 
             var key = _cryptoService.GenerateEncryptedSecretKey();
 
-            await _walletDetailService.AddWalletDetailsAsync(wallet, payload.WalletDetails, key);
+            await _walletDetailService.CreateWalletDetails(wallet, payload.WalletDetails, key);
 
             if (payload.TestResult != null)
                 await _testResultService.AddTestResult(payload.TestResult, wallet);

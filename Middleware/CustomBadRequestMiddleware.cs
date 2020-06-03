@@ -16,14 +16,7 @@ namespace CoviIDApiCore.Middleware
 
         public CustomBadRequestMiddleware(ActionContext context)
         {
-            Response = new Response(Meta = new Meta
-            {
-                Code = (int)HttpStatusCode.BadRequest,
-                Message = ConstructErrorMessage(context),
-                Success = false
-            }, false, HttpStatusCode.BadRequest);
-
-            JsonConvert.SerializeObject(Response, new JsonSerializerSettings
+            JsonConvert.SerializeObject(new JsonSerializerSettings
             {
                 ContractResolver = new CamelCasePropertyNamesContractResolver(),
                 Formatting = Formatting.Indented

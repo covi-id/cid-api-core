@@ -22,7 +22,7 @@ namespace CoviIDApiCore.V1.Controllers
 
         [HttpPost]
         [Route("{sessionId?}")]
-        public async Task<IActionResult> CreateWalletWithSession([FromBody] CreateWalletRequest walletParameters, string sessionId)
+        public async Task<IActionResult> CreateWallet([FromBody] CreateWalletRequest walletParameters, string sessionId = null)
         {
             var response = await _walletService.CreateWalletAndOtp(walletParameters, sessionId);
 
@@ -36,6 +36,14 @@ namespace CoviIDApiCore.V1.Controllers
             var response = await _walletService.GetWalletStatus(walletId, payload.Key);
 
             return Ok(new Response(response, HttpStatusCode.OK));
+        }
+
+        [HttpDelete]
+        [Route("{walletId}")]
+        public async Task<IActionResult> DeleteWalletAndOtpRequest(string walletId)
+        {
+            await _walletService.DeleteWallet(walletId);
+            return Ok(new Response(true, HttpStatusCode.OK));
         }
     }
 }

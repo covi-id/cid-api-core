@@ -68,7 +68,7 @@ namespace CoviIDApiCore
                     options.InvalidModelStateResponseFactory = context =>
                     {
                         var problems = new CustomBadRequestMiddleware(context);
-                        return new BadRequestObjectResult(problems);
+                        return new BadRequestObjectResult(new V1.DTOs.System.Response(problems,false, HttpStatusCode.BadRequest));
                     };
                 });
 
@@ -179,7 +179,6 @@ namespace CoviIDApiCore
             services.AddScoped<IOrganisationAccessLogRepository, OrganisationAccessLogRepository>();
             services.AddScoped<IOtpTokenRepository, OtpTokenRepository>();
             services.AddScoped<IWalletRepository, WalletRepository>();
-            services.AddScoped<ICovidTestRepository, CovidTestRepository>();
             services.AddScoped<IWalletDetailRepository, WalletDetailRepository>();
             services.AddScoped<IWalletTestResultRepository, WalletTestResultRepository>();
             services.AddScoped<ISessionRepository, SessionRepository>();

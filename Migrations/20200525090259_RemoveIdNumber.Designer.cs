@@ -4,20 +4,51 @@ using CoviIDApiCore.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace CoviIDApiCore.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20200525090259_RemoveIdNumber")]
+    partial class RemoveIdNumber
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "2.2.6-servicing-10079")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+            modelBuilder.Entity("CoviIDApiCore.Models.Database.CovidTest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<string>("CovidStatus")
+                        .IsRequired();
+
+                    b.Property<string>("CredentialIndicator")
+                        .IsRequired();
+
+                    b.Property<DateTime>("DateTested");
+
+                    b.Property<bool>("HasConsent");
+
+                    b.Property<string>("Laboratory")
+                        .IsRequired();
+
+                    b.Property<DateTime>("PermissionGrantedAt");
+
+                    b.Property<string>("ReferenceNumber");
+
+                    b.Property<string>("WalletId");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CovidTests");
+                });
 
             modelBuilder.Entity("CoviIDApiCore.Models.Database.Organisation", b =>
                 {
@@ -42,14 +73,24 @@ namespace CoviIDApiCore.Migrations
 
                     b.Property<DateTime?>("CreatedAt");
 
+                    b.Property<decimal>("Latitude")
+                        .HasColumnType("decimal(12,8)");
+
+                    b.Property<decimal>("Longitude")
+                        .HasColumnType("decimal(12,8)");
+
                     b.Property<Guid?>("OrganisationId");
 
                     b.Property<string>("ScanType")
                         .IsRequired();
 
+                    b.Property<Guid?>("WalletId");
+
                     b.HasKey("Id");
 
                     b.HasIndex("OrganisationId");
+
+                    b.HasIndex("WalletId");
 
                     b.ToTable("OrganisationAccessLogs");
                 });
@@ -102,6 +143,10 @@ namespace CoviIDApiCore.Migrations
 
                     b.Property<DateTime?>("CreatedAt");
 
+                    b.Property<string>("MobileNumber");
+
+                    b.Property<string>("MobileNumberReference");
+
                     b.Property<DateTime?>("MobileNumberVerifiedAt");
 
                     b.HasKey("Id");
@@ -114,21 +159,13 @@ namespace CoviIDApiCore.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<DateTime?>("CreatedAt");
-
                     b.Property<string>("FirstName");
 
-                    b.Property<bool>("HasConsent");
-
                     b.Property<string>("LastName");
-
-                    b.Property<string>("MobileNumber");
 
                     b.Property<string>("PhotoReference");
 
                     b.Property<Guid?>("WalletId");
-
-                    b.Property<bool>("isMyMobileNumber");
 
                     b.HasKey("Id");
 
@@ -137,41 +174,12 @@ namespace CoviIDApiCore.Migrations
                     b.ToTable("WalletDetails");
                 });
 
-            modelBuilder.Entity("CoviIDApiCore.Models.Database.WalletLocationReceipt", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd();
-
-                    b.Property<DateTime?>("CreatedAt");
-
-                    b.Property<decimal>("Latitude")
-                        .HasColumnType("decimal(12,8)");
-
-                    b.Property<decimal>("Longitude")
-                        .HasColumnType("decimal(12,8)");
-
-                    b.Property<string>("ScanType")
-                        .IsRequired();
-
-                    b.Property<Guid?>("WalletId");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("WalletId");
-
-                    b.ToTable("WalletLocationReceipts");
-                });
-
             modelBuilder.Entity("CoviIDApiCore.Models.Database.WalletTestResult", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<DateTime?>("CreatedAt");
-
                     b.Property<bool>("HasConsent");
-
-                    b.Property<bool>("HasReceivedResults");
 
                     b.Property<DateTime?>("IssuedAt");
 
@@ -207,6 +215,10 @@ namespace CoviIDApiCore.Migrations
                     b.HasOne("CoviIDApiCore.Models.Database.Organisation", "Organisation")
                         .WithMany("AccessLogs")
                         .HasForeignKey("OrganisationId");
+
+                    b.HasOne("CoviIDApiCore.Models.Database.Wallet", "Wallet")
+                        .WithMany()
+                        .HasForeignKey("WalletId");
                 });
 
             modelBuilder.Entity("CoviIDApiCore.Models.Database.Session", b =>
@@ -217,13 +229,6 @@ namespace CoviIDApiCore.Migrations
                 });
 
             modelBuilder.Entity("CoviIDApiCore.Models.Database.WalletDetail", b =>
-                {
-                    b.HasOne("CoviIDApiCore.Models.Database.Wallet", "Wallet")
-                        .WithMany()
-                        .HasForeignKey("WalletId");
-                });
-
-            modelBuilder.Entity("CoviIDApiCore.Models.Database.WalletLocationReceipt", b =>
                 {
                     b.HasOne("CoviIDApiCore.Models.Database.Wallet", "Wallet")
                         .WithMany()

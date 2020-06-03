@@ -28,15 +28,6 @@ namespace CoviIDApiCore.V1.Repositories
                 .ToListAsync();
         }
 
-        public async Task<List<OrganisationAccessLog>> GetListByWalletIds(List<Guid> walletIds)
-        {
-            return await _dbSet
-                .Where(oal => walletIds.Contains(oal.Wallet.Id))
-                .Where(oal => oal.CreatedAt.Value.Date == DateTime.UtcNow.Date)
-                .Include(oal => oal.Wallet)
-                .ToListAsync();
-        }
-
         public async Task<List<OrganisationAccessLog>> GetLogsForLastTwoWeeks(Guid walletId, DateTime testedAt)
         {
             return await _dbSet.Where(oal => Equals(oal.Wallet.Id, walletId))
