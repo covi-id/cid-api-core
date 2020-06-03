@@ -121,8 +121,6 @@ namespace CoviIDApiCore.V1.Services
             return wallet;
         }
 
-
-
         public async Task DeleteWallet(string walletId)
         {
             var wallet = await _walletRepository.GetAsync(Guid.Parse(walletId));
@@ -140,23 +138,6 @@ namespace CoviIDApiCore.V1.Services
 
             return;
         }
-
-        public async Task<Wallet> UpdateWalletToVerified(string walletId)
-        {
-            var wallet = await _walletRepository.GetAsync(Guid.Parse(walletId));
-
-            if (wallet == null)
-                throw new NotFoundException(Messages.Wallet_NotFound);
-
-            wallet.MobileNumberVerifiedAt = DateTime.UtcNow;
-
-            _walletRepository.Update(wallet);
-
-            await _walletRepository.SaveAsync();
-
-            return wallet;
-        }
-
 
         #region Private Methods
         private async Task<Wallet> CreateWallet()

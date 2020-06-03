@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using CoviIDApiCore.Exceptions;
 using CoviIDApiCore.V1.Constants;
 using Microsoft.EntityFrameworkCore.Internal;
-using Amazon.Runtime;
 
 namespace CoviIDApiCore.V1.Services
 {
@@ -51,7 +50,7 @@ namespace CoviIDApiCore.V1.Services
 
         public async Task<WalletTestResult> AddTestResult(TestResultRequest request)
         {
-            if (testResultRequest == null || !testResultRequest.isValid())
+            if (request == null || !request.isValid())
                 throw new ValidationException(Messages.TestResult_Invalid);
 
             var wallet = await _walletRepository.GetAsync(request.walletId);

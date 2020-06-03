@@ -12,6 +12,5 @@ namespace CoviIDApiCore.V1.Interfaces.Services
         Task<Wallet> GetWalletByMobileNumebr(string mobileNumber);
         Task<Wallet> CreateMobileWallet(CreateWalletRequest request, string organisationName);
         Task DeleteWallet(string walletId);
-        Task<Wallet> UpdateWalletToVerified(string walletId);
     }
 }
