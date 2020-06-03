@@ -8,6 +8,7 @@ using CoviIDApiCore.V1.Constants;
 using CoviIDApiCore.V1.DTOs.System;
 using CoviIDApiCore.V1.Interfaces.Services;
 using Newtonsoft.Json.Serialization;
+using Sentry;
 
 namespace CoviIDApiCore.Middleware
 {
