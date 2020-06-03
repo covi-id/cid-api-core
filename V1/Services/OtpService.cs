@@ -22,11 +22,10 @@ namespace CoviIDApiCore.V1.Services
         private readonly IAmazonS3Broker _amazonS3Broker;
         private readonly ITokenService _tokenService;
         private readonly ISmsService _smsService;
-        private readonly IWalletService _walletService;
 
         public OtpService(IOtpTokenRepository tokenRepository, IConfiguration configuration, IWalletRepository walletRepository, 
             IWalletDetailService walletDetailService, ICryptoService cryptoService, ITokenService tokenService, IAmazonS3Broker amazonS3Broker, 
-            ISmsService smsService, IWalletService walletService)
+            ISmsService smsService)
         {
             _otpTokenRepository = tokenRepository;
             _configuration = configuration;
@@ -36,7 +35,6 @@ namespace CoviIDApiCore.V1.Services
             _tokenService = tokenService;
             _amazonS3Broker = amazonS3Broker;
             _smsService = smsService;
-            _walletService = walletService;
         }
 
         public async Task<long> GenerateAndSendOtpAsync(string mobileNumber)
@@ -113,7 +111,7 @@ namespace CoviIDApiCore.V1.Services
 
             await _otpTokenRepository.SaveAsync();
 
-            var wallet = await _walletService.UpdateWalletToVerified(authTokenDetails.WalletId);
+            var wallet = await UpdateWalletToVerified(authTokenDetails.WalletId);
 
             var fileReference = await _amazonS3Broker.AddImageToBucket(payload.WalletDetails.Photo, Guid.NewGuid().ToString());
             payload.WalletDetails.Photo = fileReference;
@@ -131,5 +129,24 @@ namespace CoviIDApiCore.V1.Services
                 Key = key
             };
         }
+
+        #region Private Methods
+        private async Task<Wallet> UpdateWalletToVerified(string walletId)
+        {
+            var wallet = await _walletRepository.GetAsync(Guid.Parse(walletId));
+
+            if (wallet == null)
+                throw new NotFoundException(Messages.Wallet_NotFound);
+
+            wallet.MobileNumberVerifiedAt = DateTime.UtcNow;
+
+            _walletRepository.Update(wallet);
+
+            await _walletRepository.SaveAsync();
+
+            return wallet;
+        }
+
+        #endregion
     }
 }
