@@ -22,14 +22,13 @@ namespace CoviIDApiCore.V1.Services
         private readonly IEmailService _emailService;
         private readonly IQRCodeService _qrCodeService;
         private readonly IWalletRepository _walletRepository;
-        private readonly IWalletDetailRepository _walletDetailRepository;
         private readonly IWalletService _walletService;
         private readonly ICryptoService _cryptoService;
         private readonly IWalletLocationReceiptService _walletLocationReceiptService;
 
         public OrganisationService(IOrganisationRepository organisationRepository, IOrganisationAccessLogRepository organisationAccessLogRepository,
             IEmailService emailService, IQRCodeService qrCodeService, IWalletRepository walletRepository, IWalletService walletService,
-            ICryptoService cryptoService, IWalletLocationReceiptService walletLocationReceiptService, IWalletDetailRepository walletDetailRepository)
+            ICryptoService cryptoService, IWalletLocationReceiptService walletLocationReceiptService)
         {
             _organisationRepository = organisationRepository;
             _organisationAccessLogRepository = organisationAccessLogRepository;
@@ -39,7 +38,6 @@ namespace CoviIDApiCore.V1.Services
             _walletService = walletService;
             _cryptoService = cryptoService;
             _walletLocationReceiptService = walletLocationReceiptService;
-            _walletDetailRepository = walletDetailRepository;
         }
 
         public async Task CreateAsync(CreateOrganisationRequest payload)
