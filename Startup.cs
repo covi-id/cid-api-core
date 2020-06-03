@@ -255,11 +255,14 @@ namespace CoviIDApiCore
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(_applicationJson));
             });
 
-            services.AddHttpClient<ISafePlacesBroker, SafePlacesBroker>(client =>
+            if (safePlacesCredentials.isEnabled)
             {
-                client.BaseAddress = new Uri(safePlacesCredentials.BaseUrl);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(_applicationJson));
-            });
+                services.AddHttpClient<ISafePlacesBroker, SafePlacesBroker>(client =>
+                {
+                    client.BaseAddress = new Uri(safePlacesCredentials.BaseUrl);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(_applicationJson));
+                });
+            }
         }
 
         private void ConfigureSwagger(IServiceCollection services)

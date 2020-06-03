@@ -21,31 +21,41 @@ namespace CoviIDApiCore.V1.Brokers
             _httpClient = httpClient;
             _credentials = credentials;
 
-            //Task.Run(() =>
-            //    Login(new LoginRequest
-            //    {
-            //        Password = _credentials.Password,
-            //        Username = _credentials.Username
-            //    })
-            //).ConfigureAwait(false).GetAwaiter().GetResult();
+            if (_credentials.isEnabled)
+            {
+                Task.Run(() =>
+                Login(new LoginRequest
+                {
+                    Password = _credentials.Password,
+                    Username = _credentials.Username
+                })
+            ).ConfigureAwait(false).GetAwaiter().GetResult();
+            }
         }
 
         public async Task<Redacted> AddRedacted(RedactedRequest request)
         {
-            var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, _applicationJson);
+            if (_credentials.isEnabled)
+            {
+                var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, _applicationJson);
 
-            var response = await _httpClient.PostAsync(UrlConstants.PartialRoutes[UrlConstants.Routes.SafePlacesRedacted], content);
+                var response = await _httpClient.PostAsync(UrlConstants.PartialRoutes[UrlConstants.Routes.SafePlacesRedacted], content);
 
-            return await ValidateResponse<Redacted>(response);
+                return await ValidateResponse<Redacted>(response);
+            }
+            return null;
         }
 
         public async Task<List<Redacted>> GetRedacted()
         {
-            var response = await _httpClient.GetAsync(UrlConstants.PartialRoutes[UrlConstants.Routes.SafePlacesRedacted]);
+            if (_credentials.isEnabled)
+            {
+                var response = await _httpClient.GetAsync(UrlConstants.PartialRoutes[UrlConstants.Routes.SafePlacesRedacted]);
 
-            return await ValidateResponse<List<Redacted>>(response);
+                return await ValidateResponse<List<Redacted>>(response);
+            }
+            return null;
         }
-
 
         private async Task<LoginResponse> Login(LoginRequest request)
         {
