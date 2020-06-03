@@ -29,7 +29,7 @@ namespace CoviIDApiCore.V1.Repositories
                 .ToListAsync();
         }
 
-        public async Task<List<WalletLocationReceipt>> GetLogsByStartDate(Guid walletId, DateTime startDate)
+        public async Task<List<WalletLocationReceipt>> GetReceiptsByStartDate(Guid walletId, DateTime startDate)
         {
             return await _dbSet.Where(oal => Equals(oal.Wallet.Id, walletId))
                   .Where(oal => oal.CreatedAt >= startDate && oal.ScanType == ScanType.CheckIn)

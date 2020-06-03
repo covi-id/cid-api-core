@@ -4,7 +4,6 @@ using CoviIDApiCore.V1.Interfaces.Services;
 using Hangfire;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Threading.Tasks;
 
 namespace CoviIDApiCore.V1.Services
@@ -43,13 +42,6 @@ namespace CoviIDApiCore.V1.Services
         public async Task<List<WalletLocationReceipt>> GetReceiptsForDate(Wallet wallet, DateTime forDate)
         {
             var receipts = await _walletLocationReceiptRepository.GetReceiptsForDate(wallet, forDate);
-
-            return receipts;
-        }
-
-        public async Task<List<WalletLocationReceipt>> GetReceiptsByStartDate(Guid walletId, DateTime startDate)
-        {
-            var receipts = await _walletLocationReceiptRepository.GetLogsByStartDate(walletId, startDate);
 
             return receipts;
         }

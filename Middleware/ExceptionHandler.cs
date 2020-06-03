@@ -8,7 +8,6 @@ using CoviIDApiCore.V1.Constants;
 using CoviIDApiCore.V1.DTOs.System;
 using CoviIDApiCore.V1.Interfaces.Services;
 using Newtonsoft.Json.Serialization;
-using Sentry;
 
 namespace CoviIDApiCore.Middleware
 {
@@ -83,7 +82,7 @@ namespace CoviIDApiCore.Middleware
         #region Exception Handler Methods
         private Task HandleSafePlacesException(HttpContext context, SafePlacesException e)
         {
-            SentrySdk.CaptureException(e);
+            CaptureException(e);
 
             var statusCode = HttpStatusCode.InternalServerError;
             context.Response.ContentType = _applicationJson;
@@ -257,7 +256,7 @@ namespace CoviIDApiCore.Middleware
         private static void CaptureException(Exception e)
         {
             #if !DEBUG
-                SentrySdk.CaptureException(e);
+            Sentry.SentrySdk.CaptureException(e);
             #endif
         }
         #endregion Exception Handler Methods

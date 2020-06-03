@@ -120,9 +120,6 @@ namespace CoviIDApiCore.V1.Services
 
             await _walletDetailService.CreateWalletDetails(wallet, payload.WalletDetails, key);
 
-            if (payload.TestResult != null)
-                await _testResultService.AddTestResult(payload.TestResult, wallet);
-
             return new OtpConfirmationResponse()
             {
                 WalletId = wallet.Id.ToString(),

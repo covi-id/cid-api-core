@@ -22,6 +22,11 @@ namespace CoviIDApiCore.Models.Database
 
         public WalletTestResult(TestResultRequest request, Wallet wallet)
         {
+            if (HasConsent)
+            {
+                request.PermissionGrantedAt = DateTime.Now;
+            }
+
             Wallet = wallet;
             TestType = TestType.Covid19;
             Laboratory = request.Laboratory;
@@ -34,11 +39,10 @@ namespace CoviIDApiCore.Models.Database
             PermissionGrantedAt = request.PermissionGrantedAt;
             CreatedAt = DateTime.UtcNow;
         }
-
+       
         public WalletTestResult()
         {
 
         }
-
     }
 }

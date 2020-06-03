@@ -171,7 +171,8 @@ namespace CoviIDApiCore
             services.AddTransient<ISmsService, SmsService>();
             services.AddTransient<ISessionService, SessionService>();
             services.AddTransient<IStaySafeService, StaySafeService>();
-
+            services.AddTransient<IWalletLocationReceiptService, WalletLocationReceiptService>();
+            
             #endregion
 
             #region Repository Layer
@@ -182,6 +183,8 @@ namespace CoviIDApiCore
             services.AddScoped<IWalletDetailRepository, WalletDetailRepository>();
             services.AddScoped<IWalletTestResultRepository, WalletTestResultRepository>();
             services.AddScoped<ISessionRepository, SessionRepository>();
+            services.AddScoped<IWalletLocationReceiptRepository, WalletLocationReceiptRepository>();
+
             #endregion
 
             #region Broker Layer

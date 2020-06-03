@@ -9,6 +9,6 @@ namespace CoviIDApiCore.V1.Interfaces.Repositories
     {
         Task<List<WalletLocationReceipt>> GetReceiptsForDate(Wallet wallet, DateTime forDate);
 
-        Task<List<WalletLocationReceipt>> GetLogsByStartDate(Guid walletId, DateTime startDate);
+        Task<List<WalletLocationReceipt>> GetReceiptsByStartDate(Guid walletId, DateTime startDate);
     }
 }
