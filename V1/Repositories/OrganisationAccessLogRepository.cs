@@ -27,13 +27,5 @@ namespace CoviIDApiCore.V1.Repositories
                 .Where(oal => oal.CreatedAt.Value.Date.Equals(DateTime.UtcNow.Date))
                 .ToListAsync();
         }
-
-        public async Task<List<OrganisationAccessLog>> GetLogsForLastTwoWeeks(Guid walletId, DateTime testedAt)
-        {
-            return await _dbSet.Where(oal => Equals(oal.Wallet.Id, walletId))
-                  .Where(oal => oal.CreatedAt >= testedAt.AddDays(-14) && oal.ScanType == ScanType.CheckIn)
-                  .ToListAsync();
-
-        }
     }
 }

@@ -2,7 +2,6 @@
 using CoviIDApiCore.V1.Constants;
 using CoviIDApiCore.V1.DTOs.SafePlaces;
 using CoviIDApiCore.V1.Interfaces.Brokers;
-using CoviIDApiCore.V1.Interfaces.Repositories;
 using CoviIDApiCore.V1.Interfaces.Services;
 using System;
 using System.Collections.Generic;
@@ -12,21 +11,19 @@ namespace CoviIDApiCore.V1.Services
 {
     public class StaySafeService : IStaySafeService
     {
-        private readonly IOrganisationAccessLogRepository _organisationAccessLogRepository;
+        private readonly IWalletLocationReceiptService _walletLocationReceiptService;
         private readonly ISafePlacesBroker _safePlacesBroker;
 
-        public StaySafeService(IOrganisationAccessLogRepository organisationAccessLogRepository, ISafePlacesBroker safePlacesBroker)
+        public StaySafeService(IWalletLocationReceiptService walletLocationReceiptService, ISafePlacesBroker safePlacesBroker)
         {
-            _organisationAccessLogRepository = organisationAccessLogRepository;
+            _walletLocationReceiptService = walletLocationReceiptService;
             _safePlacesBroker = safePlacesBroker;
         }
 
-
-
-        public async Task CaptureData(Guid walletId, DateTime twoWeeksFromDate)
+        public async Task CaptureData(Guid walletId, DateTime testedAtDate)
         {
             var trails = new List<Trail>();
-            var logs = await _organisationAccessLogRepository.GetLogsForLastTwoWeeks(walletId, twoWeeksFromDate);
+            var logs = await _walletLocationReceiptService.GetReceiptsByStartDate(walletId, testedAtDate.AddDays(-14));
 
             if (logs == null)
                 throw new NotFoundException(Messages.Oal_NotFound);

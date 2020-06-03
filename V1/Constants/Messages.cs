@@ -26,6 +26,7 @@
         public static readonly string Org_UserNotScannedIn = $"User can not be scanned out if no scan in has been recorded.";
         public static readonly string Org_UserScannedIn = $"User can not be scanned in. User is already scanned in.";
         public static readonly string Org_UserScannedOut = $"User has already been scanned out.";
+        #endregion
 
         #region Organisation Access Logs
         public static readonly string Oal_NotFound = "Could not find any data for the query.";
