@@ -19,7 +19,7 @@ namespace CoviIDApiCore.V1.Services
             _sessionSettings = sessionSettings;
         }
 
-        public async Task<Session> CreateSession(string mobileNumber, Wallet wallet)
+        public async Task<Session> CreateSession(Wallet wallet)
         {
             var session = new Session
             {

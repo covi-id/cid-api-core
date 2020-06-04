@@ -15,10 +15,12 @@ namespace CoviIDApiCore.V1.Services
     {
         private readonly IWalletTestResultRepository _walletTestResultRepository;
         private readonly IWalletRepository _walletRepository;
-        public TestResultService(IWalletTestResultRepository walletTestResultRepository, IWalletRepository walletRepository)
+        private readonly ICryptoService _cryptoService;
+        public TestResultService(IWalletTestResultRepository walletTestResultRepository, IWalletRepository walletRepository, ICryptoService cryptoService)
         {
             _walletTestResultRepository = walletTestResultRepository;
             _walletRepository = walletRepository;
+            _cryptoService = cryptoService;
         }
 
         public async Task<TestResultResponse> GetTestResult(Guid walletId)
@@ -33,11 +35,7 @@ namespace CoviIDApiCore.V1.Services
 
             var response = new TestResultResponse();
 
-            if (tests.Count > 1)
-            {
-                // TODO : Do calculation based on all test results
-            }
-            var test = tests.OrderByDescending(t => t.IssuedAt).FirstOrDefault();
+            var test = tests.OrderByDescending(t => t.IssuedAt)?.FirstOrDefault();
             response.HasConsent = test.HasConsent;
             response.IssuedAt = test.IssuedAt;
             response.Laboratory = test.Laboratory;
@@ -50,44 +48,39 @@ namespace CoviIDApiCore.V1.Services
             return response;
         }
 
-        public async Task AddTestResult(TestResultRequest testResultRequest)
+        public async Task<WalletTestResult> AddTestResult(TestResultRequest request)
         {
-            if (testResultRequest == null || !testResultRequest.isValid())
-                throw new ValidationException(Messages.Token_InvaldPayload);
+            if (request == null || !request.isValid())
+                throw new ValidationException(Messages.TestResult_Invalid);
 
-            var wallet = await _walletRepository.GetAsync(testResultRequest.walletId);
+            var wallet = await _walletRepository.GetAsync(request.walletId);
 
             if (wallet == null)
                 throw new ValidationException(Messages.Wallet_NotFound);
 
-            var testResults = new WalletTestResult
-            {
-                Wallet = wallet,
-                Laboratory = testResultRequest.Laboratory,
-                ReferenceNumber = testResultRequest.ReferenceNumber,
-                TestedAt = testResultRequest.TestedAt,
-                ResultStatus = testResultRequest.ResultStatus,
-                LaboratoryStatus = LaboratoryStatus.Unsent,
-                TestType = TestType.Covid19,
-                HasConsent = testResultRequest.HasConsent,
-                PermissionGrantedAt = DateTime.UtcNow
-            };
+            var testResults = new WalletTestResult(request, wallet);
+
+            _cryptoService.EncryptAsUser(request, request.Key);
 
             await _walletTestResultRepository.AddAsync(testResults);
 
             await _walletTestResultRepository.SaveAsync();
+
+            return testResults;
         }
 
-        public async Task DeleteTestResults(Guid walletId)
+        public async Task<bool> DeleteTestResults(Guid walletId)
         {
             var tests = await _walletTestResultRepository.GetTestResults(walletId);
 
             if (tests == null || tests.Count < 1)
-                return;
+                return false;
 
             _walletTestResultRepository.DeleteRange(tests);
+            
             await _walletTestResultRepository.SaveAsync();
-            return;
+            
+            return true;
         }
     }
 }

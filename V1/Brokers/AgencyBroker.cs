@@ -11,7 +11,6 @@ using System.Threading.Tasks;
 using CoviIDApiCore.V1.Constants;
 using CoviIDApiCore.V1.DTOs.Verifications;
 using CoviIDApiCore.V1.DTOs.VerificationPolicy;
-using CoviIDApiCore.Helpers;
 
 namespace CoviIDApiCore.V1.Brokers
 {

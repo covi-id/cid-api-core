@@ -80,6 +80,8 @@ namespace CoviIDApiCore.Middleware
 
         private static Task HandleValidationException(HttpContext context, Exception e)
         {
+            CaptureException(e);
+
             var code = HttpStatusCode.BadRequest;
 
             context.Response.ContentType = "application/json";
@@ -92,18 +94,20 @@ namespace CoviIDApiCore.Middleware
 
         private static Task HandleNotFoundException(HttpContext context, Exception e)
         {
+            CaptureException(e);
+
             var code = HttpStatusCode.NotFound;
 
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = (int)code;
 
-            var rsp = new Response(false, HttpStatusCode.NotFound);
+            var rsp = new Response(false, HttpStatusCode.NotFound, e.Message);
             return ReturnResult(context, rsp);
         }
 
         private Task HandleStreetCredBrokerException(HttpContext context, StreetCredBrokerException e)
         {
-            SentrySdk.CaptureException(e);
+            CaptureException(e);
 
             var statusCode = HttpStatusCode.InternalServerError;
             context.Response.ContentType = "application/json";
@@ -119,7 +123,7 @@ namespace CoviIDApiCore.Middleware
 
         private Task HandleSendGridException(HttpContext context, SendGridException e)
         {
-            SentrySdk.CaptureException(e);
+            CaptureException(e);
 
             var statusCode = HttpStatusCode.InternalServerError;
             context.Response.ContentType = "application/json";
@@ -135,7 +139,7 @@ namespace CoviIDApiCore.Middleware
 
         private Task HandleClickatellException(HttpContext context, ClickatellException e)
         {
-            SentrySdk.CaptureException(e);
+            CaptureException(e);
 
             var statusCode = HttpStatusCode.InternalServerError;
             context.Response.ContentType = "application/json";
@@ -150,7 +154,7 @@ namespace CoviIDApiCore.Middleware
         }
         private Task HandleAmazonS3Exception(HttpContext context, AmazonS3Exception e)
         {
-            SentrySdk.CaptureException(e);
+            CaptureException(e);
 
             var statusCode = HttpStatusCode.InternalServerError;
             context.Response.ContentType = "application/json";
@@ -166,7 +170,7 @@ namespace CoviIDApiCore.Middleware
 
         private Task HandleBitlyException(HttpContext context, BitlyException e)
         {
-            SentrySdk.CaptureException(e);
+            CaptureException(e);
 
             var statusCode = HttpStatusCode.InternalServerError;
             context.Response.ContentType = "application/json";
@@ -182,7 +186,7 @@ namespace CoviIDApiCore.Middleware
 
         private static Task HandleUnexpectedException(HttpContext context, Exception e)
         {
-            SentrySdk.CaptureException(e);
+            CaptureException(e);
 
             var code = HttpStatusCode.InternalServerError;
 
@@ -200,7 +204,7 @@ namespace CoviIDApiCore.Middleware
 
         private static Task HandleQRException(HttpContext context, Exception e)
         {
-            SentrySdk.CaptureException(e);
+            CaptureException(e);
 
             var code = HttpStatusCode.InternalServerError;
 
@@ -233,6 +237,13 @@ namespace CoviIDApiCore.Middleware
                 ContractResolver = new CamelCasePropertyNamesContractResolver(),
                 Formatting = Formatting.Indented
             }));
+        }
+
+        private static void CaptureException(Exception e)
+        {
+            #if !DEBUG
+                SentrySdk.CaptureException(e);
+            #endif
         }
         #endregion Exception Handler Methods
     }
