@@ -80,6 +80,8 @@ namespace CoviIDApiCore.Middleware
 
         private static Task HandleValidationException(HttpContext context, Exception e)
         {
+            CaptureException(e);
+
             var code = HttpStatusCode.BadRequest;
 
             context.Response.ContentType = "application/json";
@@ -92,12 +94,14 @@ namespace CoviIDApiCore.Middleware
 
         private static Task HandleNotFoundException(HttpContext context, Exception e)
         {
+            CaptureException(e);
+
             var code = HttpStatusCode.NotFound;
 
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = (int)code;
 
-            var rsp = new Response(false, HttpStatusCode.NotFound);
+            var rsp = new Response(false, HttpStatusCode.NotFound, e.Message);
             return ReturnResult(context, rsp);
         }
 

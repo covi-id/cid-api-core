@@ -56,11 +56,9 @@ namespace CoviIDApiCore.V1.Services
             return walletDetails;
         }
 
-        public async Task<List<WalletDetail>> GetWalletDetailsByMobileNumber(string mobileNumber)
+        public async Task<List<WalletDetail>> GetWalletDetailsByEncryptedMobileNumber(string encryptedMobileNumber)
         {
-            _cryptoService.EncryptAsServer(mobileNumber);
-            
-            var walletDetails = await _walletDetailRepository.GeWalletDetailstByEncryptedMobileNumber(mobileNumber);
+            var walletDetails = await _walletDetailRepository.GeWalletDetailstByEncryptedMobileNumber(encryptedMobileNumber);
 
             if (walletDetails == default || walletDetails == null)
                 throw new ValidationException(Messages.WalltDetails_NotFound);

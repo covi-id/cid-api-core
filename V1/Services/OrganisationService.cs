@@ -192,7 +192,7 @@ namespace CoviIDApiCore.V1.Services
         {
             _cryptoService.EncryptAsServer(payload, true);
 
-            var wallet = await _walletService.GetWalletByMobileNumebr(payload.MobileNumber);
+            var wallet = await _walletService.GetWalletByEncryptedMobileNumber(payload.MobileNumber);
 
             var updateCounterRequest = new UpdateCountRequest
             {

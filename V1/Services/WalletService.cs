@@ -96,7 +96,7 @@ namespace CoviIDApiCore.V1.Services
         {
             var wallet = await CreateWallet();
 
-            var session = await _sessionService.CreateSession(request.MobileNumber, wallet);
+            var session = await _sessionService.CreateSession(wallet);
 
             await _smsService.SendWelcomeSms(request.MobileNumber, organisationName, session.ExpireAt.Value, session.Id);
 
@@ -105,9 +105,9 @@ namespace CoviIDApiCore.V1.Services
             return wallet;
         }
 
-        public async Task<Wallet> GetWalletByMobileNumebr(string mobileNumber)
+        public async Task<Wallet> GetWalletByEncryptedMobileNumber(string encryptedMobileNumber)
         {
-            var walletDetails = await _walletDetailService.GetWalletDetailsByMobileNumber(mobileNumber);
+            var walletDetails = await _walletDetailService.GetWalletDetailsByEncryptedMobileNumber(encryptedMobileNumber);
 
             // TODO better identify the wallet to checkout
             var wallet = walletDetails
