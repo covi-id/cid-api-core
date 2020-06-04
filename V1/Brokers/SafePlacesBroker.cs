@@ -3,6 +3,7 @@ using CoviIDApiCore.Models.AppSettings;
 using CoviIDApiCore.V1.Constants;
 using CoviIDApiCore.V1.DTOs.SafePlaces;
 using CoviIDApiCore.V1.Interfaces.Brokers;
+using Microsoft.AspNetCore.Identity.UI.V3.Pages.Internal.Account.Manage;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -16,6 +17,8 @@ namespace CoviIDApiCore.V1.Brokers
         private readonly HttpClient _httpClient;
         private static readonly string _applicationJson = "application/json";
         private readonly SafePlacesCredentials _credentials;
+        private string _mapsApiKey;
+
         public SafePlacesBroker(HttpClient httpClient, SafePlacesCredentials credentials)
         {
             _httpClient = httpClient;
@@ -24,12 +27,17 @@ namespace CoviIDApiCore.V1.Brokers
             if (_credentials.isEnabled)
             {
                 Task.Run(() =>
-                Login(new LoginRequest
+
+                _mapsApiKey = Login(new LoginRequest
                 {
                     Password = _credentials.Password,
                     Username = _credentials.Username
                 })
-            ).ConfigureAwait(false).GetAwaiter().GetResult();
+                    .ConfigureAwait(false)
+                    .GetAwaiter()
+                    .GetResult()
+                    .MapsApiKey
+                );
             }
         }
 
