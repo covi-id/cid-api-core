@@ -115,6 +115,7 @@ namespace CoviIDApiCore.V1.Services
 
             return newToken.Id;
         }
+
         private async Task<bool> ValidateOtpCreationAsync(string mobileNumberReference)
         {
             _cryptoService.EncryptAsServer(mobileNumberReference);
