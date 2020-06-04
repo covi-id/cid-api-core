@@ -44,22 +44,6 @@ namespace CoviIDApiCore.V1.Services
             return await SaveOtpAsync(mobileNumber, sms.Code, sms.ValidityPeriod);
         }
 
-        private async Task<bool> ValidateOtpCreationAsync(string mobileNumberReference)
-        {
-            _cryptoService.EncryptAsServer(mobileNumberReference);
-
-            var otps = await _otpTokenRepository.GetAllUnexpiredByEncryptedMobileNumber(mobileNumberReference);
-
-            if (!otps.Any())
-                return true;
-
-            var timeThreshold = _configuration.GetValue<int>("OTPSettings:TimeThreshold");
-
-            var amountThreshold = _configuration.GetValue<int>("OTPSettings:AmountThreshold");
-
-            return otps.Count(otp => otp.CreatedAt > DateTime.UtcNow.AddMinutes(-1 * timeThreshold)) <= amountThreshold;
-        }
-
         public async Task<TokenResponse> ResendOtpAsync(RequestResendOtp payload, string authToken)
         {
             var authTokenDetails = _tokenService.GetDetailsFromToken(authToken);
@@ -78,26 +62,6 @@ namespace CoviIDApiCore.V1.Services
             {
                 Token = _tokenService.GenerateToken(wallet.Id.ToString(), otp)
             };
-        }
-
-        private async Task<long> SaveOtpAsync(string mobileNumber, int code, int expiryTime)
-        {
-            var newToken = new OtpToken()
-            {
-                Code = code,
-                CreatedAt = DateTime.UtcNow,
-                ExpireAt = DateTime.UtcNow.AddMinutes(expiryTime),
-                isUsed = false,
-                MobileNumber = mobileNumber
-            };
-
-            _cryptoService.EncryptAsServer(newToken);
-
-            await _otpTokenRepository.AddAsync(newToken);
-
-            await _otpTokenRepository.SaveAsync();
-
-            return newToken.Id;
         }
 
         public async Task<OtpConfirmationResponse> ConfirmOtpAsync(RequestOtpConfirmation payload, string authToken)
@@ -132,6 +96,41 @@ namespace CoviIDApiCore.V1.Services
         }
 
         #region Private Methods
+        private async Task<long> SaveOtpAsync(string mobileNumber, int code, int expiryTime)
+        {
+            var newToken = new OtpToken()
+            {
+                Code = code,
+                CreatedAt = DateTime.UtcNow,
+                ExpireAt = DateTime.UtcNow.AddMinutes(expiryTime),
+                isUsed = false,
+                MobileNumber = mobileNumber
+            };
+
+            _cryptoService.EncryptAsServer(newToken);
+
+            await _otpTokenRepository.AddAsync(newToken);
+
+            await _otpTokenRepository.SaveAsync();
+
+            return newToken.Id;
+        }
+        private async Task<bool> ValidateOtpCreationAsync(string mobileNumberReference)
+        {
+            _cryptoService.EncryptAsServer(mobileNumberReference);
+
+            var otps = await _otpTokenRepository.GetAllUnexpiredByEncryptedMobileNumber(mobileNumberReference);
+
+            if (!otps.Any())
+                return true;
+
+            var timeThreshold = _configuration.GetValue<int>("OTPSettings:TimeThreshold");
+
+            var amountThreshold = _configuration.GetValue<int>("OTPSettings:AmountThreshold");
+
+            return otps.Count(otp => otp.CreatedAt > DateTime.UtcNow.AddMinutes(-1 * timeThreshold)) <= amountThreshold;
+        }
+
         private async Task<Wallet> UpdateWalletToVerified(string walletId)
         {
             var wallet = await _walletRepository.GetAsync(Guid.Parse(walletId));
