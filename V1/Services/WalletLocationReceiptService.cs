@@ -12,11 +12,13 @@ namespace CoviIDApiCore.V1.Services
     {
         private readonly IWalletLocationReceiptRepository _walletLocationReceiptRepository;
         private readonly IStaySafeService _staySafeService;
+        private readonly ITestResultService _testResultService;
 
-        public WalletLocationReceiptService(IWalletLocationReceiptRepository walletLocationReceiptRepository, IStaySafeService staySafeService)
+        public WalletLocationReceiptService(IWalletLocationReceiptRepository walletLocationReceiptRepository, IStaySafeService staySafeService, ITestResultService testResultService)
         {
             _walletLocationReceiptRepository = walletLocationReceiptRepository;
             _staySafeService = staySafeService;
+            _testResultService = testResultService;
         }
 
         public async Task<WalletLocationReceipt> CreateReceipt(Wallet wallet, decimal longitude, decimal latitude, ScanType scanType)
@@ -50,13 +52,13 @@ namespace CoviIDApiCore.V1.Services
         {
             if (scanType == ScanType.CheckIn)
             {
-                //get data 
-                //check if we have consent
+                var testResult = await _testResultService.GetLatestTestResult(walletId);
 
-                await _staySafeService.CaptureData(walletId, DateTime.UtcNow);
-
+                if (testResult.HasConsent)
+                {
+                    await _staySafeService.CaptureData(walletId, DateTime.UtcNow);
+                }
             }
-
         }
         #endregion
     }
