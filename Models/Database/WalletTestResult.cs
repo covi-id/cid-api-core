@@ -16,12 +16,20 @@ namespace CoviIDApiCore.Models.Database
         public DateTime? IssuedAt { get; set; }
         [Encrypted]
         public string ReferenceNumber { get; set; }
+        /// <summary>
+        /// Is consent given to share information with a laboratory 
+        /// </summary>
         public bool HasConsent { get; set; }
         public DateTime? PermissionGrantedAt { get; set; }
         public DateTime? CreatedAt { get; set; }
 
         public WalletTestResult(TestResultRequest request, Wallet wallet)
         {
+            if (HasConsent)
+            {
+                request.PermissionGrantedAt = DateTime.Now;
+            }
+
             Wallet = wallet;
             TestType = TestType.Covid19;
             Laboratory = request.Laboratory;
