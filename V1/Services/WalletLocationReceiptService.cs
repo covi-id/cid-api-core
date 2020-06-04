@@ -19,7 +19,7 @@ namespace CoviIDApiCore.V1.Services
             _staySafeService = staySafeService;
         }
 
-        public async Task<WalletLocationReceipt> CreateReceipt(Wallet wallet, decimal longitude, decimal latitude, ScanType scanType, bool isPositive = false)
+        public async Task<WalletLocationReceipt> CreateReceipt(Wallet wallet, decimal longitude, decimal latitude, ScanType scanType)
         {
             var receipt = new WalletLocationReceipt
             {
@@ -33,8 +33,7 @@ namespace CoviIDApiCore.V1.Services
             
             await _walletLocationReceiptRepository.SaveAsync();
 
-            if (scanType == ScanType.CheckIn && isPositive)
-                BackgroundJob.Enqueue(() => _staySafeService.CaptureData(wallet.Id, DateTime.UtcNow));
+            BackgroundJob.Enqueue(() => CaptureDataIfPermitted(wallet.Id, scanType));
 
             return receipt;
         }
@@ -45,5 +44,20 @@ namespace CoviIDApiCore.V1.Services
 
             return receipts;
         }
+
+        #region Private Methods
+        public async Task CaptureDataIfPermitted(Guid walletId, ScanType scanType)
+        {
+            if (scanType == ScanType.CheckIn)
+            {
+                //get data 
+                //check if we have consent
+
+                await _staySafeService.CaptureData(walletId, DateTime.UtcNow);
+
+            }
+
+        }
+        #endregion
     }
 }

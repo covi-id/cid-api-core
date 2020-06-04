@@ -7,7 +7,7 @@ namespace CoviIDApiCore.V1.Interfaces.Services
 {
     public interface IWalletLocationReceiptService
     {
-        Task<WalletLocationReceipt> CreateReceipt(Wallet wallet, decimal longitude, decimal latitude, ScanType scanType, bool isPositive = false);
+        Task<WalletLocationReceipt> CreateReceipt(Wallet wallet, decimal longitude, decimal latitude, ScanType scanType);
         Task<List<WalletLocationReceipt>> GetReceiptsForDate(Wallet wallet, DateTime forDate);
     }
 }

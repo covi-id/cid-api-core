@@ -62,7 +62,6 @@ namespace CoviIDApiCore.V1.Brokers
             var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, _applicationJson);
 
             var response = await _httpClient.PostAsync(UrlConstants.PartialRoutes[UrlConstants.Routes.SafePlacesLogin], content);
-            var test = JsonConvert.DeserializeObject<string>(await response.Content.ReadAsStringAsync());
 
             return JsonConvert.DeserializeObject<LoginResponse>(await response.Content.ReadAsStringAsync());
         }

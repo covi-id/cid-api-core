@@ -58,7 +58,7 @@ namespace CoviIDApiCore.V1.Services
 
             var photoUrl = _amazonS3Broker.GetImage(walletDetails.PhotoReference);
 
-            var testResults = await _testResultService.GetTestResult(Guid.Parse(walletId));
+            var testResults = await _testResultService.GetLatestTestResult(Guid.Parse(walletId));
 
             var response = new WalletStatusResponse
             {

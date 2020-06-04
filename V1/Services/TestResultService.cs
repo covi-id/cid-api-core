@@ -28,29 +28,19 @@ namespace CoviIDApiCore.V1.Services
             _staySafeService = staySafeService;
         }
 
-        public async Task<TestResultResponse> GetTestResult(Guid walletId)
+        public async Task<WalletTestResult> GetLatestTestResult(Guid walletId)
         {
             var tests = await _walletTestResultRepository.GetTestResults(walletId);
 
             if (tests == null)
-                throw new ValidationException(Messages.TestResult_NotFound);
+                throw new NotFoundException(Messages.TestResult_NotFound);
 
             if (!tests.Any())
                 return null;
 
-            var response = new TestResultResponse();
-
-            var test = tests.OrderByDescending(t => t.IssuedAt)?.FirstOrDefault();
-            response.HasConsent = test.HasConsent;
-            response.IssuedAt = test.IssuedAt;
-            response.Laboratory = test.Laboratory;
-            response.LaboratoryStatus = test.LaboratoryStatus;
-            response.PermissionGrantedAt = test.PermissionGrantedAt;
-            response.ReferenceNumber = test.ReferenceNumber;
-            response.ResultStatus = test.ResultStatus;
-            response.TestedAt = test.TestedAt;
-
-            return response;
+            var test = tests.OrderByDescending(t => t.CreatedAt)?.FirstOrDefault();
+            
+            return test;
         }
 
         public async Task<WalletTestResult> AddTestResult(TestResultRequest request)
@@ -71,7 +61,7 @@ namespace CoviIDApiCore.V1.Services
 
             await _walletTestResultRepository.SaveAsync();
 
-            if (request.ResultStatus == ResultStatus.Positive)
+            if (request.ResultStatus == ResultStatus.Positive && request.HasConsent)
                 BackgroundJob.Enqueue(() => _staySafeService.CaptureData(wallet.Id, request.TestedAt));
 
             return testResults;
@@ -90,6 +80,5 @@ namespace CoviIDApiCore.V1.Services
             
             return true;
         }
-
     }
 }

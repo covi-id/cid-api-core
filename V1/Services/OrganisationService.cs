@@ -84,7 +84,7 @@ namespace CoviIDApiCore.V1.Services
             return new Response(new OrganisationDTO(organisation, orgCounter, totalScans, GetAccessLogBalance(accessLogs)), HttpStatusCode.OK);
         }
 
-        public async Task<Response> UpdateCountAsync(string id, UpdateCountRequest payload, ScanType scanType, bool mobile = false, bool isPositive = false)
+        public async Task<Response> UpdateCountAsync(string id, UpdateCountRequest payload, ScanType scanType, bool mobile = false)
         {
             Wallet wallet = null;
 
@@ -122,7 +122,7 @@ namespace CoviIDApiCore.V1.Services
                 HttpStatusCode.OK);
         }
 
-        public async Task<Response> MobileCheckIn(string organisationId, MobileUpdateCountRequest payload, bool isPositive = false)
+        public async Task<Response> MobileCheckIn(string organisationId, MobileUpdateCountRequest payload)
         {
             var organisation = await _organisationRepository.GetAsync(Guid.Parse(organisationId));
 
@@ -143,7 +143,7 @@ namespace CoviIDApiCore.V1.Services
                 WalletId = wallet.Id.ToString()
             };
 
-            var counterResponse = await UpdateCountAsync(organisationId, updateCounterRequest, ScanType.CheckIn, true, isPositive);
+            var counterResponse = await UpdateCountAsync(organisationId, updateCounterRequest, ScanType.CheckIn, true);
 
             return counterResponse;
         }

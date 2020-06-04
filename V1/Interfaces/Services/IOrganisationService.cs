@@ -9,8 +9,8 @@ namespace CoviIDApiCore.V1.Interfaces.Services
     {
         Task CreateAsync(CreateOrganisationRequest payload);
         Task<Response> GetAsync(string id);
-        Task<Response> UpdateCountAsync(string id, UpdateCountRequest payload, ScanType scanType, bool mobileCheckin = false, bool isPositive = false);
-        Task<Response> MobileCheckIn(string organisationId, MobileUpdateCountRequest payload, bool isPositive = false);
+        Task<Response> UpdateCountAsync(string id, UpdateCountRequest payload, ScanType scanType, bool mobileCheckin = false);
+        Task<Response> MobileCheckIn(string organisationId, MobileUpdateCountRequest payload);
         Task<Response> MobileCheckOut(string organisationId, MobileUpdateCountRequest payload);
     }
 }

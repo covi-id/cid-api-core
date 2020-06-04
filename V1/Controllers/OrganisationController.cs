@@ -57,11 +57,11 @@ namespace CoviIDApiCore.V1.Controllers
             return StatusCode(resp.Meta.Code, resp);
         }
 
-        [HttpPost("organisations/{id}/check_in/{isPositive?}")]
-        public async Task<IActionResult> CheckIn(string id, [FromBody] UpdateCountRequest payload, bool isPositive = false)
+        [HttpPost("organisations/{id}/check_in")]
+        public async Task<IActionResult> CheckIn(string id, [FromBody] UpdateCountRequest payload)
         {
             return StatusCode(StatusCodes.Status200OK,
-                await _organisationService.UpdateCountAsync(id, payload, ScanType.CheckIn, false, isPositive));
+                await _organisationService.UpdateCountAsync(id, payload, ScanType.CheckIn, false));
         }
 
         [HttpPost("organisations/{id}/check_out")]
