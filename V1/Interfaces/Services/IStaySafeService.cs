@@ -5,6 +5,6 @@ namespace CoviIDApiCore.V1.Interfaces.Services
 {
     public interface IStaySafeService
     {
-        Task CaptureData(Guid walletId, DateTime testedAtDate);
+        Task CaptureData(Guid walletId, DateTime testedAtDate, int totalDays);
     }
 }

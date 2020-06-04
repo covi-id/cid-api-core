@@ -19,10 +19,10 @@ namespace CoviIDApiCore.V1.Services
             _safePlacesBroker = safePlacesBroker;
         }
 
-        public async Task CaptureData(Guid walletId, DateTime testedAtDate)
+        public async Task CaptureData(Guid walletId, DateTime testedAtDate, int totalDays)
         {
             var trails = new List<Trail>();
-            var logs = await _walletLocationReceiptRepository.GetReceiptsByStartDate(walletId, testedAtDate.AddDays(-14));
+            var logs = await _walletLocationReceiptRepository.GetReceiptsByStartDate(walletId, testedAtDate.AddDays(totalDays));
 
             if (logs.Count > 0)
             {

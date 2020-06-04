@@ -3,10 +3,10 @@ using CoviIDApiCore.Models.AppSettings;
 using CoviIDApiCore.V1.Constants;
 using CoviIDApiCore.V1.DTOs.SafePlaces;
 using CoviIDApiCore.V1.Interfaces.Brokers;
-using Microsoft.AspNetCore.Identity.UI.V3.Pages.Internal.Account.Manage;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -17,7 +17,7 @@ namespace CoviIDApiCore.V1.Brokers
         private readonly HttpClient _httpClient;
         private static readonly string _applicationJson = "application/json";
         private readonly SafePlacesCredentials _credentials;
-        private string _mapsApiKey;
+        private LoginResponse _loginResponse;
 
         public SafePlacesBroker(HttpClient httpClient, SafePlacesCredentials credentials)
         {
@@ -28,7 +28,7 @@ namespace CoviIDApiCore.V1.Brokers
             {
                 Task.Run(() =>
 
-                _mapsApiKey = Login(new LoginRequest
+                _loginResponse = Login(new LoginRequest
                 {
                     Password = _credentials.Password,
                     Username = _credentials.Username
@@ -36,8 +36,9 @@ namespace CoviIDApiCore.V1.Brokers
                     .ConfigureAwait(false)
                     .GetAwaiter()
                     .GetResult()
-                    .MapsApiKey
                 );
+
+                
             }
         }
 
@@ -46,6 +47,8 @@ namespace CoviIDApiCore.V1.Brokers
             if (_credentials.isEnabled)
             {
                 var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, _applicationJson);
+
+                AddHeader();
 
                 var response = await _httpClient.PostAsync(UrlConstants.PartialRoutes[UrlConstants.Routes.SafePlacesRedacted], content);
 
@@ -58,6 +61,8 @@ namespace CoviIDApiCore.V1.Brokers
         {
             if (_credentials.isEnabled)
             {
+                AddHeader();
+             
                 var response = await _httpClient.GetAsync(UrlConstants.PartialRoutes[UrlConstants.Routes.SafePlacesRedacted]);
 
                 return await ValidateResponse<List<Redacted>>(response);
@@ -85,6 +90,14 @@ namespace CoviIDApiCore.V1.Brokers
             }
 
             throw new SafePlacesException($"{message} Broker status code: {request.StatusCode}");
+        }
+
+        private void AddHeader()
+        {
+            if (!_httpClient.DefaultRequestHeaders.TryGetValues("Authorization", out var authorizationHeader))
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _loginResponse.Token);
+            }
         }
     }
 }

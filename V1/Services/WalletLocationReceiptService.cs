@@ -56,7 +56,7 @@ namespace CoviIDApiCore.V1.Services
 
                 if (testResult.HasConsent)
                 {
-                    await _staySafeService.CaptureData(walletId, DateTime.UtcNow);
+                    await _staySafeService.CaptureData(walletId, DateTime.UtcNow, 0);
                 }
             }
         }

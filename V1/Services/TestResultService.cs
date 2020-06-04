@@ -62,7 +62,7 @@ namespace CoviIDApiCore.V1.Services
             await _walletTestResultRepository.SaveAsync();
 
             if (request.ResultStatus == ResultStatus.Positive && request.HasConsent)
-                BackgroundJob.Enqueue(() => _staySafeService.CaptureData(wallet.Id, request.TestedAt));
+                BackgroundJob.Enqueue(() => _staySafeService.CaptureData(wallet.Id, request.TestedAt, -14));
 
             return testResults;
         }
