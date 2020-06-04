@@ -9,7 +9,7 @@ namespace CoviIDApiCore.V1.Interfaces.Services
     {
         Task<WalletDetail> CreateWalletDetails(Wallet wallet, WalletDetailsRequest walletDetails, string key);
         Task<WalletDetail> CreateMobileWalletDetails(Wallet wallet, string mobileNumber);
-        Task<List<WalletDetail>> GetWalletDetailsByMobileNumber(string mobileNumber);
+        Task<List<WalletDetail>> GetWalletDetailsByEncryptedMobileNumber(string encryptedMobileNumber);
         Task DeleteWalletDetails(Wallet wallet);
     }
 }
