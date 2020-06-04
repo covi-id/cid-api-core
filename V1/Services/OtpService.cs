@@ -46,7 +46,9 @@ namespace CoviIDApiCore.V1.Services
 
         private async Task<bool> ValidateOtpCreationAsync(string mobileNumberReference)
         {
-            var otps = await _otpTokenRepository.GetAllUnexpiredByMobileNumberAsync(mobileNumberReference);
+            _cryptoService.EncryptAsServer(mobileNumberReference);
+
+            var otps = await _otpTokenRepository.GetAllUnexpiredByEncryptedMobileNumber(mobileNumberReference);
 
             if (!otps.Any())
                 return true;
@@ -88,6 +90,8 @@ namespace CoviIDApiCore.V1.Services
                 isUsed = false,
                 MobileNumber = mobileNumber
             };
+
+            _cryptoService.EncryptAsServer(newToken);
 
             await _otpTokenRepository.AddAsync(newToken);
 
