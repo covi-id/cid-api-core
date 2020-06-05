@@ -27,7 +27,7 @@ namespace CoviIDApiCore.V1.Repositories
                 .ToListAsync();
         }
 
-        public async Task<List<WalletDetail>> GeWalletDetailstByEncryptedMobileNumber(string encryptedMobileNumber)
+        public async Task<List<WalletDetail>> GeWalletDetailstByMobileNumber(string encryptedMobileNumber)
         {
             return await _dbSet
                 .Where(wd => string.Equals(wd.MobileNumber, encryptedMobileNumber))

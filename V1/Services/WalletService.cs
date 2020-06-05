@@ -24,11 +24,10 @@ namespace CoviIDApiCore.V1.Services
         private readonly IAmazonS3Broker _amazonS3Broker;
         private readonly ISessionService _sessionService;
         private readonly ISmsService _smsService;
-        private readonly ICryptoService _cryptoService;
 
         public WalletService(IOtpService otpService, IWalletRepository walletRepository, IWalletDetailRepository walletDetailRepository,
             ITestResultService testResultService, ITokenService tokenService, IAmazonS3Broker amazonS3Broker, ISessionService sessionService, 
-            IWalletDetailService walletDetailService, ISmsService smsService, ICryptoService cryptoService)
+            IWalletDetailService walletDetailService, ISmsService smsService)
         {
             _walletDetailRepository = walletDetailRepository;
             _testResultService = testResultService;
@@ -37,7 +36,6 @@ namespace CoviIDApiCore.V1.Services
             _sessionService = sessionService;
             _walletDetailService = walletDetailService;
             _smsService = smsService;
-            _cryptoService = cryptoService;
             _otpService = otpService;
             _walletRepository = walletRepository;
         }
@@ -53,8 +51,6 @@ namespace CoviIDApiCore.V1.Services
             if (walletDetails == null)
                 throw new NotFoundException(Messages.WalltDetails_NotFound);
             
-            _cryptoService.DecryptAsServer(walletDetails);
-
             var photoUrl = _amazonS3Broker.GetImage(walletDetails.PhotoReference);
 
             var testResults = await _testResultService.GetTestResult(Guid.Parse(walletId));
@@ -106,7 +102,7 @@ namespace CoviIDApiCore.V1.Services
 
         public async Task<Wallet> GetWalletByEncryptedMobileNumber(string encryptedMobileNumber)
         {
-            var walletDetails = await _walletDetailService.GetWalletDetailsByEncryptedMobileNumber(encryptedMobileNumber);
+            var walletDetails = await _walletDetailService.GetWalletDetailsByMobileNumber(encryptedMobileNumber);
 
             // TODO better identify the wallet to checkout
             var wallet = walletDetails

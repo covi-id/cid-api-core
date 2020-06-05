@@ -6,6 +6,6 @@ namespace CoviIDApiCore.V1.Interfaces.Repositories
 {
     public interface IOtpTokenRepository : IBaseRepository<OtpToken, long>
     {
-        Task<List<OtpToken>> GetAllUnexpiredByEncryptedMobileNumber(string mobileNumber);
+        Task<List<OtpToken>> GetAllUnexpiredByMobileNumber(string mobileNumber);
     }
 }
