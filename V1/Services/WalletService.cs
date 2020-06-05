@@ -100,9 +100,9 @@ namespace CoviIDApiCore.V1.Services
             return wallet;
         }
 
-        public async Task<Wallet> GetWalletByEncryptedMobileNumber(string encryptedMobileNumber)
+        public async Task<Wallet> GetWalletByMobileNumber(string mobileNumber)
         {
-            var walletDetails = await _walletDetailService.GetWalletDetailsByMobileNumber(encryptedMobileNumber);
+            var walletDetails = await _walletDetailService.GetWalletDetailsByMobileNumber(mobileNumber);
 
             // TODO better identify the wallet to checkout
             var wallet = walletDetails

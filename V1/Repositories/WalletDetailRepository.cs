@@ -27,10 +27,10 @@ namespace CoviIDApiCore.V1.Repositories
                 .ToListAsync();
         }
 
-        public async Task<List<WalletDetail>> GeWalletDetailstByMobileNumber(string encryptedMobileNumber)
+        public async Task<List<WalletDetail>> GeWalletDetailstByMobileNumber(string mobileNumber)
         {
             return await _dbSet
-                .Where(wd => string.Equals(wd.MobileNumber, encryptedMobileNumber))
+                .Where(wd => string.Equals(wd.MobileNumber, mobileNumber))
                 .Include(wd => wd.Wallet)
                 .ToListAsync();
         }
