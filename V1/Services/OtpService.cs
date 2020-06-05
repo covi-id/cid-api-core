@@ -84,14 +84,11 @@ namespace CoviIDApiCore.V1.Services
             var fileReference = await _amazonS3Broker.AddImageToBucket(payload.WalletDetails.Photo, Guid.NewGuid().ToString());
             payload.WalletDetails.Photo = fileReference;
 
-            var key = _cryptoService.GenerateEncryptedSecretKey();
-
-            await _walletDetailService.CreateWalletDetails(wallet, payload.WalletDetails, key);
+            await _walletDetailService.CreateWalletDetails(wallet, payload.WalletDetails);
 
             return new OtpConfirmationResponse()
             {
                 WalletId = wallet.Id.ToString(),
-                Key = key
             };
         }
 

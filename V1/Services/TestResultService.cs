@@ -60,8 +60,7 @@ namespace CoviIDApiCore.V1.Services
 
             var testResults = new WalletTestResult(request, wallet);
 
-            _cryptoService.EncryptAsUser(request, request.Key);
-
+            _cryptoService.EncryptAsServer(request);
             await _walletTestResultRepository.AddAsync(testResults);
 
             await _walletTestResultRepository.SaveAsync();

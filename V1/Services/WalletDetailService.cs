@@ -20,7 +20,7 @@ namespace CoviIDApiCore.V1.Services
             _cryptoService = cryptoService;
         }
 
-        public async Task<WalletDetail> CreateWalletDetails(Wallet wallet, WalletDetailsRequest request, string key)
+        public async Task<WalletDetail> CreateWalletDetails(Wallet wallet, WalletDetailsRequest request)
         {
             var walletDetails = new WalletDetail(request)
             {
@@ -30,7 +30,7 @@ namespace CoviIDApiCore.V1.Services
             if (walletDetails == null || walletDetails == default)
                 throw new ValidationException(Messages.WalltDetails_Invalid);
 
-            _cryptoService.EncryptAsUser(walletDetails, key);
+            _cryptoService.EncryptAsServer(walletDetails);
 
             await _walletDetailRepository.AddAsync(walletDetails);
 

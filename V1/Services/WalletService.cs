@@ -21,29 +21,28 @@ namespace CoviIDApiCore.V1.Services
         private readonly ITestResultService _testResultService;
         private readonly IWalletDetailService _walletDetailService;
         private readonly ITokenService _tokenService;
-        private readonly ICryptoService _cryptoService;
         private readonly IAmazonS3Broker _amazonS3Broker;
         private readonly ISessionService _sessionService;
         private readonly ISmsService _smsService;
+        private readonly ICryptoService _cryptoService;
 
         public WalletService(IOtpService otpService, IWalletRepository walletRepository, IWalletDetailRepository walletDetailRepository,
-            ITestResultService testResultService, ITokenService tokenService, ICryptoService cryptoService,
-            IAmazonS3Broker amazonS3Broker, ISessionService sessionService, IWalletDetailService walletDetailService,
-            ISmsService smsService)
+            ITestResultService testResultService, ITokenService tokenService, IAmazonS3Broker amazonS3Broker, ISessionService sessionService, 
+            IWalletDetailService walletDetailService, ISmsService smsService, ICryptoService cryptoService)
         {
             _walletDetailRepository = walletDetailRepository;
             _testResultService = testResultService;
             _tokenService = tokenService;
-            _cryptoService = cryptoService;
             _amazonS3Broker = amazonS3Broker;
             _sessionService = sessionService;
             _walletDetailService = walletDetailService;
             _smsService = smsService;
+            _cryptoService = cryptoService;
             _otpService = otpService;
             _walletRepository = walletRepository;
         }
 
-        public async Task<WalletStatusResponse> GetWalletStatus(string walletId, string key)
+        public async Task<WalletStatusResponse> GetWalletStatus(string walletId)
         {
             var wallet = await _walletRepository.GetAsync(Guid.Parse(walletId));
             if (wallet == null)
@@ -53,8 +52,8 @@ namespace CoviIDApiCore.V1.Services
 
             if (walletDetails == null)
                 throw new NotFoundException(Messages.WalltDetails_NotFound);
-
-            _cryptoService.DecryptAsUser(walletDetails, key);
+            
+            _cryptoService.DecryptAsServer(walletDetails);
 
             var photoUrl = _amazonS3Broker.GetImage(walletDetails.PhotoReference);
 
