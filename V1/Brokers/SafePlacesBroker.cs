@@ -50,9 +50,9 @@ namespace CoviIDApiCore.V1.Brokers
 
                 AddHeader();
 
-                var response = await _httpClient.PostAsync(UrlConstants.PartialRoutes[UrlConstants.Routes.SafePlacesRedacted], content);
+                var response = await _httpClient.PostAsync(UrlConstants.PartialRoutes[UrlConstants.Routes.SafePlacesRedactedTrail], content);
 
-                return await ValidateResponse<Redacted>(response);
+                return (await ValidateResponse<BaseResponse<Redacted>>(response)).Data;
             }
             return null;
         }
@@ -63,7 +63,7 @@ namespace CoviIDApiCore.V1.Brokers
             {
                 AddHeader();
              
-                var response = await _httpClient.GetAsync(UrlConstants.PartialRoutes[UrlConstants.Routes.SafePlacesRedacted]);
+                var response = await _httpClient.GetAsync(UrlConstants.PartialRoutes[UrlConstants.Routes.SafePlacesRedactedTrails]);
 
                 return await ValidateResponse<List<Redacted>>(response);
             }
@@ -96,7 +96,7 @@ namespace CoviIDApiCore.V1.Brokers
         {
             if (!_httpClient.DefaultRequestHeaders.TryGetValues("Authorization", out var authorizationHeader))
             {
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _loginResponse.Token);
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(_loginResponse.Token);
             }
         }
     }

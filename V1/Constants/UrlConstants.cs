@@ -16,7 +16,8 @@ namespace CoviIDApiCore.V1.Constants
             { Routes.ShortenUrl, "v4/shorten" },
             { Routes.WebCreateWallet, "create-wallet/details" },
             { Routes.SafePlacesLogin, "login" },
-            { Routes.SafePlacesRedacted, "redacted_trails" },
+            { Routes.SafePlacesRedactedTrails, "redacted_trails" },
+            { Routes.SafePlacesRedactedTrail, "redacted_trail" },
             { Routes.SafePlacesSafePath, "safe_path" }
 
         };
@@ -33,7 +34,8 @@ namespace CoviIDApiCore.V1.Constants
             ShortenUrl,
             WebCreateWallet,
             SafePlacesLogin,
-            SafePlacesRedacted,
+            SafePlacesRedactedTrails,
+            SafePlacesRedactedTrail,
             SafePlacesSafePath
         }
     }

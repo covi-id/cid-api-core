@@ -1,9 +1,14 @@
-﻿namespace CoviIDApiCore.V1.DTOs.SafePlaces
+﻿using Newtonsoft.Json;
+
+namespace CoviIDApiCore.V1.DTOs.SafePlaces
 {
     public class Trail
     {
+        [JsonProperty("time")]
         public string Time { get; set; }
+        [JsonProperty("latitude")]
         public double Latitude { get; set; }
+        [JsonProperty("longitude")]
         public double Longitude { get; set; }
     }
 }
