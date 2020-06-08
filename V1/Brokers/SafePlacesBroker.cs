@@ -17,29 +17,11 @@ namespace CoviIDApiCore.V1.Brokers
         private readonly HttpClient _httpClient;
         private static readonly string _applicationJson = "application/json";
         private readonly SafePlacesCredentials _credentials;
-        private LoginResponse _loginResponse;
 
         public SafePlacesBroker(HttpClient httpClient, SafePlacesCredentials credentials)
         {
             _httpClient = httpClient;
             _credentials = credentials;
-
-            if (_credentials.isEnabled)
-            {
-                Task.Run(() =>
-
-                _loginResponse = Login(new LoginRequest
-                {
-                    Password = _credentials.Password,
-                    Username = _credentials.Username
-                })
-                    .ConfigureAwait(false)
-                    .GetAwaiter()
-                    .GetResult()
-                );
-
-                
-            }
         }
 
         public async Task<Redacted> AddRedacted(RedactedRequest request)
@@ -48,7 +30,7 @@ namespace CoviIDApiCore.V1.Brokers
             {
                 var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, _applicationJson);
 
-                AddHeader();
+                await AddHeader();
 
                 var response = await _httpClient.PostAsync(UrlConstants.PartialRoutes[UrlConstants.Routes.SafePlacesRedactedTrail], content);
 
@@ -61,8 +43,8 @@ namespace CoviIDApiCore.V1.Brokers
         {
             if (_credentials.isEnabled)
             {
-                AddHeader();
-             
+                await AddHeader();
+
                 var response = await _httpClient.GetAsync(UrlConstants.PartialRoutes[UrlConstants.Routes.SafePlacesRedactedTrails]);
 
                 return await ValidateResponse<List<Redacted>>(response);
@@ -92,11 +74,17 @@ namespace CoviIDApiCore.V1.Brokers
             throw new SafePlacesException($"{message} Broker status code: {request.StatusCode}");
         }
 
-        private void AddHeader()
+        private async Task AddHeader()
         {
             if (!_httpClient.DefaultRequestHeaders.TryGetValues("Authorization", out var authorizationHeader))
             {
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(_loginResponse.Token);
+                var loginResponse = await Login(new LoginRequest
+                {
+                    Username = _credentials.Username,
+                    Password = _credentials.Password
+                });
+
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(loginResponse.Token);
             }
         }
     }

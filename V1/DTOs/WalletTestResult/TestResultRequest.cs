@@ -9,7 +9,6 @@ namespace CoviIDApiCore.V1.DTOs.WalletTestResult
             if (HasConsent)
                 PermissionGrantedAt = DateTime.UtcNow;
         }
-        public string Key { get; set; }
         public Guid walletId { get; set; }
         public LaboratoryStatus LaboratoryStatus { get; set; } = LaboratoryStatus.Unsent;
         public bool HasReceivedResults { get; set; }

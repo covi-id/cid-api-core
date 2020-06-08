@@ -32,7 +32,7 @@ namespace CoviIDApiCore.V1.Services
                     {
                         trails.Add(new Trail
                         {
-                            Time = log.CreatedAt.ToString(),
+                            Time = log.CreatedAt.Value.Ticks,
                             Latitude = decimal.ToDouble(log.Latitude),
                             Longitude = decimal.ToDouble(log.Longitude)
                         });
@@ -45,7 +45,7 @@ namespace CoviIDApiCore.V1.Services
                         Identifier = Guid.NewGuid().ToString(),
                         Trails = trails
                     };
-                 
+
                     await _safePlacesBroker.AddRedacted(request);
                 }
             }
