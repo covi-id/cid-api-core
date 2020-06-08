@@ -23,12 +23,11 @@ namespace CoviIDApiCore.V1.Services
         private readonly IQRCodeService _qrCodeService;
         private readonly IWalletRepository _walletRepository;
         private readonly IWalletService _walletService;
-        private readonly ICryptoService _cryptoService;
         private readonly IWalletLocationReceiptService _walletLocationReceiptService;
 
         public OrganisationService(IOrganisationRepository organisationRepository, IOrganisationAccessLogRepository organisationAccessLogRepository,
             IEmailService emailService, IQRCodeService qrCodeService, IWalletRepository walletRepository, IWalletService walletService,
-            ICryptoService cryptoService, IWalletLocationReceiptService walletLocationReceiptService)
+            IWalletLocationReceiptService walletLocationReceiptService)
         {
             _organisationRepository = organisationRepository;
             _organisationAccessLogRepository = organisationAccessLogRepository;
@@ -36,7 +35,6 @@ namespace CoviIDApiCore.V1.Services
             _qrCodeService = qrCodeService;
             _walletRepository = walletRepository;
             _walletService = walletService;
-            _cryptoService = cryptoService;
             _walletLocationReceiptService = walletLocationReceiptService;
         }
 
@@ -150,9 +148,7 @@ namespace CoviIDApiCore.V1.Services
 
         public async Task<Response> MobileCheckOut(string organisationId, MobileUpdateCountRequest payload)
         {
-            _cryptoService.EncryptAsServer(payload, true);
-
-            var wallet = await _walletService.GetWalletByMobileNumebr(payload.MobileNumber);
+            var wallet = await _walletService.GetWalletByMobileNumber(payload.MobileNumber);
 
             var updateCounterRequest = new UpdateCountRequest
             {

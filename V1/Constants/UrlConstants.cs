@@ -6,8 +6,6 @@ namespace CoviIDApiCore.V1.Constants
     {
         public static Dictionary<Routes, string> PartialRoutes = new Dictionary<Routes, string>
         {
-            { Routes.Agency, "agency/v1/" },
-            { Routes.Custodian, "custodian/v1/api/" },
             { Routes.Sendgrid, "v3/mail/send"},
             { Routes.ClickatellSend, "/messages"},
             { Routes.ClickatellBalance, "/public-client/balance"},
@@ -24,8 +22,6 @@ namespace CoviIDApiCore.V1.Constants
 
         public enum Routes
         {
-            Agency,
-            Custodian,
             Sendgrid,
             ClickatellSend,
             ClickatellBalance,

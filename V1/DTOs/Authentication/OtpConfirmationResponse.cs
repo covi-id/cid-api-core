@@ -3,6 +3,5 @@
     public class OtpConfirmationResponse
     {
         public string WalletId { get; set; }
-        public string Key { get; set; }
     }
 }

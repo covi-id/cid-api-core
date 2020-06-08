@@ -21,20 +21,17 @@ namespace CoviIDApiCore.V1.Services
         private readonly ITestResultService _testResultService;
         private readonly IWalletDetailService _walletDetailService;
         private readonly ITokenService _tokenService;
-        private readonly ICryptoService _cryptoService;
         private readonly IAmazonS3Broker _amazonS3Broker;
         private readonly ISessionService _sessionService;
         private readonly ISmsService _smsService;
 
         public WalletService(IOtpService otpService, IWalletRepository walletRepository, IWalletDetailRepository walletDetailRepository,
-            ITestResultService testResultService, ITokenService tokenService, ICryptoService cryptoService,
-            IAmazonS3Broker amazonS3Broker, ISessionService sessionService, IWalletDetailService walletDetailService,
-            ISmsService smsService)
+            ITestResultService testResultService, ITokenService tokenService, IAmazonS3Broker amazonS3Broker, ISessionService sessionService, 
+            IWalletDetailService walletDetailService, ISmsService smsService)
         {
             _walletDetailRepository = walletDetailRepository;
             _testResultService = testResultService;
             _tokenService = tokenService;
-            _cryptoService = cryptoService;
             _amazonS3Broker = amazonS3Broker;
             _sessionService = sessionService;
             _walletDetailService = walletDetailService;
@@ -43,7 +40,7 @@ namespace CoviIDApiCore.V1.Services
             _walletRepository = walletRepository;
         }
 
-        public async Task<WalletStatusResponse> GetWalletStatus(string walletId, string key)
+        public async Task<WalletStatusResponse> GetWalletStatus(string walletId)
         {
             var wallet = await _walletRepository.GetAsync(Guid.Parse(walletId));
             if (wallet == null)
@@ -53,9 +50,7 @@ namespace CoviIDApiCore.V1.Services
 
             if (walletDetails == null)
                 throw new NotFoundException(Messages.WalltDetails_NotFound);
-
-            _cryptoService.DecryptAsUser(walletDetails, key);
-
+            
             var photoUrl = _amazonS3Broker.GetImage(walletDetails.PhotoReference);
 
             var testResults = await _testResultService.GetLatestTestResult(Guid.Parse(walletId));
@@ -96,7 +91,7 @@ namespace CoviIDApiCore.V1.Services
         {
             var wallet = await CreateWallet();
 
-            var session = await _sessionService.CreateSession(request.MobileNumber, wallet);
+            var session = await _sessionService.CreateSession(wallet);
 
             await _smsService.SendWelcomeSms(request.MobileNumber, organisationName, session.ExpireAt.Value, session.Id);
 
@@ -105,7 +100,7 @@ namespace CoviIDApiCore.V1.Services
             return wallet;
         }
 
-        public async Task<Wallet> GetWalletByMobileNumebr(string mobileNumber)
+        public async Task<Wallet> GetWalletByMobileNumber(string mobileNumber)
         {
             var walletDetails = await _walletDetailService.GetWalletDetailsByMobileNumber(mobileNumber);
 

@@ -41,10 +41,6 @@ namespace CoviIDApiCore.Middleware
             {
                 await HandleNotFoundException(context, e);
             }
-            catch (StreetCredBrokerException e)
-            {
-                await HandleStreetCredBrokerException(context, e);
-            }
             catch (SendGridException e)
             {
                 await HandleSendGridException(context, e);
@@ -98,6 +94,8 @@ namespace CoviIDApiCore.Middleware
 
         private static Task HandleValidationException(HttpContext context, Exception e)
         {
+            CaptureException(e);
+
             var code = HttpStatusCode.BadRequest;
 
             context.Response.ContentType = _applicationJson;
@@ -110,28 +108,14 @@ namespace CoviIDApiCore.Middleware
 
         private static Task HandleNotFoundException(HttpContext context, Exception e)
         {
+            CaptureException(e);
+
             var code = HttpStatusCode.NotFound;
 
             context.Response.ContentType = _applicationJson;
             context.Response.StatusCode = (int)code;
 
-            var rsp = new Response(false, HttpStatusCode.NotFound);
-            return ReturnResult(context, rsp);
-        }
-
-        private Task HandleStreetCredBrokerException(HttpContext context, StreetCredBrokerException e)
-        {
-            CaptureException(e);
-
-            var statusCode = HttpStatusCode.InternalServerError;
-            context.Response.ContentType = _applicationJson;
-            context.Response.StatusCode = (int)statusCode;
-            var message = Messages.Misc_ThirdParty;
-
-            #if DEBUG
-            message = e.Message;
-            #endif
-            var rsp = new Response(false, statusCode, message);
+            var rsp = new Response(false, HttpStatusCode.NotFound, e.Message);
             return ReturnResult(context, rsp);
         }
 

@@ -11,6 +11,9 @@ namespace CoviIDApiCore.V1.DTOs.WalletTestResult
         public DateTime? TestedAt { get; set; }
         public DateTime? IssuedAt { get; set; }
         public DateTime? PermissionGrantedAt { get; set; }
+        /// <summary>
+        /// Is consent given to share information with a laboratory 
+        /// </summary>
         public bool HasConsent { get; set; }
     }
 }

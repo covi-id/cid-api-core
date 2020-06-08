@@ -20,19 +20,11 @@ namespace CoviIDApiCore.V1.Repositories
             _dbSet = _context.OtpTokens;
         }
 
-        public async Task<OtpToken> GetUnusedByMobileNumber(string mobileNumber)
-        {
-            return await _dbSet
-                .Where(t => string.Equals(t.MobileNumber, mobileNumber, StringComparison.Ordinal))
-                .Where(t => !t.isUsed)
-                .OrderByDescending(t => t.CreatedAt)
-                .FirstOrDefaultAsync();
-        }
-
-        public async Task<List<OtpToken>> GetAllUnexpiredByMobileNumberAsync(string mobileNumber)
+        public async Task<List<OtpToken>> GetAllUnexpiredByMobileNumber(string mobileNumber)
         {
             return await _dbSet
                 .Where(t => t.MobileNumber == mobileNumber)
+                .Where(t => !t.isUsed)
                 .Where(t => t.ExpireAt < DateTime.UtcNow)
                 .OrderByDescending(t => t.CreatedAt)
                 .ToListAsync();

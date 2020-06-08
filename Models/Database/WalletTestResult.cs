@@ -14,8 +14,10 @@ namespace CoviIDApiCore.Models.Database
         public Laboratory Laboratory { get; set; }
         public DateTime? TestedAt { get; set; }
         public DateTime? IssuedAt { get; set; }
-        [Encrypted]
         public string ReferenceNumber { get; set; }
+        /// <summary>
+        /// Is consent given to share information with a laboratory 
+        /// </summary>
         public bool HasConsent { get; set; }
         public DateTime? PermissionGrantedAt { get; set; }
         public DateTime? CreatedAt { get; set; }
