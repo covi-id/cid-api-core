@@ -163,7 +163,6 @@ namespace CoviIDApiCore
             services.AddTransient<IQRCodeService, QRCodeService>();
             services.AddScoped<IOtpService, OtpService>();
             services.AddTransient<ITestResultService, TestResultService>();
-            services.AddSingleton<ICryptoService, CryptoService>();
             services.AddScoped<IWalletDetailService, WalletDetailService>();
             services.AddSingleton<ITokenService, TokenService>();
             services.AddTransient<ISmsService, SmsService>();
