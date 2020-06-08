@@ -163,12 +163,13 @@ namespace CoviIDApiCore
             services.AddTransient<IQRCodeService, QRCodeService>();
             services.AddScoped<IOtpService, OtpService>();
             services.AddTransient<ITestResultService, TestResultService>();
-            services.AddSingleton<ICryptoService, CryptoService>();
             services.AddScoped<IWalletDetailService, WalletDetailService>();
             services.AddSingleton<ITokenService, TokenService>();
             services.AddTransient<ISmsService, SmsService>();
             services.AddTransient<ISessionService, SessionService>();
+            services.AddTransient<IStaySafeService, StaySafeService>();
             services.AddTransient<IWalletLocationReceiptService, WalletLocationReceiptService>();
+            
             #endregion
 
             #region Repository Layer
@@ -187,6 +188,7 @@ namespace CoviIDApiCore
             services.AddTransient<IClickatellBroker, ClickatellBroker>();
             services.AddSingleton<IAmazonS3Broker, AmazonS3Broker>();
             services.AddTransient<IBitlyBroker, BitlyBroker>();
+            services.AddSingleton<ISafePlacesBroker, SafePlacesBroker>();
             #endregion
         }
 
@@ -200,6 +202,10 @@ namespace CoviIDApiCore
 
             var bitlyCredentials = new BitlyCredentials();
             _configuration.Bind(nameof(BitlyCredentials), bitlyCredentials);
+
+            var safePlacesCredentials = new SafePlacesCredentials();
+            _configuration.Bind(nameof(SafePlacesCredentials), safePlacesCredentials);
+            services.AddSingleton(safePlacesCredentials);
 
             services.AddHttpClient<ISendGridBroker, SendGridBroker>(client =>
                 {
@@ -223,6 +229,15 @@ namespace CoviIDApiCore
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", bitlyCredentials.Key);
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(_applicationJson));
             });
+
+            if (safePlacesCredentials.isEnabled)
+            {
+                services.AddHttpClient<ISafePlacesBroker, SafePlacesBroker>(client =>
+                {
+                    client.BaseAddress = new Uri(safePlacesCredentials.BaseUrl);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(_applicationJson));
+                });
+            }
         }
 
         private void ConfigureSwagger(IServiceCollection services)
@@ -271,7 +286,7 @@ namespace CoviIDApiCore
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
         }
-        
+
         private void ConfigureSentry()
         {
             var url = _configuration?.GetSection("Sentry")?.GetSection("Url").Value ?? throw new Exception("Failed to setup sentry.");

@@ -61,7 +61,7 @@ namespace CoviIDApiCore.V1.Controllers
         public async Task<IActionResult> CheckIn(string id, [FromBody] UpdateCountRequest payload)
         {
             return StatusCode(StatusCodes.Status200OK,
-                await _organisationService.UpdateCountAsync(id, payload, ScanType.CheckIn));
+                await _organisationService.UpdateCountAsync(id, payload, ScanType.CheckIn, false));
         }
 
         [HttpPost("organisations/{id}/check_out")]

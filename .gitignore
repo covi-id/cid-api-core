@@ -12,6 +12,10 @@
 
 #appsettings
 appsettings.json
+appsettings.Development.json
+appsettings.Staging.json
+appsettings.Production.json
+
 
 #bin
 bin

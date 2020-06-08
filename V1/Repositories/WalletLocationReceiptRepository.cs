@@ -20,13 +20,21 @@ namespace CoviIDApiCore.V1.Repositories
             _dbSet = _context.WalletLocationReceipts;
         }
 
-        public async Task<List<WalletLocationReceipt>> GetReceiptsForTodayByWallet(Wallet wallet)
+        public async Task<List<WalletLocationReceipt>> GetReceiptsForDate(Wallet wallet, DateTime forDate)
         {
             return await _dbSet
                 .Where(r => r.Wallet == wallet)
-                .Where(r => r.CreatedAt.Value.Date == DateTime.Now.Date)
+                .Where(r => r.CreatedAt.Value.Date == forDate)
                 .OrderByDescending(r => r.CreatedAt)
                 .ToListAsync();
+        }
+
+        public async Task<List<WalletLocationReceipt>> GetReceiptsByStartDate(Guid walletId, DateTime startDate)
+        {
+            return await _dbSet.Where(oal => Equals(oal.Wallet.Id, walletId))
+                  .Where(oal => oal.CreatedAt >= startDate && oal.ScanType == ScanType.CheckIn)
+                  .ToListAsync();
+
         }
     }
 }

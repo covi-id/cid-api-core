@@ -120,46 +120,6 @@ namespace CoviIDApiCore.V1.Services
                 HttpStatusCode.OK);
         }
 
-        private async Task UpdateOrganisationAccessLogs(Organisation organisation, ScanType scanType)
-        {
-            var newCount = new OrganisationAccessLog()
-            {
-                Organisation = organisation,
-                CreatedAt = DateTime.UtcNow,
-                ScanType = scanType
-            };
-
-            await _organisationAccessLogRepository.AddAsync(newCount);
-
-            await _organisationAccessLogRepository.SaveAsync();
-
-        }
-
-        private async Task ValidateScan(List<OrganisationAccessLog> logs, ScanType scanType, Wallet wallet, bool mobile = false)
-        {
-            if (wallet != default && !mobile)
-            {
-                var locationReceipts = await _walletLocationReceiptService.GetReceiptsForToday(wallet);
-
-                if (!locationReceipts.Any() && scanType == ScanType.CheckOut)
-                    throw new ValidationException(Messages.Org_UserNotScannedIn);
-
-                if (locationReceipts.FirstOrDefault()?.ScanType == ScanType.CheckIn && scanType == ScanType.CheckIn)
-                    throw new ValidationException(Messages.Org_UserScannedIn);
-
-                if (locationReceipts.FirstOrDefault()?.ScanType != ScanType.CheckIn && scanType == ScanType.CheckOut)
-                    throw new ValidationException(Messages.Org_UserNotScannedIn);
-
-                if (locationReceipts.FirstOrDefault()?.ScanType == ScanType.CheckOut && scanType == ScanType.CheckOut)
-                    throw new ValidationException(Messages.Org_UserScannedOut);
-            }
-
-            var balance = GetAccessLogBalance(logs);
-
-            if (balance < 1 && scanType == ScanType.CheckOut)
-                throw new ValidationException(Messages.Org_NegBalance);
-        }
-
         public async Task<Response> MobileCheckIn(string organisationId, MobileUpdateCountRequest payload)
         {
             var organisation = await _organisationRepository.GetAsync(Guid.Parse(organisationId));
@@ -203,6 +163,45 @@ namespace CoviIDApiCore.V1.Services
         }
 
         #region Private Methods
+        private async Task UpdateOrganisationAccessLogs(Organisation organisation, ScanType scanType)
+        {
+            var newCount = new OrganisationAccessLog()
+            {
+                Organisation = organisation,
+                CreatedAt = DateTime.UtcNow,
+                ScanType = scanType
+            };
+
+            await _organisationAccessLogRepository.AddAsync(newCount);
+
+            await _organisationAccessLogRepository.SaveAsync();
+        }
+
+        private async Task ValidateScan(List<OrganisationAccessLog> logs, ScanType scanType, Wallet wallet, bool mobile = false)
+        {
+            if (wallet != default && !mobile)
+            {
+                var locationReceipts = await _walletLocationReceiptService.GetReceiptsForDate(wallet, DateTime.Now.Date);
+
+                if (!locationReceipts.Any() && scanType == ScanType.CheckOut)
+                    throw new ValidationException(Messages.Org_UserNotScannedIn);
+
+                if (locationReceipts.FirstOrDefault()?.ScanType == ScanType.CheckIn && scanType == ScanType.CheckIn)
+                    throw new ValidationException(Messages.Org_UserScannedIn);
+
+                if (locationReceipts.FirstOrDefault()?.ScanType != ScanType.CheckIn && scanType == ScanType.CheckOut)
+                    throw new ValidationException(Messages.Org_UserNotScannedIn);
+
+                if (locationReceipts.FirstOrDefault()?.ScanType == ScanType.CheckOut && scanType == ScanType.CheckOut)
+                    throw new ValidationException(Messages.Org_UserScannedOut);
+            }
+
+            var balance = GetAccessLogBalance(logs);
+
+            if (balance < 1 && scanType == ScanType.CheckOut)
+                throw new ValidationException(Messages.Org_NegBalance);
+        }
+
         private int GetAccessLogBalance(List<OrganisationAccessLog> logs)
         {
             var checkIns = logs.Count(oal => oal.ScanType == ScanType.CheckIn);

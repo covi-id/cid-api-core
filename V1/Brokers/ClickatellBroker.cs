@@ -12,7 +12,7 @@ namespace CoviIDApiCore.V1.Brokers
     {
         private readonly HttpClient _httpClient;
         private static readonly string _sendPartialRoute = UrlConstants.PartialRoutes[UrlConstants.Routes.ClickatellSend];
-        private static readonly string _balancePartialRoute =UrlConstants.PartialRoutes[UrlConstants.Routes.ClickatellBalance];
+        private static readonly string _balancePartialRoute = UrlConstants.PartialRoutes[UrlConstants.Routes.ClickatellBalance];
 
         public ClickatellBroker(HttpClient httpClient)
         {
