@@ -20,10 +20,10 @@ namespace CoviIDApiCore.V1.Repositories
             _dbSet = _context.OtpTokens;
         }
 
-        public async Task<List<OtpToken>> GetAllUnexpiredByEncryptedMobileNumber(string encryptedMobileNumber)
+        public async Task<List<OtpToken>> GetAllUnexpiredByMobileNumber(string mobileNumber)
         {
             return await _dbSet
-                .Where(t => t.MobileNumber == encryptedMobileNumber)
+                .Where(t => t.MobileNumber == mobileNumber)
                 .Where(t => !t.isUsed)
                 .Where(t => t.ExpireAt < DateTime.UtcNow)
                 .OrderByDescending(t => t.CreatedAt)

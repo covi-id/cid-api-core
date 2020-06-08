@@ -7,9 +7,9 @@ namespace CoviIDApiCore.V1.Interfaces.Services
 {
     public interface IWalletDetailService
     {
-        Task<WalletDetail> CreateWalletDetails(Wallet wallet, WalletDetailsRequest walletDetails, string key);
+        Task<WalletDetail> CreateWalletDetails(Wallet wallet, WalletDetailsRequest walletDetails);
         Task<WalletDetail> CreateMobileWalletDetails(Wallet wallet, string mobileNumber);
-        Task<List<WalletDetail>> GetWalletDetailsByEncryptedMobileNumber(string encryptedMobileNumber);
+        Task<List<WalletDetail>> GetWalletDetailsByMobileNumber(string mobileNumber);
         Task DeleteWalletDetails(Wallet wallet);
     }
 }
