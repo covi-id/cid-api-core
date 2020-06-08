@@ -28,10 +28,6 @@
     <Compile Remove="Migrations\20200601083521_PrivacyPreserving_Restructure.Designer.cs" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Content Remove="appsettings.Development.json" />
-    <Content Remove="appsettings.Local.json" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="AspNetCoreRateLimit" Version="3.0.5" />
