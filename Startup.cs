@@ -157,8 +157,6 @@ namespace CoviIDApiCore
         {
             #region Service layer
             services.AddTransient<IWalletService, WalletService>();
-            services.AddTransient<IVerifyService, VerifyService>();
-            services.AddTransient<ICredentialService, CredentialService>();
             services.AddScoped<IOrganisationService, OrganisationService>();
             services.AddScoped<IEmailService, EmailService>();
             services.AddSingleton<IAuthenticationService, AuthenticationService>();
@@ -171,7 +169,6 @@ namespace CoviIDApiCore
             services.AddTransient<ISmsService, SmsService>();
             services.AddTransient<ISessionService, SessionService>();
             services.AddTransient<IWalletLocationReceiptService, WalletLocationReceiptService>();
-
             #endregion
 
             #region Repository Layer
@@ -186,8 +183,6 @@ namespace CoviIDApiCore
             #endregion
 
             #region Broker Layer
-            services.AddTransient<IAgencyBroker, AgencyBroker>();
-            services.AddTransient<ICustodianBroker, CustodianBroker>();
             services.AddTransient<ISendGridBroker, SendGridBroker>();
             services.AddTransient<IClickatellBroker, ClickatellBroker>();
             services.AddSingleton<IAmazonS3Broker, AmazonS3Broker>();
@@ -197,36 +192,14 @@ namespace CoviIDApiCore
 
         private void ConfigureHttpClients(IServiceCollection services)
         {
-            var agencyApiBaseUrl = _configuration.GetConnectionString("AgencyApiBaseUrl");
-            var custodianApiBaseUrl = _configuration.GetConnectionString("CustodianApiBaseUrl");
-            var tenantId = _configuration.GetValue<string>("TenantId");
             var sendGridCredentials = new SendGridCredentials();
             _configuration.Bind(nameof(SendGridCredentials), sendGridCredentials);
-
-            var streetCredCredentials = new StreetCredCredentials();
-            _configuration.Bind(nameof(StreetCredCredentials), streetCredCredentials);
 
             var clickatellCredentials = new ClickatellCredentials();
             _configuration.Bind(nameof(ClickatellCredentials), clickatellCredentials);
 
             var bitlyCredentials = new BitlyCredentials();
             _configuration.Bind(nameof(BitlyCredentials), bitlyCredentials);
-
-            services.AddHttpClient<IAgencyBroker, AgencyBroker>(client =>
-            {
-                client.BaseAddress = new Uri(agencyApiBaseUrl);
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", streetCredCredentials.AuthorizationToken);
-                client.DefaultRequestHeaders.Add("X-Streetcred-Subscription-Key", streetCredCredentials.SubscriptionKey);
-                client.DefaultRequestHeaders.Add("X-Streetcred-Tenant-Id", tenantId);
-            });
-
-            services.AddHttpClient<ICustodianBroker, CustodianBroker>(client =>
-            {
-                client.BaseAddress = new Uri(custodianApiBaseUrl);
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", streetCredCredentials.AuthorizationToken);
-                client.DefaultRequestHeaders.Add("X-Streetcred-Subscription-Key", streetCredCredentials.SubscriptionKey);
-                client.DefaultRequestHeaders.Add("X-Streetcred-Tenant-Id", tenantId);
-            });
 
             services.AddHttpClient<ISendGridBroker, SendGridBroker>(client =>
                 {
