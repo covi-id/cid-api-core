@@ -15,12 +15,10 @@ namespace CoviIDApiCore.V1.Services
     {
         private readonly IWalletTestResultRepository _walletTestResultRepository;
         private readonly IWalletRepository _walletRepository;
-        private readonly ICryptoService _cryptoService;
-        public TestResultService(IWalletTestResultRepository walletTestResultRepository, IWalletRepository walletRepository, ICryptoService cryptoService)
+        public TestResultService(IWalletTestResultRepository walletTestResultRepository, IWalletRepository walletRepository)
         {
             _walletTestResultRepository = walletTestResultRepository;
             _walletRepository = walletRepository;
-            _cryptoService = cryptoService;
         }
 
         public async Task<TestResultResponse> GetTestResult(Guid walletId)
@@ -59,8 +57,6 @@ namespace CoviIDApiCore.V1.Services
                 throw new ValidationException(Messages.Wallet_NotFound);
 
             var testResults = new WalletTestResult(request, wallet);
-
-            _cryptoService.EncryptAsUser(request, request.Key);
 
             await _walletTestResultRepository.AddAsync(testResults);
 

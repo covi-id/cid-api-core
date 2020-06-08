@@ -12,15 +12,13 @@ namespace CoviIDApiCore.V1.Services
     public class WalletDetailService : IWalletDetailService
     {
         private readonly IWalletDetailRepository _walletDetailRepository;
-        private readonly ICryptoService _cryptoService;
 
-        public WalletDetailService(IWalletDetailRepository walletDetailRepository, ICryptoService cryptoService)
+        public WalletDetailService(IWalletDetailRepository walletDetailRepository)
         {
             _walletDetailRepository = walletDetailRepository;
-            _cryptoService = cryptoService;
         }
 
-        public async Task<WalletDetail> CreateWalletDetails(Wallet wallet, WalletDetailsRequest request, string key)
+        public async Task<WalletDetail> CreateWalletDetails(Wallet wallet, WalletDetailsRequest request)
         {
             var walletDetails = new WalletDetail(request)
             {
@@ -29,8 +27,6 @@ namespace CoviIDApiCore.V1.Services
 
             if (walletDetails == null || walletDetails == default)
                 throw new ValidationException(Messages.WalltDetails_Invalid);
-
-            _cryptoService.EncryptAsUser(walletDetails, key);
 
             await _walletDetailRepository.AddAsync(walletDetails);
 
@@ -47,8 +43,6 @@ namespace CoviIDApiCore.V1.Services
                 MobileNumber = mobileNumber
             };
 
-            _cryptoService.EncryptAsServer(walletDetails, true);
-
             await _walletDetailRepository.AddAsync(walletDetails);
 
             await _walletDetailRepository.SaveAsync();
@@ -56,9 +50,9 @@ namespace CoviIDApiCore.V1.Services
             return walletDetails;
         }
 
-        public async Task<List<WalletDetail>> GetWalletDetailsByEncryptedMobileNumber(string encryptedMobileNumber)
+        public async Task<List<WalletDetail>> GetWalletDetailsByMobileNumber(string mobileNumber)
         {
-            var walletDetails = await _walletDetailRepository.GeWalletDetailstByEncryptedMobileNumber(encryptedMobileNumber);
+            var walletDetails = await _walletDetailRepository.GeWalletDetailstByMobileNumber(mobileNumber);
 
             if (walletDetails == default || walletDetails == null)
                 throw new ValidationException(Messages.WalltDetails_NotFound);

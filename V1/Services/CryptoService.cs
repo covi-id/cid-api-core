@@ -12,7 +12,7 @@ namespace CoviIDApiCore.V1.Services
 {
     enum TransformDirection { ToCipher, FromCipher };
 
-    public class CryptoService : ICryptoService
+    public class CryptoService /*: ICryptoService*/
     {
         private readonly string serverKey;
         private readonly RNGCryptoServiceProvider rng;

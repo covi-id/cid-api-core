@@ -18,20 +18,18 @@ namespace CoviIDApiCore.V1.Services
         private readonly IOtpTokenRepository _otpTokenRepository;
         private readonly IWalletRepository _walletRepository;
         private readonly IWalletDetailService _walletDetailService;
-        private readonly ICryptoService _cryptoService;
         private readonly IAmazonS3Broker _amazonS3Broker;
         private readonly ITokenService _tokenService;
         private readonly ISmsService _smsService;
 
         public OtpService(IOtpTokenRepository tokenRepository, IConfiguration configuration, IWalletRepository walletRepository, 
-            IWalletDetailService walletDetailService, ICryptoService cryptoService, ITokenService tokenService, IAmazonS3Broker amazonS3Broker, 
+            IWalletDetailService walletDetailService, ITokenService tokenService, IAmazonS3Broker amazonS3Broker, 
             ISmsService smsService)
         {
             _otpTokenRepository = tokenRepository;
             _configuration = configuration;
             _walletRepository = walletRepository;
             _walletDetailService = walletDetailService;
-            _cryptoService = cryptoService;
             _tokenService = tokenService;
             _amazonS3Broker = amazonS3Broker;
             _smsService = smsService;
@@ -84,14 +82,11 @@ namespace CoviIDApiCore.V1.Services
             var fileReference = await _amazonS3Broker.AddImageToBucket(payload.WalletDetails.Photo, Guid.NewGuid().ToString());
             payload.WalletDetails.Photo = fileReference;
 
-            var key = _cryptoService.GenerateEncryptedSecretKey();
-
-            await _walletDetailService.CreateWalletDetails(wallet, payload.WalletDetails, key);
+            await _walletDetailService.CreateWalletDetails(wallet, payload.WalletDetails);
 
             return new OtpConfirmationResponse()
             {
                 WalletId = wallet.Id.ToString(),
-                Key = key
             };
         }
 
@@ -107,8 +102,6 @@ namespace CoviIDApiCore.V1.Services
                 MobileNumber = mobileNumber
             };
 
-            _cryptoService.EncryptAsServer(newToken);
-
             await _otpTokenRepository.AddAsync(newToken);
 
             await _otpTokenRepository.SaveAsync();
@@ -116,11 +109,9 @@ namespace CoviIDApiCore.V1.Services
             return newToken.Id;
         }
 
-        private async Task<bool> ValidateOtpCreationAsync(string mobileNumberReference)
+        private async Task<bool> ValidateOtpCreationAsync(string mobileNumber)
         {
-            _cryptoService.EncryptAsServer(mobileNumberReference);
-
-            var otps = await _otpTokenRepository.GetAllUnexpiredByEncryptedMobileNumber(mobileNumberReference);
+            var otps = await _otpTokenRepository.GetAllUnexpiredByMobileNumber(mobileNumber);
 
             if (!otps.Any())
                 return true;
