@@ -30,8 +30,6 @@ namespace CoviIDApiCore.V1.Brokers
             {
                 var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, _applicationJson);
 
-                await AddHeader();
-
                 var response = await _httpClient.PostAsync(UrlConstants.PartialRoutes[UrlConstants.Routes.SafePlacesRedactedTrail], content);
 
                 return (await ValidateResponse<BaseResponse<Redacted>>(response)).Data;
@@ -43,8 +41,6 @@ namespace CoviIDApiCore.V1.Brokers
         {
             if (_credentials.isEnabled)
             {
-                await AddHeader();
-
                 var response = await _httpClient.GetAsync(UrlConstants.PartialRoutes[UrlConstants.Routes.SafePlacesRedactedTrails]);
 
                 return await ValidateResponse<List<Redacted>>(response);
@@ -72,20 +68,6 @@ namespace CoviIDApiCore.V1.Brokers
             }
 
             throw new SafePlacesException($"{message} Broker status code: {request.StatusCode}");
-        }
-
-        private async Task AddHeader()
-        {
-            if (!_httpClient.DefaultRequestHeaders.TryGetValues("Authorization", out var authorizationHeader))
-            {
-                var loginResponse = await Login(new LoginRequest
-                {
-                    Username = _credentials.Username,
-                    Password = _credentials.Password
-                });
-
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(loginResponse.Token);
-            }
         }
     }
 }
